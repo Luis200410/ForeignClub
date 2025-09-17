@@ -1,25 +1,230 @@
 {% extends "core/base.html" %}
 {% block title %}Dashboard · FOREIGN{% endblock %}
 {% block content %}
+{% if not dashboard_ready %}
 <section class="container-xl py-7">
-    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-4 mb-5">
-        <div>
-            <p class="eyebrow">Your arena</p>
-            <h1 class="display-5 fw-bold tracking-tight mb-3">Welcome, {{ user.first_name|default:user.username }}.</h1>
-            <p class="text-white-50 mb-0">Stay consistent. Speak boldly. Every session builds your instinct.</p>
-        </div>
-        <a class="btn btn-light btn-lg px-5" href="#">Launch next mission</a>
-    </div>
-
-    <div class="row g-4">
-        {% for experience in experiences %}
-            <div class="col-md-4">
-                <div class="experience-card">
-                    <h3 class="h4 mb-3">{{ experience.title }}</h3>
-                    <p class="text-white-50 mb-0">{{ experience.description }}</p>
-                </div>
-            </div>
-        {% endfor %}
+    <div class="dashboard-panel">
+        <h1 class="h4 mb-3">We are preparing your dashboard</h1>
+        <p class="text-white-50 mb-0">Your account is almost synced. Please refresh in a few seconds or contact support if this persists.</p>
     </div>
 </section>
+{% else %}
+<section class="dashboard-hero container-xl py-7">
+    <div class="glass-panel p-5 p-lg-6">
+        <div class="row g-5 align-items-center">
+            <div class="col-lg-7">
+                <p class="eyebrow mb-3">Command center</p>
+                <h1 class="display-5 fw-bold tracking-tight mb-3">Welcome back, {{ profile.display_name|default:user.get_username }}.</h1>
+                <p class="text-white-50 mb-4">{{ profile.headline|default:"Your journey continues—immerse, adapt, and own every conversation." }}</p>
+                <div class="d-flex flex-wrap gap-3">
+                    <span class="badge badge-soft">Goal focus: {{ profile.get_target_focus_display }}</span>
+                    <span class="badge badge-soft">Target level: {{ profile.get_desired_fluency_level_display }}</span>
+                    {% if interaction_preferences %}
+                        <span class="badge badge-soft">Prefers {{ interaction_preferences.get_preferred_session_format_display }}</span>
+                        <span class="badge badge-soft">Team size: {{ interaction_preferences.preferred_group_size }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="dashboard-stat-grid">
+                    <div class="stat-card">
+                        <span class="stat-label">Active goals</span>
+                        <span class="stat-value">{{ stats.total_goals|default:0 }}</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Live windows</span>
+                        <span class="stat-value">{{ stats.engagement_windows|default:0 }}</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Progress notes</span>
+                        <span class="stat-value">{{ stats.progress_notes|default:0 }}</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Latest assessment</span>
+                        {% if stats.last_assessment %}
+                            <span class="stat-value">{{ stats.last_assessment.get_fluency_level_display }}</span>
+                            <span class="stat-meta">{{ stats.last_assessment.assessed_at|date:"M j" }}</span>
+                        {% else %}
+                            <span class="stat-value">Pending</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="row g-4">
+        <div class="col-xl-6">
+            <div class="dashboard-panel">
+                <div class="panel-header d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <p class="eyebrow mb-1">Mission priority</p>
+                        <h2 class="h4 tracking-tight mb-0">Primary learning goal</h2>
+                    </div>
+                    <a class="btn btn-outline-light btn-sm px-3" href="#">Update goal</a>
+                </div>
+                {% if primary_goal %}
+                    <div class="goal-card highlight">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h3 class="h5 mb-2">{{ primary_goal.title }}</h3>
+                                <p class="text-white-50 small mb-3">{{ primary_goal.success_metric }}</p>
+                            </div>
+                            <span class="badge badge-outline">{{ primary_goal.get_focus_area_display }}</span>
+                        </div>
+                        <div class="d-flex flex-wrap gap-3 text-white-50 small">
+                            {% if primary_goal.target_date %}
+                                <span>Target: {{ primary_goal.target_date|date:"M j, Y" }}</span>
+                            {% endif %}
+                            <span>Priority: {{ primary_goal.get_priority_display }}</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p class="mb-1 fw-semibold">Set your first goal</p>
+                        <p class="text-white-50 mb-0">Define what fluency looks like for you to unlock tailored sessions.</p>
+                    </div>
+                {% endif %}
+
+                {% if secondary_goals %}
+                    <div class="mt-4">
+                        <p class="eyebrow mb-3">Supporting focus</p>
+                        <div class="goal-grid">
+                            {% for goal in secondary_goals %}
+                                <div class="goal-card">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h3 class="h6 mb-0">{{ goal.title }}</h3>
+                                        <span class="badge badge-outline">{{ goal.get_focus_area_display }}</span>
+                                    </div>
+                                    <p class="text-white-50 small mb-2">{{ goal.success_metric }}</p>
+                                    <div class="text-white-50 small">
+                                        {% if goal.target_date %}
+                                            <span>Target: {{ goal.target_date|date:"M j, Y" }}</span>
+                                        {% else %}
+                                            <span>No target date</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-xl-6">
+            <div class="dashboard-panel h-100">
+                <div class="panel-header d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <p class="eyebrow mb-1">Momentum</p>
+                        <h2 class="h4 tracking-tight mb-0">Recent progress notes</h2>
+                    </div>
+                    <a class="btn btn-outline-light btn-sm px-3" href="#">Add progress</a>
+                </div>
+                {% if recent_progress %}
+                    <ul class="progress-timeline">
+                        {% for entry in recent_progress %}
+                            <li>
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h3 class="h6 mb-0">{{ entry.summary }}</h3>
+                                        <span class="badge badge-soft">{{ entry.logged_at|date:"M j" }}</span>
+                                    </div>
+                                    <p class="text-white-50 small mb-2">{{ entry.details|default:"Focus session logged." }}</p>
+                                    <div class="text-white-50 small">Impact rating: {{ entry.impact_rating }} / 5 &middot; Logged by {{ entry.logged_by }}</div>
+                                    {% if entry.tags %}
+                                        <div class="d-flex flex-wrap gap-2 mt-2">
+                                            {% for tag in entry.tags %}
+                                                <span class="badge badge-outline">{{ tag }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="empty-state">
+                        <p class="mb-1 fw-semibold">Capture your breakthroughs</p>
+                        <p class="text-white-50 mb-0">Log reflections after each mission to fuel data-driven coaching.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="dashboard-panel h-100">
+                <div class="panel-header d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <p class="eyebrow mb-1">Live readiness</p>
+                        <h2 class="h4 tracking-tight mb-0">Availability windows</h2>
+                    </div>
+                    <a class="btn btn-outline-light btn-sm px-3" href="#">Edit windows</a>
+                </div>
+                {% if availability_windows %}
+                    <ul class="availability-list">
+                        {% for slot in availability_windows %}
+                            <li>
+                                <div>
+                                    <h3 class="h6 mb-1">{{ slot.get_day_of_week_display }}</h3>
+                                    <p class="text-white-50 small mb-0">{{ slot.start_time|time:"H:i" }} &ndash; {{ slot.end_time|time:"H:i" }} ({{ slot.timezone }})</p>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    {% if stats.engagement_windows|default:0 > availability_windows|length %}
+                        <p class="text-white-50 small mt-3">Showing the first {{ availability_windows|length }} windows.</p>
+                    {% endif %}
+                {% else %}
+                    <div class="empty-state">
+                        <p class="mb-1 fw-semibold">Set your learning cadence</p>
+                        <p class="text-white-50 mb-0">Add when you’re free so we can match live experiences to your schedule.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="dashboard-panel h-100">
+                <div class="panel-header d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <p class="eyebrow mb-1">Calibration</p>
+                        <h2 class="h4 tracking-tight mb-0">Recent assessments</h2>
+                    </div>
+                    <a class="btn btn-outline-light btn-sm px-3" href="#">Upload evidence</a>
+                </div>
+                {% if assessments %}
+                    <ul class="assessment-list">
+                        {% for assessment in assessments %}
+                            <li>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h3 class="h6 mb-0">{{ assessment.get_assessment_type_display }}</h3>
+                                    <span class="badge badge-soft">{{ assessment.assessed_at|date:"M j" }}</span>
+                                </div>
+                                <div class="text-white-50 small mb-1">Level: {{ assessment.get_fluency_level_display }}{% if assessment.score %} &middot; Score {{ assessment.score }}{% endif %}</div>
+                                {% if assessment.assessed_by %}
+                                    <div class="text-white-50 small">By {{ assessment.assessed_by }}</div>
+                                {% endif %}
+                                {% if assessment.notes %}
+                                    <p class="text-white-50 small mt-2">{{ assessment.notes }}</p>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="empty-state">
+                        <p class="mb-1 fw-semibold">No assessments logged yet</p>
+                        <p class="text-white-50 mb-0">Schedule a placement or coach review to benchmark your fluency.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
 {% endblock %}

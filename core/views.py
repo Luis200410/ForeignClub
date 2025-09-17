@@ -55,18 +55,39 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["experiences"] = [
+        user = self.request.user
+
+        profile = getattr(user, "profile", None)
+        context["profile"] = profile
+
+        if profile is None:
+            context["dashboard_ready"] = False
+            return context
+
+        goals_qs = profile.goals.all().order_by("-priority", "target_date")
+        availability_qs = profile.availability_windows.all().order_by("day_of_week", "start_time")
+        assessments_qs = profile.assessments.all().order_by("-assessed_at")
+        progress_qs = profile.progress_logs.all().order_by("-logged_at")
+
+        primary_goal = goals_qs.filter(is_primary=True).first()
+        secondary_goals = goals_qs.exclude(pk=getattr(primary_goal, "pk", None))[:3]
+
+        context.update(
             {
-                "title": "Live Language Exchanges",
-                "description": "Meet native speakers in curated micro-sessions designed to spark real conversations.",
-            },
-            {
-                "title": "Immersive Story Games",
-                "description": "Play narrative-driven games that adapt to your vocabulary level in real time.",
-            },
-            {
-                "title": "Rapid Feedback Labs",
-                "description": "Receive instant pronunciation and grammar feedback powered by expert coaches.",
-            },
-        ]
+                "dashboard_ready": True,
+                "primary_goal": primary_goal,
+                "secondary_goals": list(secondary_goals),
+                "availability_windows": list(availability_qs[:5]),
+                "assessments": list(assessments_qs[:3]),
+                "recent_progress": list(progress_qs[:3]),
+                "interaction_preferences": getattr(profile, "interaction_preferences", None),
+                "stats": {
+                    "total_goals": goals_qs.count(),
+                    "engagement_windows": availability_qs.count(),
+                    "last_assessment": assessments_qs.first(),
+                    "progress_notes": progress_qs.count(),
+                },
+            }
+        )
+
         return context
