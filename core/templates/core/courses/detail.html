@@ -1,0 +1,133 @@
+{% extends "core/base.html" %}
+{% block title %}{{ course.title }} · FOREIGN{% endblock %}
+{% block content %}
+<section class="container-xl py-7">
+    <div class="row g-5">
+        <div class="col-lg-8">
+            <article class="course-hero glass-panel p-5 p-lg-6 mb-5" data-animate="fade-up">
+                <div class="d-flex flex-wrap gap-3 mb-4">
+                    <span class="badge badge-outline">{{ course.get_delivery_mode_display }}</span>
+                    <span class="badge badge-soft">{{ course.get_difficulty_display }}</span>
+                    <span class="badge badge-soft">{{ course.focus_area }}</span>
+                    <span class="badge badge-soft">Level {{ course.get_fluency_level_display }}</span>
+                </div>
+                <h1 class="display-5 fw-bold tracking-tight mb-3">{{ course.title }}</h1>
+                {% if course.subtitle %}
+                    <p class="lead text-white-50 mb-4">{{ course.subtitle }}</p>
+                {% endif %}
+                <p class="text-white-50 mb-4">{{ course.summary }}</p>
+                <div class="course-grid">
+                    <div>
+                        <span class="course-label">Duration</span>
+                        <span class="course-value">{{ course.duration_weeks }} weeks</span>
+                    </div>
+                    <div>
+                        <span class="course-label">Weekly commitment</span>
+                        <span class="course-value">{{ course.weekly_commitment_hours }} hrs</span>
+                    </div>
+                    <div>
+                        <span class="course-label">Cohort size</span>
+                        <span class="course-value">{{ course.cohort_size }} learners</span>
+                    </div>
+                    <div>
+                        <span class="course-label">Kickoff</span>
+                        <span class="course-value">{{ course.start_date|date:"M j, Y"|default:"Rolling" }}</span>
+                    </div>
+                </div>
+            </article>
+
+            <section class="mb-6" data-animate="fade-up" data-animate-delay="0.1s">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <p class="eyebrow mb-2">Curriculum flow</p>
+                        <h2 class="h4 tracking-tight mb-0">What you will experience</h2>
+                    </div>
+                    <a class="btn btn-outline-light btn-sm px-3" href="{% url 'course_list' % }">All courses</a>
+                </div>
+                {% if modules %}
+                    <div class="module-accordion">
+                        {% for module in modules %}
+                            <article class="module-card" data-animate="fade-up" data-animate-delay="{{ forloop.counter0|add:1 }}00ms">
+                                <header class="module-card__header">
+                                    <div>
+                                        <p class="eyebrow mb-1">Module {{ module.order }}</p>
+                                        <h3 class="h5 tracking-tight mb-1">{{ module.title }}</h3>
+                                        {% if module.focus_keyword %}
+                                            <span class="badge badge-outline">{{ module.focus_keyword }}</span>
+                                        {% endif %}
+                                    </div>
+                                </header>
+                                {% if module.description %}
+                                    <p class="text-white-50 mb-3">{{ module.description }}</p>
+                                {% endif %}
+                                {% if module.outcomes %}
+                                    <div class="module-outcomes">
+                                        <span class="course-label">Outcomes</span>
+                                        <p class="text-white-50 mb-0">{{ module.outcomes }}</p>
+                                    </div>
+                                {% endif %}
+                                {% if module.sessions.all %}
+                                    <ul class="session-list">
+                                        {% for session in module.sessions.all %}
+                                            <li>
+                                                <div>
+                                                    <h4 class="h6 mb-1">{{ session.title }}</h4>
+                                                    <p class="text-white-50 small mb-1">{{ session.get_session_type_display }} · {{ session.duration_minutes }} min</p>
+                                                    {% if session.description %}
+                                                        <p class="text-white-50 small mb-0">{{ session.description }}</p>
+                                                    {% endif %}
+                                                </div>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="dashboard-panel">
+                        <p class="mb-2 fw-semibold">Curriculum in progress</p>
+                        <p class="text-white-50 mb-0">We are evolving this course. Stay tuned for new modules.</p>
+                    </div>
+                {% endif %}
+            </section>
+        </div>
+        <div class="col-lg-4">
+            <aside class="enrollment-card glass-panel p-4 p-lg-5" data-animate="fade-up" data-animate-delay="0.2s">
+                {% if enrollment %}
+                    <p class="eyebrow mb-2">You are in</p>
+                    <h2 class="h4 tracking-tight mb-3">Status: {{ enrollment.get_status_display }}</h2>
+                    <p class="text-white-50 mb-4">We will notify you as soon as cohort logistics are confirmed. Keep your schedule current so we can match you faster.</p>
+                    <form action="{% url 'course_enroll' course.slug %}" method="post">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label text-uppercase small text-white-50">Motivation</label>
+                            <textarea name="motivation" rows="4" class="form-control">{{ enrollment.motivation }}</textarea>
+                        </div>
+                        <button class="btn btn-light w-100" type="submit">Update enrollment</button>
+                    </form>
+                {% else %}
+                    <p class="eyebrow mb-2">Join this mission</p>
+                    <h2 class="h4 tracking-tight mb-3">Reserve your seat</h2>
+                    <p class="text-white-50 mb-4">Complete the request below. Our team will review your profile, align schedules, and confirm your placement.</p>
+                    <form action="{% url 'course_enroll' course.slug %}" method="post">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label text-uppercase small text-white-50">Motivation</label>
+                            {{ form.motivation }}
+                            {% if form.motivation.errors %}
+                                <div class="text-danger small mt-1">{{ form.motivation.errors|join:" " }}</div>
+                            {% endif %}
+                        </div>
+                        <button class="btn btn-light w-100" type="submit">Request access</button>
+                    </form>
+                {% endif %}
+                <div class="mt-4">
+                    <p class="eyebrow mb-2">Need help?</p>
+                    <p class="text-white-50 small mb-0">Email us at <a class="link-light" href="mailto:command@foreign.club">command@foreign.club</a> and we will craft the right path for you.</p>
+                </div>
+            </aside>
+        </div>
+    </div>
+</section>
+{% endblock %}

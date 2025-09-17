@@ -117,4 +117,65 @@ CREATE TABLE IF NOT EXISTS core_progresslog (
 
 COMMENT ON TABLE core_progresslog IS 'Qualitative progress notes used by mentors and program leads.';
 
+CREATE TABLE IF NOT EXISTS core_course (
+    id BIGSERIAL PRIMARY KEY,
+    slug VARCHAR(80) NOT NULL UNIQUE,
+    title VARCHAR(160) NOT NULL,
+    subtitle VARCHAR(220) NULL,
+    summary TEXT NOT NULL,
+    delivery_mode VARCHAR(16) NOT NULL DEFAULT 'live',
+    difficulty VARCHAR(16) NOT NULL DEFAULT 'foundation',
+    focus_area VARCHAR(60) NOT NULL DEFAULT 'Communication mastery',
+    fluency_level VARCHAR(2) NOT NULL DEFAULT 'B1',
+    duration_weeks SMALLINT NOT NULL DEFAULT 6,
+    weekly_commitment_hours NUMERIC(4,1) NOT NULL DEFAULT 3,
+    cohort_size SMALLINT NOT NULL DEFAULT 18,
+    start_date DATE NULL,
+    end_date DATE NULL,
+    hero_image_url VARCHAR(200) NULL,
+    is_published BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT core_course_delivery_mode_check CHECK (delivery_mode IN ('live','hybrid','self_paced')),
+    CONSTRAINT core_course_difficulty_check CHECK (difficulty IN ('foundation','intensive','master')),
+    CONSTRAINT core_course_fluency_level_check CHECK (fluency_level IN ('A1','A2','B1','B2','C1','C2'))
+);
+
+CREATE TABLE IF NOT EXISTS core_coursemodule (
+    id BIGSERIAL PRIMARY KEY,
+    course_id BIGINT NOT NULL REFERENCES core_course(id) ON DELETE CASCADE,
+    "order" SMALLINT NOT NULL DEFAULT 1,
+    title VARCHAR(160) NOT NULL,
+    description TEXT NULL,
+    outcomes TEXT NULL,
+    focus_keyword VARCHAR(80) NULL,
+    CONSTRAINT core_coursemodule_unique_order UNIQUE (course_id, "order")
+);
+
+CREATE TABLE IF NOT EXISTS core_coursesession (
+    id BIGSERIAL PRIMARY KEY,
+    module_id BIGINT NOT NULL REFERENCES core_coursemodule(id) ON DELETE CASCADE,
+    "order" SMALLINT NOT NULL DEFAULT 1,
+    title VARCHAR(160) NOT NULL,
+    session_type VARCHAR(16) NOT NULL DEFAULT 'lab',
+    duration_minutes SMALLINT NOT NULL DEFAULT 60,
+    description TEXT NULL,
+    resources JSONB NOT NULL DEFAULT '[]'::jsonb,
+    CONSTRAINT core_coursesession_unique_order UNIQUE (module_id, "order"),
+    CONSTRAINT core_coursesession_type_check CHECK (session_type IN ('lab','workshop','game','coaching','debrief'))
+);
+
+CREATE TABLE IF NOT EXISTS core_courseenrollment (
+    id BIGSERIAL PRIMARY KEY,
+    profile_id BIGINT NOT NULL REFERENCES core_profile(id) ON DELETE CASCADE,
+    course_id BIGINT NOT NULL REFERENCES core_course(id) ON DELETE CASCADE,
+    status VARCHAR(12) NOT NULL DEFAULT 'applied',
+    motivation TEXT NULL,
+    joined_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_accessed_at TIMESTAMPTZ NULL,
+    completion_rate NUMERIC(5,2) NOT NULL DEFAULT 0,
+    CONSTRAINT core_courseenrollment_status_check CHECK (status IN ('applied','active','completed','withdrawn')),
+    CONSTRAINT core_courseenrollment_unique UNIQUE (profile_id, course_id)
+);
+
 COMMIT;

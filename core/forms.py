@@ -37,3 +37,25 @@ class SignUpForm(UserCreationForm):
                 "class": "form-control form-control-lg",
             }
         )
+
+
+class CourseEnrollmentForm(forms.Form):
+    """Simple enrollment form capturing learner intent."""
+
+    motivation = forms.CharField(
+        label="Why this course?",
+        widget=forms.Textarea(
+            attrs={
+                "rows": 4,
+                "placeholder": "Share what you want to unlock, so we can tailor your experience.",
+                "class": "form-control",
+            }
+        ),
+        required=False,
+    )
+
+    def clean_motivation(self):
+        motivation = self.cleaned_data.get("motivation", "").strip()
+        if motivation and len(motivation) < 12:
+            raise forms.ValidationError("Tell us a bit more about what you're aiming for.")
+        return motivation

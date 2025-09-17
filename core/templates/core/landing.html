@@ -5,14 +5,14 @@
     <div class="row align-items-center g-5">
         <div class="col-lg-6">
             <div class="eyebrow text-uppercase mb-3">Live, fearless English</div>
-            <h1 class="display-2 fw-bold tracking-tight mb-4 animate-fade-up">Language is a living experience. FOREIGN puts you inside it.</h1>
-            <p class="lead text-white-50 mb-5 animate-fade-up" style="animation-delay: .1s;">We fuse real human connection, immersive play, and adaptive coaching so you can think, respond, and feel in English—faster than traditional courses ever could.</p>
-            <div class="d-flex flex-column flex-md-row gap-3 animate-fade-up" style="animation-delay: .2s;">
+            <h1 class="display-2 fw-bold tracking-tight mb-4" data-animate="fade-up">Language is a living experience. FOREIGN puts you inside it.</h1>
+            <p class="lead text-white-50 mb-5" data-animate="fade-up" data-animate-delay="0.1s">We fuse real human connection, immersive play, and adaptive coaching so you can think, respond, and feel in English—faster than traditional courses ever could.</p>
+            <div class="d-flex flex-column flex-md-row gap-3" data-animate="fade-up" data-animate-delay="0.2s">
                 <a class="btn btn-light btn-lg px-5" href="{% url 'register' %}">Start Your Transformation</a>
                 <a class="btn btn-outline-light btn-lg px-5" href="{% url 'login' %}">Access Your Space</a>
             </div>
         </div>
-        <div class="col-lg-6 animate-fade-up" style="animation-delay: .3s;">
+        <div class="col-lg-6" data-animate="fade-up" data-animate-delay="0.3s">
             <div class="glass-panel p-4 p-md-5">
                 <div class="text-white-50 text-uppercase small mb-3">FOREIGN Framework</div>
                 <ul class="list-unstyled fs-5 mb-0">
@@ -32,17 +32,17 @@
             </div>
         </div>
     </div>
-    <div class="hero-orb orb-left"></div>
-    <div class="hero-orb orb-right"></div>
+    <div class="hero-orb orb-left" data-parallax="0.12"></div>
+    <div class="hero-orb orb-right" data-parallax="0.18"></div>
 </section>
 
 <section id="promise" class="container-xl py-7">
     <div class="row align-items-center g-5">
-        <div class="col-lg-5 animate-fade-up">
+        <div class="col-lg-5" data-animate="slide-right">
             <p class="eyebrow">The Promise</p>
             <h2 class="display-5 fw-bold tracking-tight mb-4">Fluency that sticks because you live it, not memorize it.</h2>
         </div>
-        <div class="col-lg-7 animate-fade-up" style="animation-delay: .1s;">
+        <div class="col-lg-7" data-animate="slide-left" data-animate-delay="0.1s">
             <div class="promise-grid">
                 <div class="promise-card">
                     <h3 class="h5 mb-3">Human-first</h3>
@@ -100,7 +100,7 @@
 
 <section id="programs" class="container-xl py-7">
     <div class="row g-4">
-        <div class="col-lg-4 animate-fade-up">
+        <div class="col-lg-4" data-animate="fade-up">
             <div class="program-card border-light-subtle">
                 <div class="text-uppercase small text-white-50 mb-3">Starter</div>
                 <h3 class="h3 mb-4">Ignition Sprints</h3>
@@ -108,7 +108,7 @@
                 <a class="btn btn-outline-light mt-3" href="{% url 'register' %}">Apply now</a>
             </div>
         </div>
-        <div class="col-lg-4 animate-fade-up" style="animation-delay: .1s;">
+        <div class="col-lg-4" data-animate="fade-up" data-animate-delay="0.1s">
             <div class="program-card border-light-subtle highlight">
                 <div class="text-uppercase small text-white-50 mb-3">Flagship</div>
                 <h3 class="h3 mb-4">Immersion Labs</h3>
@@ -116,7 +116,7 @@
                 <a class="btn btn-light mt-3" href="{% url 'register' %}">Secure your spot</a>
             </div>
         </div>
-        <div class="col-lg-4 animate-fade-up" style="animation-delay: .2s;">
+        <div class="col-lg-4" data-animate="fade-up" data-animate-delay="0.2s">
             <div class="program-card border-light-subtle">
                 <div class="text-uppercase small text-white-50 mb-3">Advanced</div>
                 <h3 class="h3 mb-4">Proficiency Studios</h3>
@@ -125,10 +125,13 @@
             </div>
         </div>
     </div>
+    <div class="text-center mt-5" data-animate="fade-up" data-animate-delay="0.2s">
+        <a class="btn btn-outline-light btn-lg px-5" href="{% url 'program_list' %}">Explore A1 – C2 Programs</a>
+    </div>
 </section>
 
 <section class="cta container-xl py-7">
-    <div class="glass-panel text-center py-6 px-4 px-md-6">
+    <div class="glass-panel text-center py-6 px-4 px-md-6" data-animate="fade-scale">
         <h2 class="display-5 fw-bold tracking-tight mb-4">Ready to speak from instinct?</h2>
         <p class="text-white-50 lead mb-5">FOREIGN is the shift from studying English to embodying it. Be the next story.
         </p>

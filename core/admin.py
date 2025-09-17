@@ -71,6 +71,67 @@ class ProgressLogAdmin(admin.ModelAdmin):
     search_fields = ("summary", "profile__display_name", "logged_by")
     autocomplete_fields = ("profile",)
     readonly_fields = ("logged_at",)
+
+
+
+class CourseModuleInline(admin.TabularInline):
+    model = models.CourseModule
+    extra = 1
+    fields = ("order", "title", "focus_keyword")
+    show_change_link = True
+    ordering = ("order",)
+
+
+class CourseSessionInline(admin.TabularInline):
+    model = models.CourseSession
+    extra = 1
+    fields = ("order", "title", "session_type", "duration_minutes")
+    ordering = ("order",)
+
+
+@admin.register(models.Course)
+class CourseAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "delivery_mode",
+        "difficulty",
+        "fluency_level",
+        "focus_area",
+        "start_date",
+        "end_date",
+        "is_published",
+    )
+    list_filter = ("delivery_mode", "difficulty", "fluency_level", "is_published")
+    search_fields = ("title", "subtitle", "summary", "focus_area")
+    prepopulated_fields = {"slug": ("title",)}
+    inlines = (CourseModuleInline,)
+    readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(models.CourseModule)
+class CourseModuleAdmin(admin.ModelAdmin):
+    list_display = ("course", "order", "title", "focus_keyword")
+    list_filter = ("course",)
+    search_fields = ("title", "course__title")
+    ordering = ("course", "order")
+    inlines = (CourseSessionInline,)
+
+
+@admin.register(models.CourseSession)
+class CourseSessionAdmin(admin.ModelAdmin):
+    list_display = ("module", "order", "title", "session_type", "duration_minutes")
+    list_filter = ("session_type", "module__course")
+    search_fields = ("title", "module__course__title")
+    ordering = ("module", "order")
+
+
+@admin.register(models.CourseEnrollment)
+class CourseEnrollmentAdmin(admin.ModelAdmin):
+    list_display = ("profile", "course", "status", "joined_at", "completion_rate")
+    list_filter = ("status", "joined_at")
+    search_fields = ("profile__display_name", "course__title")
+    autocomplete_fields = ("profile", "course")
+    readonly_fields = ("joined_at",)
 admin.site.site_header = "FOREIGN Command Center"
 admin.site.site_title = "FOREIGN Admin"
 admin.site.index_title = "Operations Dashboard"

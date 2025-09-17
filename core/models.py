@@ -263,3 +263,161 @@ class ProgressLog(models.Model):
 
     def __str__(self) -> str:
         return f"{self.summary} ({self.logged_at:%Y-%m-%d})"
+
+class Course(models.Model):
+    """Structured learning experience learners can join."""
+
+    class DeliveryMode(models.TextChoices):
+        LIVE = "live", "Live cohort"
+        HYBRID = "hybrid", "Hybrid"
+        SELF_PACED = "self_paced", "Self-paced"
+
+    class Difficulty(models.TextChoices):
+        FOUNDATION = "foundation", "Foundation"
+        INTENSIVE = "intensive", "Intensive"
+        MASTER = "master", "Mastery"
+
+    slug = models.SlugField(unique=True, max_length=80)
+    title = models.CharField(max_length=160)
+    subtitle = models.CharField(max_length=220, blank=True)
+    summary = models.TextField()
+    delivery_mode = models.CharField(
+        max_length=16,
+        choices=DeliveryMode.choices,
+        default=DeliveryMode.LIVE,
+    )
+    difficulty = models.CharField(
+        max_length=16,
+        choices=Difficulty.choices,
+        default=Difficulty.FOUNDATION,
+    )
+    focus_area = models.CharField(max_length=60, default="Communication mastery")
+    fluency_level = models.CharField(
+        max_length=2,
+        choices=Profile.FluencyLevel.choices,
+        default=Profile.FluencyLevel.INTERMEDIATE,
+    )
+    duration_weeks = models.PositiveSmallIntegerField(default=6)
+    weekly_commitment_hours = models.DecimalField(max_digits=4, decimal_places=1, default=3)
+    cohort_size = models.PositiveSmallIntegerField(default=18)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    hero_image_url = models.URLField(blank=True)
+    is_published = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["title"]
+        verbose_name = "Course"
+        verbose_name_plural = "Courses"
+
+    def __str__(self) -> str:
+        return self.title
+
+    @property
+    def is_cohort_based(self) -> bool:
+        return self.delivery_mode != self.DeliveryMode.SELF_PACED
+
+
+class CourseModule(models.Model):
+    """Curriculum block inside a course."""
+
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="modules",
+    )
+    order = models.PositiveSmallIntegerField(default=1)
+    title = models.CharField(max_length=160)
+    description = models.TextField(blank=True)
+    outcomes = models.TextField(blank=True)
+    focus_keyword = models.CharField(max_length=80, blank=True)
+
+    class Meta:
+        ordering = ["course", "order"]
+        verbose_name = "Course module"
+        verbose_name_plural = "Course modules"
+        unique_together = ("course", "order")
+
+    def __str__(self) -> str:
+        return f"{self.course.title} · Module {self.order}"
+
+
+class CourseSession(models.Model):
+    """Live or async session that sits inside a module."""
+
+    class SessionType(models.TextChoices):
+        LAB = "lab", "Immersion lab"
+        WORKSHOP = "workshop", "Workshop"
+        GAME = "game", "Game mission"
+        COACHING = "coaching", "Coaching"
+        DEBRIEF = "debrief", "Debrief"
+
+    module = models.ForeignKey(
+        CourseModule,
+        on_delete=models.CASCADE,
+        related_name="sessions",
+    )
+    order = models.PositiveSmallIntegerField(default=1)
+    title = models.CharField(max_length=160)
+    session_type = models.CharField(
+        max_length=16,
+        choices=SessionType.choices,
+        default=SessionType.LAB,
+    )
+    duration_minutes = models.PositiveSmallIntegerField(default=60)
+    description = models.TextField(blank=True)
+    resources = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        ordering = ["module", "order"]
+        verbose_name = "Course session"
+        verbose_name_plural = "Course sessions"
+        unique_together = ("module", "order")
+
+    def __str__(self) -> str:
+        return f"{self.module.course.title} · {self.title}"
+
+
+class CourseEnrollment(models.Model):
+    """Enrollment linking a learner profile to a course."""
+
+    class EnrollmentStatus(models.TextChoices):
+        APPLIED = "applied", "Applied"
+        ACTIVE = "active", "Active"
+        COMPLETED = "completed", "Completed"
+        WITHDRAWN = "withdrawn", "Withdrawn"
+
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        related_name="enrollments",
+    )
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="enrollments",
+    )
+    status = models.CharField(
+        max_length=12,
+        choices=EnrollmentStatus.choices,
+        default=EnrollmentStatus.APPLIED,
+    )
+    motivation = models.TextField(blank=True)
+    joined_at = models.DateTimeField(default=timezone.now)
+    last_accessed_at = models.DateTimeField(null=True, blank=True)
+    completion_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+
+    class Meta:
+        ordering = ["-joined_at"]
+        verbose_name = "Course enrollment"
+        verbose_name_plural = "Course enrollments"
+        unique_together = ("profile", "course")
+
+    def __str__(self) -> str:
+        return f"{self.profile.display_name} → {self.course.title}"
+
+    @property
+    def is_active(self) -> bool:
+        return self.status in {self.EnrollmentStatus.APPLIED, self.EnrollmentStatus.ACTIVE}

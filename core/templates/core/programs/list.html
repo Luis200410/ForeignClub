@@ -1,0 +1,27 @@
+{% extends "core/base.html" %}
+{% block title %}Programs · FOREIGN{% endblock %}
+{% block content %}
+<section class="container-xl py-7">
+    <div class="page-intro" data-animate="fade-up">
+        <p class="eyebrow mb-2">Programs by level</p>
+        <h1 class="display-4 fw-bold tracking-tight mb-3">Select the arena that matches your current fluency.</h1>
+        <p class="text-white-50 lead mb-0">Every stage unlocks mission spaces tailored to your instincts. Explore the level that resonates and preview the curriculum flow.</p>
+    </div>
+
+    <div class="program-grid mt-5">
+        {% for level in program_levels %}
+            <article class="program-card" data-animate="fade-up" data-animate-delay="{{ forloop.counter0|add:1 }}00ms">
+                <header class="program-card__header">
+                    <div class="program-card__code">{{ level.title }}</div>
+                    <span class="badge badge-soft">{{ level.course_count|default:0 }} courses</span>
+                </header>
+                <p class="h5 tracking-tight mb-2">{{ level.headline }}</p>
+                <p class="text-white-50 mb-4">{{ level.tagline }}</p>
+                <div class="program-card__cta">
+                    <a class="btn btn-light w-100" href="{% url 'program_detail' level.code %}">Open program space</a>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

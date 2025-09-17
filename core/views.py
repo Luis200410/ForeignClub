@@ -3,12 +3,58 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import redirect, render
+from django.db.models import Prefetch
+from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import TemplateView
 
-from .forms import SignUpForm
+from .forms import CourseEnrollmentForm, SignUpForm
+from .models import Course, CourseEnrollment, CourseModule, Profile
 
+
+
+PROGRAM_LEVELS = [
+    {
+        "code": Profile.FluencyLevel.BEGINNER,
+        "title": "A1 · Awakening",
+        "headline": "Build instincts for everyday survival conversations.",
+        "tagline": "Intentional micro-missions to spark your English reflexes.",
+    },
+    {
+        "code": Profile.FluencyLevel.ELEMENTARY,
+        "title": "A2 · Momentum",
+        "headline": "Navigate daily life with clarity and confidence.",
+        "tagline": "Roleplay-powered labs designed to automate essential phrases.",
+    },
+    {
+        "code": Profile.FluencyLevel.INTERMEDIATE,
+        "title": "B1 · Expression",
+        "headline": "Think in English during fast-paced conversations.",
+        "tagline": "High-tempo exchanges and adaptive story games to unlock spontaneity.",
+    },
+    {
+        "code": Profile.FluencyLevel.UPPER_INTERMEDIATE,
+        "title": "B2 · Influence",
+        "headline": "Lead conversations, presentations, and collaborations.",
+        "tagline": "Strategic labs that sharpen persuasion and nuance.",
+    },
+    {
+        "code": Profile.FluencyLevel.ADVANCED,
+        "title": "C1 · Command",
+        "headline": "Operate like a native in high-stakes environments.",
+        "tagline": "Executive simulations, rapid feedback, and precision coaching.",
+    },
+    {
+        "code": Profile.FluencyLevel.PROFICIENT,
+        "title": "C2 · Legacy",
+        "headline": "Shape culture, mentor others, and craft impact.",
+        "tagline": "Mastery studios focused on performance, storytelling, and nuance.",
+    },
+]
+
+PROGRAM_LOOKUP = {level["code"]: level for level in PROGRAM_LEVELS}
 
 def landing(request):
     """Landing page introducing the FOREIGN experience."""
@@ -91,3 +137,164 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         )
 
         return context
+
+
+class CourseListView(LoginRequiredMixin, TemplateView):
+    template_name = "core/courses/list.html"
+    login_url = "login"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        courses = Course.objects.filter(is_published=True).order_by("title")
+        profile = getattr(self.request.user, "profile", None)
+
+        enrollments = {}
+        if profile:
+            enrollments = {en.course_id: en for en in profile.enrollments.select_related("course")}
+
+        course_cards = [
+            {
+                "course": course,
+                "enrollment": enrollments.get(course.id),
+            }
+            for course in courses
+        ]
+
+        context.update(
+            {
+                "courses": courses,
+                "course_cards": course_cards,
+            }
+        )
+        return context
+
+
+class CourseDetailView(LoginRequiredMixin, TemplateView):
+    template_name = "core/courses/detail.html"
+    login_url = "login"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        course = get_object_or_404(
+            Course.objects.prefetch_related(
+                Prefetch(
+                    "modules",
+                    queryset=CourseModule.objects.prefetch_related("sessions").order_by("order"),
+                )
+            ),
+            slug=kwargs["slug"],
+            is_published=True,
+        )
+        profile = getattr(self.request.user, "profile", None)
+        enrollment = None
+        if profile:
+            enrollment = CourseEnrollment.objects.filter(profile=profile, course=course).first()
+
+        context.update(
+            {
+                "course": course,
+                "modules": course.modules.all(),
+                "enrollment": enrollment,
+                "form": CourseEnrollmentForm(),
+            }
+        )
+        return context
+
+
+class CourseEnrollView(LoginRequiredMixin, View):
+    login_url = "login"
+
+    def post(self, request, slug: str):
+        profile = getattr(request.user, "profile", None)
+        if profile is None:
+            messages.error(request, "Complete your profile before enrolling in a course.")
+            return redirect("dashboard")
+
+        course = get_object_or_404(
+            Course.objects.prefetch_related(
+                Prefetch(
+                    "modules",
+                    queryset=CourseModule.objects.prefetch_related("sessions").order_by("order"),
+                )
+            ),
+            slug=slug,
+            is_published=True,
+        )
+        form = CourseEnrollmentForm(request.POST)
+
+        if not form.is_valid():
+            enrollment = CourseEnrollment.objects.filter(profile=profile, course=course).first()
+            context = {
+                "course": course,
+                "modules": course.modules.all(),
+                "enrollment": enrollment,
+                "form": form,
+            }
+            return render(request, "core/courses/detail.html", context, status=400)
+
+        enrollment, created = CourseEnrollment.objects.get_or_create(
+            profile=profile,
+            course=course,
+            defaults={
+                "motivation": form.cleaned_data.get("motivation", ""),
+                "status": CourseEnrollment.EnrollmentStatus.APPLIED,
+            },
+        )
+
+        if not created:
+            enrollment.motivation = form.cleaned_data.get("motivation", enrollment.motivation)
+            if enrollment.status == CourseEnrollment.EnrollmentStatus.WITHDRAWN:
+                enrollment.status = CourseEnrollment.EnrollmentStatus.APPLIED
+            enrollment.save(update_fields=["motivation", "status"])
+            messages.success(request, "Enrollment preferences updated. We'll be in touch soon.")
+        else:
+            messages.success(request, "You're on the path. Our team will confirm your seat shortly.")
+
+        return redirect("course_detail", slug=slug)
+
+class ProgramListView(TemplateView):
+    template_name = "core/programs/list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        published_courses = Course.objects.filter(is_published=True)
+        course_counts = {code: 0 for code in PROGRAM_LOOKUP}
+        for course in published_courses.values('fluency_level'):
+            code = course['fluency_level']
+            if code in course_counts:
+                course_counts[code] += 1
+
+        levels_with_counts = []
+        for level in PROGRAM_LEVELS:
+            enriched = level.copy()
+            enriched['course_count'] = course_counts.get(level['code'], 0)
+            levels_with_counts.append(enriched)
+
+        context.update(
+            {
+                "program_levels": levels_with_counts,
+            }
+        )
+        return context
+
+
+class ProgramDetailView(TemplateView):
+    template_name = "core/programs/detail.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        code = (kwargs.get("code") or "").upper()
+        program = PROGRAM_LOOKUP.get(code)
+        if program is None:
+            raise Http404
+
+        courses = list(Course.objects.filter(is_published=True, fluency_level=code).order_by("title"))
+        context.update(
+            {
+                "program": program,
+                "courses": courses,
+                "has_courses": bool(courses),
+            }
+        )
+        return context
+
