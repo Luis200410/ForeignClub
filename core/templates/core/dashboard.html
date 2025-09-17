@@ -1,0 +1,25 @@
+{% extends "core/base.html" %}
+{% block title %}Dashboard · FOREIGN{% endblock %}
+{% block content %}
+<section class="container-xl py-7">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-4 mb-5">
+        <div>
+            <p class="eyebrow">Your arena</p>
+            <h1 class="display-5 fw-bold tracking-tight mb-3">Welcome, {{ user.first_name|default:user.username }}.</h1>
+            <p class="text-white-50 mb-0">Stay consistent. Speak boldly. Every session builds your instinct.</p>
+        </div>
+        <a class="btn btn-light btn-lg px-5" href="#">Launch next mission</a>
+    </div>
+
+    <div class="row g-4">
+        {% for experience in experiences %}
+            <div class="col-md-4">
+                <div class="experience-card">
+                    <h3 class="h4 mb-3">{{ experience.title }}</h3>
+                    <p class="text-white-50 mb-0">{{ experience.description }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

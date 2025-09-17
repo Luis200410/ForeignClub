@@ -1,0 +1,30 @@
+{% extends "core/base.html" %}
+{% block title %}Log In · FOREIGN{% endblock %}
+{% block content %}
+<section class="auth-section container-sm py-7">
+    <div class="glass-panel p-5 mx-auto" style="max-width: 520px;">
+        <h1 class="h2 fw-bold tracking-tight mb-4 text-center">Welcome back</h1>
+        <p class="text-white-50 text-center mb-5">Keep your momentum—your immersive missions await.</p>
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>
+            {% endif %}
+            {% for field in form %}
+                <div class="mb-4">
+                    <label class="form-label text-uppercase small text-white-50">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="text-danger small mt-1">{{ field.errors|join:" " }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-light w-100 py-3">Enter FOREIGN</button>
+        </form>
+        <p class="mt-4 text-center text-white-50">
+            New here?
+            <a class="link-light" href="{% url 'register' %}">Join the movement</a>
+        </p>
+    </div>
+</section>
+{% endblock %}

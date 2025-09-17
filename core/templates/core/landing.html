@@ -1,0 +1,141 @@
+{% extends "core/base.html" %}
+{% block title %}FOREIGN · Speak English Like You Belong{% endblock %}
+{% block content %}
+<section class="hero container-xl py-5 py-lg-7 position-relative overflow-hidden">
+    <div class="row align-items-center g-5">
+        <div class="col-lg-6">
+            <div class="eyebrow text-uppercase mb-3">Live, fearless English</div>
+            <h1 class="display-2 fw-bold tracking-tight mb-4 animate-fade-up">Language is a living experience. FOREIGN puts you inside it.</h1>
+            <p class="lead text-white-50 mb-5 animate-fade-up" style="animation-delay: .1s;">We fuse real human connection, immersive play, and adaptive coaching so you can think, respond, and feel in English—faster than traditional courses ever could.</p>
+            <div class="d-flex flex-column flex-md-row gap-3 animate-fade-up" style="animation-delay: .2s;">
+                <a class="btn btn-light btn-lg px-5" href="{% url 'register' %}">Start Your Transformation</a>
+                <a class="btn btn-outline-light btn-lg px-5" href="{% url 'login' %}">Access Your Space</a>
+            </div>
+        </div>
+        <div class="col-lg-6 animate-fade-up" style="animation-delay: .3s;">
+            <div class="glass-panel p-4 p-md-5">
+                <div class="text-white-50 text-uppercase small mb-3">FOREIGN Framework</div>
+                <ul class="list-unstyled fs-5 mb-0">
+                    <li class="d-flex align-items-start gap-3 mb-3">
+                        <span class="dot"></span>
+                        <span>Encounter live conversations curated for your goals and fuel your instinctive responses.</span>
+                    </li>
+                    <li class="d-flex align-items-start gap-3 mb-3">
+                        <span class="dot"></span>
+                        <span>Play cinematic language missions that adapt to your skill and coach you as you go.</span>
+                    </li>
+                    <li class="d-flex align-items-start gap-3 mb-0">
+                        <span class="dot"></span>
+                        <span>Collect micro-feedback from expert mentors after every interaction.</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="hero-orb orb-left"></div>
+    <div class="hero-orb orb-right"></div>
+</section>
+
+<section id="promise" class="container-xl py-7">
+    <div class="row align-items-center g-5">
+        <div class="col-lg-5 animate-fade-up">
+            <p class="eyebrow">The Promise</p>
+            <h2 class="display-5 fw-bold tracking-tight mb-4">Fluency that sticks because you live it, not memorize it.</h2>
+        </div>
+        <div class="col-lg-7 animate-fade-up" style="animation-delay: .1s;">
+            <div class="promise-grid">
+                <div class="promise-card">
+                    <h3 class="h5 mb-3">Human-first</h3>
+                    <p class="text-white-50 mb-0">Every session connects you with curated partners, coaches, or cohorts. Language is social—we keep it that way.</p>
+                </div>
+                <div class="promise-card">
+                    <h3 class="h5 mb-3">Playground design</h3>
+                    <p class="text-white-50 mb-0">Games, challenges, and storylines pull you forward. You learn because you're immersed, intrigued, and driven.</p>
+                </div>
+                <div class="promise-card">
+                    <h3 class="h5 mb-3">Precision feedback</h3>
+                    <p class="text-white-50 mb-0">AI-enhanced insights meet world-class coaches so you adjust instantly and compound progress.</p>
+                </div>
+                <div class="promise-card">
+                    <h3 class="h5 mb-3">Global community</h3>
+                    <p class="text-white-50 mb-0">Join ambitious learners pushing boundaries together. Culture-shifting energy with every login.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="method" class="method-section py-7">
+    <div class="container-xl">
+        <div class="text-center mb-5">
+            <p class="eyebrow">Method</p>
+            <h2 class="display-5 fw-bold tracking-tight">The FOREIGN immersion arc</h2>
+            <p class="text-white-50 lead">A three-phase loop that repeats weekly so your learning compounds fast.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="method-card">
+                    <span class="method-step">01</span>
+                    <h3 class="h4 mb-3">Prime</h3>
+                    <p class="text-white-50">Set targets, unlock vocabulary packs, and rehearse with micro-scenarios inside the app.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="method-card">
+                    <span class="method-step">02</span>
+                    <h3 class="h4 mb-3">Immerse</h3>
+                    <p class="text-white-50">Dive into live exchanges, cinematic missions, and responsive games with real people.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="method-card">
+                    <span class="method-step">03</span>
+                    <h3 class="h4 mb-3">Elevate</h3>
+                    <p class="text-white-50">Review instant feedback, get mentor nudges, and lock in new instincts with targeted drills.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="programs" class="container-xl py-7">
+    <div class="row g-4">
+        <div class="col-lg-4 animate-fade-up">
+            <div class="program-card border-light-subtle">
+                <div class="text-uppercase small text-white-50 mb-3">Starter</div>
+                <h3 class="h3 mb-4">Ignition Sprints</h3>
+                <p class="text-white-50">Daily 20-minute micro-missions with guided feedback. Perfect to build momentum and confidence.</p>
+                <a class="btn btn-outline-light mt-3" href="{% url 'register' %}">Apply now</a>
+            </div>
+        </div>
+        <div class="col-lg-4 animate-fade-up" style="animation-delay: .1s;">
+            <div class="program-card border-light-subtle highlight">
+                <div class="text-uppercase small text-white-50 mb-3">Flagship</div>
+                <h3 class="h3 mb-4">Immersion Labs</h3>
+                <p class="text-white-50">Live sessions with curated peers, mission-based games, and expert mentors guiding every move.</p>
+                <a class="btn btn-light mt-3" href="{% url 'register' %}">Secure your spot</a>
+            </div>
+        </div>
+        <div class="col-lg-4 animate-fade-up" style="animation-delay: .2s;">
+            <div class="program-card border-light-subtle">
+                <div class="text-uppercase small text-white-50 mb-3">Advanced</div>
+                <h3 class="h3 mb-4">Proficiency Studios</h3>
+                <p class="text-white-50">Enterprise-level mastery with executive coaching, negotiation labs, and cultural intelligence bootcamps.</p>
+                <a class="btn btn-outline-light mt-3" href="{% url 'register' %}">Get invited</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta container-xl py-7">
+    <div class="glass-panel text-center py-6 px-4 px-md-6">
+        <h2 class="display-5 fw-bold tracking-tight mb-4">Ready to speak from instinct?</h2>
+        <p class="text-white-50 lead mb-5">FOREIGN is the shift from studying English to embodying it. Be the next story.
+        </p>
+        <div class="d-flex flex-column flex-md-row justify-content-center gap-3">
+            <a class="btn btn-light btn-lg px-5" href="{% url 'register' %}">Join FOREIGN</a>
+            <a class="btn btn-outline-light btn-lg px-5" href="{% url 'login' %}">Log in</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
