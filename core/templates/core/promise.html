@@ -1,0 +1,121 @@
+{% extends "core/base.html" %}
+{% block title %}FOREIGN Promise{% endblock %}
+{% block content %}
+<section class="container-xl py-7">
+    <div class="page-intro" data-animate="fade-up">
+        <p class="eyebrow mb-2">The Promise</p>
+        <h1 class="display-4 fw-bold tracking-tight mb-3">Fluency that sticks because you live it, not memorize it.</h1>
+        <p class="text-white-50 lead mb-0">FOREIGN is engineered to transform English from something you study into a sense of self you embody. This is how we guarantee the shift.</p>
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="row g-4">
+        {% for pillar in pillars %}
+            <div class="col-lg-4" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
+                <div class="program-card" data-tilt="4">
+                    <h2 class="h4 tracking-tight mb-3">{{ pillar.title }}</h2>
+                    <p class="text-white-50 mb-0">{{ pillar.description }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="modality-grid">
+        {% for modality in modalities %}
+            <article class="modality-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s" data-tilt="4">
+                <p class="eyebrow mb-2">{{ modality.mode }}</p>
+                <h2 class="h4 tracking-tight mb-2">{{ modality.name }}</h2>
+                <p class="text-white-50 mb-3">{{ modality.description }}</p>
+                <p class="text-white-50 small mb-0">{{ modality.touchpoints }}</p>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="row g-4">
+        {% for commitment in commitments %}
+            <div class="col-lg-4" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
+                <div class="commitment-card" data-tilt="3">
+                    <p class="eyebrow mb-2">{{ commitment.label }}</p>
+                    <p class="text-white-50 mb-0">{{ commitment.body }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="glass-panel p-5 p-lg-6" data-animate="fade-scale" data-tilt="3">
+        <p class="eyebrow mb-2">Proof</p>
+        <h2 class="h4 tracking-tight mb-3">Momentum you can measure</h2>
+        <div class="metrics-grid">
+            {% for outcome in outcomes %}
+                <div class="metric-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
+                    <span class="metric-number">{{ outcome.metric }}</span>
+                    <p class="text-white-50 small mb-0">{{ outcome.caption }}</p>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4" data-animate="fade-up" data-animate-delay="0.3s">
+            <a class="btn btn-light btn-lg px-5" href="{% url 'register' %}">Join FOREIGN</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+<section class="container-xl pb-7">
+    <div class="glass-panel p-5 p-lg-6" data-animate="fade-scale" data-tilt="3">
+        <p class="eyebrow mb-2">In the wild</p>
+        <h2 class="h4 tracking-tight mb-3">Snapshots from inside FOREIGN</h2>
+        <div class="case-study-grid">
+            <article class="case-card" data-animate="fade-up" data-animate-delay="0.1s" data-tilt="3">
+                <p class="eyebrow mb-1">Global Product Lead · B2 to C1</p>
+                <h3 class="h5 tracking-tight mb-3">Negotiating live with US investors</h3>
+                <p class="text-white-50 small mb-0">“The combination of game missions and immediate mentor corrections made English my default. I closed our round without switching back to Spanish once.”</p>
+            </article>
+            <article class="case-card" data-animate="fade-up" data-animate-delay="0.2s" data-tilt="3">
+                <p class="eyebrow mb-1">Creative Director · A2 to B1</p>
+                <h3 class="h5 tracking-tight mb-3">Pitching a global campaign</h3>
+                <p class="text-white-50 small mb-0">“FOREIGN staged the entire presentation with role players who pushed me. The real pitch felt like a repeat level—instinctive.”</p>
+            </article>
+            <article class="case-card" data-animate="fade-up" data-animate-delay="0.3s" data-tilt="3">
+                <p class="eyebrow mb-1">Medical Fellow · B1 to B2</p>
+                <h3 class="h5 tracking-tight mb-3">Running fast consults with patients</h3>
+                <p class="text-white-50 small mb-0">“Live clinical drills plus AI pronunciation labs rewired my response time. My supervisors now forget English isn’t my first language.”</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="journey-timeline glass-panel p-5 p-lg-6" data-animate="fade-scale" data-tilt="3">
+        <p class="eyebrow mb-2">Your first 30 days</p>
+        <h2 class="h4 tracking-tight mb-4">A promise backed by a clear path</h2>
+        <ol class="journey-steps list-unstyled mb-0">
+            <li data-animate="fade-up" data-animate-delay="0.1s">
+                <span class="step-marker">01</span>
+                <div>
+                    <h3 class="h6 mb-1">Calibration & mission design</h3>
+                    <p class="text-white-50 small mb-0">We define the English moments that matter and assemble the pod, coach, and mission engine that will get you there.</p>
+                </div>
+            </li>
+            <li data-animate="fade-up" data-animate-delay="0.2s">
+                <span class="step-marker">02</span>
+                <div>
+                    <h3 class="h6 mb-1">Immersive launch sprint</h3>
+                    <p class="text-white-50 small mb-0">Live labs + adaptive gameplay lock in instinct quickly while mentors and AI surface precision fixes.</p>
+                </div>
+            </li>
+            <li data-animate="fade-up" data-animate-delay="0.3s">
+                <span class="step-marker">03</span>
+                <div>
+                    <h3 class="h6 mb-1">Evidence review & elevation</h3>
+                    <p class="text-white-50 small mb-0">We review recordings, measure the delta in influence, and stage the next frontier with sharper missions.</p>
+                </div>
+            </li>
+        </ol>
+    </div>
+</section>

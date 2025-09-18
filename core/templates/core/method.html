@@ -1,0 +1,101 @@
+{% extends "core/base.html" %}
+{% block title %}FOREIGN Method{% endblock %}
+{% block content %}
+<section class="container-xl py-7">
+    <div class="page-intro" data-animate="fade-up">
+        <p class="eyebrow mb-2">The Method</p>
+        <h1 class="display-4 fw-bold tracking-tight mb-3">A three-phase loop that compounds fast.</h1>
+        <p class="text-white-50 lead mb-0">Our method runs weekly. You prime with intention, immerse with intensity, and elevate with precision—over and over until English is instinctive.</p>
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="row g-4">
+        {% for phase in phases %}
+            <div class="col-lg-4" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
+                <div class="module-card" data-tilt="4">
+                    <p class="eyebrow mb-2">{{ phase.step }}</p>
+                    <h2 class="h4 tracking-tight mb-3">{{ phase.headline }}</h2>
+                    <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-0">
+                        {% for item in phase.points %}
+                            <li>• {{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="modality-grid">
+        {% for modality in modalities %}
+            <article class="modality-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s" data-tilt="4">
+                <p class="eyebrow mb-2">{{ modality.mode }}</p>
+                <h2 class="h4 tracking-tight mb-2">{{ modality.name }}</h2>
+                <p class="text-white-50 mb-0">{{ modality.description }}</p>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="glass-panel p-5 p-lg-6" data-animate="fade-scale" data-tilt="3">
+        <p class="eyebrow mb-2">Rhythm</p>
+        <h2 class="h4 tracking-tight mb-3">Support layers woven into every loop</h2>
+        <div class="row g-4">
+            {% for ritual in rituals %}
+                <div class="col-lg-4" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
+                    <div class="placeholder-block" data-tilt="3">
+                        <span class="placeholder-title">{{ ritual.title }}</span>
+                        <p class="text-white-50 small mb-0">{{ ritual.details }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="mt-5" data-animate="fade-up" data-animate-delay="0.3s">
+            <p class="eyebrow mb-2">Toolkit</p>
+            <ul class="text-white-50 small d-grid gap-2 list-unstyled mb-4">
+                {% for item in toolkit %}
+                    <li>• {{ item }}</li>
+                {% endfor %}
+            </ul>
+            <div class="text-center">
+                <a class="btn btn-outline-light btn-lg px-5" href="{% url 'experiences' %}">Explore missions</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+<section class="container-xl pb-7">
+    <div class="method-diagram glass-panel p-5 p-lg-6" data-animate="fade-scale" data-tilt="3">
+        <p class="eyebrow mb-2">Systems stack</p>
+        <h2 class="h4 tracking-tight mb-4">Tools that keep you in motion</h2>
+        <div class="method-stack">
+            <div class="stack-column" data-animate="fade-up" data-animate-delay="0.1s">
+                <h3 class="h6 tracking-tight mb-2">Live arena</h3>
+                <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-0">
+                    <li>Mission labs (negotiation, storytelling, leadership)</li>
+                    <li>Peer pods engineered for tension and trust</li>
+                    <li>Coach-led retros with action-oriented notes</li>
+                </ul>
+            </div>
+            <div class="stack-column" data-animate="fade-up" data-animate-delay="0.2s">
+                <h3 class="h6 tracking-tight mb-2">Digital layer</h3>
+                <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-0">
+                    <li>FOREIGN app with mission briefs and evidence vault</li>
+                    <li>AI rehearsal that adapts to vocabulary + rhythm gaps</li>
+                    <li>Voice analytics surfacing pronunciation & fluency trends</li>
+                </ul>
+            </div>
+            <div class="stack-column" data-animate="fade-up" data-animate-delay="0.3s">
+                <h3 class="h6 tracking-tight mb-2">Momentum layer</h3>
+                <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-0">
+                    <li>Community pulse with daily wins and accountability</li>
+                    <li>Mentor office hours + Instant voice notes</li>
+                    <li>Quarterly showcases to prove your leap on stage</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>

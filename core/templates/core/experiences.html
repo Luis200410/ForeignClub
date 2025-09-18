@@ -1,0 +1,77 @@
+{% extends "core/base.html" %}
+{% block title %}Experiences · FOREIGN{% endblock %}
+{% block content %}
+<section class="container-xl py-7">
+    <div class="page-intro" data-animate="fade-up">
+        <p class="eyebrow mb-2">Programs & Courses</p>
+        <h1 class="display-4 fw-bold tracking-tight mb-3">Navigate the FOREIGN experience map.</h1>
+        <p class="text-white-50 lead mb-0">Select the level that resonates and drop into the missions built for you. Each program houses live cohorts, cinematic challenges, and rapid feedback rituals.</p>
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="program-grid">
+        {% for level in program_levels %}
+            <article class="program-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s" data-tilt="4">
+                <header class="program-card__header">
+                    <div class="program-card__code">{{ level.title }}</div>
+                    <span class="badge badge-soft">{{ level.course_count }} courses</span>
+                </header>
+                <p class="h5 tracking-tight mb-2">{{ level.headline }}</p>
+                <p class="text-white-50 mb-4">{{ level.tagline }}</p>
+                <div class="program-card__cta">
+                    <a class="btn btn-light w-100" href="{% url 'program_detail' level.code %}">View level detail</a>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="glass-panel p-5 p-lg-6" data-animate="fade-scale" data-tilt="3">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-4">
+            <div>
+                <p class="eyebrow mb-2">Courses</p>
+                <h2 class="h4 tracking-tight mb-2">Mission portfolio by intensity</h2>
+                <p class="text-white-50 mb-0">Each course blends live labs, story-driven missions, and precision coaching to hit your targets faster.</p>
+            </div>
+            <a class="btn btn-outline-light btn-lg px-5" href="{% url 'course_list' %}">Full course directory</a>
+        </div>
+
+        {% if has_courses %}
+            <div class="experience-course-grid mt-5">
+                {% for label, items in course_groups.items %}
+                    <div class="experience-column" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
+                        <h3 class="h5 tracking-tight mb-3">{{ label }}</h3>
+                        <ul class="experience-course-list list-unstyled">
+                            {% for course in items %}
+                                <li class="course-card" data-tilt="4">
+                                    <div class="d-flex flex-wrap gap-2 mb-3">
+                                        <span class="badge badge-soft">{{ course.get_delivery_mode_display }}</span>
+                                        <span class="badge badge-soft">Level {{ course.get_fluency_level_display }}</span>
+                                    </div>
+                                    <h4 class="h6 tracking-tight mb-2">{{ course.title }}</h4>
+                                    <p class="text-white-50 small mb-3">{{ course.subtitle|default:course.summary|truncatechars:120 }}</p>
+                                    <div class="course-meta-inline text-white-50 small mb-3">
+                                        <span>{{ course.duration_weeks }} weeks</span>
+                                        <span>{{ course.weekly_commitment_hours }} hrs/week</span>
+                                        <span>{{ course.cohort_size }} learners</span>
+                                    </div>
+                                    <a class="btn btn-outline-light btn-sm" href="{% url 'course_detail' course.slug %}">View experience</a>
+                                </li>
+                            {% empty %}
+                                <li class="empty-state">No courses published in this track yet.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state mt-5">
+                <p class="mb-1 fw-semibold">Courses inbound</p>
+                <p class="text-white-50 mb-0">We are prepping the mission portfolio. Stay tuned or email <a class="link-light" href="mailto:command@foreign.club">command@foreign.club</a> to co-design your path.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends "core/base.html" %}
+{% block title %}My Account · FOREIGN{% endblock %}
+{% block content %}
+<section class="container-xl py-7">
+    <div class="account-panel mx-auto" style="max-width: 880px;" data-animate="fade-up" data-tilt="3">
+        <div class="account-header">
+            <p class="eyebrow mb-2">Profile</p>
+            <h1 class="h3 fw-bold tracking-tight mb-3">Tune your FOREIGN identity</h1>
+            <p class="text-white-50 mb-0">Keep your details sharp so mentors, peers, and missions respond to the real you.</p>
+        </div>
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="account-section">
+                <p class="account-section__title">Account basics</p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-uppercase small text-white-50">{{ form.first_name.label }}</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}<div class="text-danger small mt-1">{{ form.first_name.errors|join:" " }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-uppercase small text-white-50">{{ form.last_name.label }}</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}<div class="text-danger small mt-1">{{ form.last_name.errors|join:" " }}</div>{% endif %}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label text-uppercase small text-white-50">{{ form.email.label }}</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors|join:" " }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="account-section">
+                <p class="account-section__title">Public profile</p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-uppercase small text-white-50">{{ form.display_name.label }}</label>
+                        {{ form.display_name }}
+                        {% if form.display_name.errors %}<div class="text-danger small mt-1">{{ form.display_name.errors|join:" " }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-uppercase small text-white-50">{{ form.headline.label }}</label>
+                        {{ form.headline }}
+                        {% if form.headline.errors %}<div class="text-danger small mt-1">{{ form.headline.errors|join:" " }}</div>{% endif %}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label text-uppercase small text-white-50">{{ form.bio.label }}</label>
+                        {{ form.bio }}
+                        {% if form.bio.errors %}<div class="text-danger small mt-1">{{ form.bio.errors|join:" " }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="account-section">
+                <p class="account-section__title">Background</p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-uppercase small text-white-50">{{ form.country.label }}</label>
+                        {{ form.country }}
+                        {% if form.country.errors %}<div class="text-danger small mt-1">{{ form.country.errors|join:" " }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-uppercase small text-white-50">{{ form.timezone.label }}</label>
+                        {{ form.timezone }}
+                        {% if form.timezone.errors %}<div class="text-danger small mt-1">{{ form.timezone.errors|join:" " }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-uppercase small text-white-50">{{ form.native_language.label }}</label>
+                        {{ form.native_language }}
+                        {% if form.native_language.errors %}<div class="text-danger small mt-1">{{ form.native_language.errors|join:" " }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-uppercase small text-white-50">{{ form.phone_number.label }}</label>
+                        {{ form.phone_number }}
+                        {% if form.phone_number.errors %}<div class="text-danger small mt-1">{{ form.phone_number.errors|join:" " }}</div>{% endif %}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label text-uppercase small text-white-50">{{ form.linkedin_url.label }}</label>
+                        {{ form.linkedin_url }}
+                        {% if form.linkedin_url.errors %}<div class="text-danger small mt-1">{{ form.linkedin_url.errors|join:" " }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="account-section">
+                <p class="account-section__title">Learning focus</p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-uppercase small text-white-50">{{ form.target_focus.label }}</label>
+                        {{ form.target_focus }}
+                        {% if form.target_focus.errors %}<div class="text-danger small mt-1">{{ form.target_focus.errors|join:" " }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-uppercase small text-white-50">{{ form.desired_fluency_level.label }}</label>
+                        {{ form.desired_fluency_level }}
+                        {% if form.desired_fluency_level.errors %}<div class="text-danger small mt-1">{{ form.desired_fluency_level.errors|join:" " }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="account-save">
+                <button type="submit" class="btn btn-light btn-lg px-5">Save changes</button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "core/base.html" %}
+{% block title %}{{ module.title }} · {{ course.title }}{% endblock %}
+{% block content %}
+<section class="container-xl py-7">
+    <div class="row g-5">
+        <div class="col-lg-8">
+            <article class="module-card glass-panel p-5 p-lg-6 mb-5" data-tilt="3">
+                <p class="eyebrow mb-2">{{ course.title }}</p>
+                <h1 class="h3 fw-bold tracking-tight mb-3">{{ module.title }}</h1>
+                {% if module.description %}
+                    <p class="text-white-50 mb-4">{{ module.description|linebreaksbr }}</p>
+                {% endif %}
+                {% if module.outcomes %}
+                    <div class="module-outcomes mb-4">
+                        <span class="course-label">Outcomes</span>
+                        <p class="text-white-50 mb-0">{{ module.outcomes|linebreaksbr }}</p>
+                    </div>
+                {% endif %}
+                {% if sessions %}
+                    <ul class="session-list">
+                        {% for session in sessions %}
+                            <li>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h2 class="h6 mb-0">{{ session.title }}</h2>
+                                    <span class="badge badge-soft">{{ session.duration_minutes }} min</span>
+                                </div>
+                                <p class="text-white-50 small mb-1">{{ session.get_session_type_display }}</p>
+                                {% if session.description %}
+                                    <p class="text-white-50 small mb-1">{{ session.description|linebreaksbr }}</p>
+                                {% endif %}
+                                {% if session.resources %}
+                                    <ul class="text-white-50 small mb-0 list-unstyled d-grid gap-1">
+                                        {% for resource in session.resources %}
+                                            <li>• {{ resource.label }}: {{ resource.detail }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </article>
+        </div>
+        <div class="col-lg-4">
+            <aside class="glass-panel p-4 p-lg-5" data-tilt="4">
+                <p class="eyebrow mb-2">Navigation</p>
+                <div class="d-grid gap-2">
+                    {% if previous_order %}
+                        <a class="btn btn-outline-light" href="{% url 'course_module' course.slug previous_order %}">← Week {{ previous_order }}</a>
+                    {% endif %}
+                    <a class="btn btn-light" href="{% url 'course_detail' course.slug %}">Back to course overview</a>
+                    {% if next_order %}
+                        <a class="btn btn-outline-light" href="{% url 'course_module' course.slug next_order %}">Week {{ next_order }} →</a>
+                    {% endif %}
+                </div>
+            </aside>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -2,10 +2,10 @@
 {% block title %}Log In · FOREIGN{% endblock %}
 {% block content %}
 <section class="auth-section container-sm py-7">
-    <div class="glass-panel p-5 mx-auto" style="max-width: 520px;">
+    <div class="glass-panel p-5 mx-auto" style="max-width: 520px;" data-animate="fade-up">
         <h1 class="h2 fw-bold tracking-tight mb-4 text-center">Welcome back</h1>
         <p class="text-white-50 text-center mb-5">Keep your momentum—your immersive missions await.</p>
-        <form method="post" novalidate>
+        <form method="post" novalidate data-animate="fade-up" data-animate-delay="0.1s">
             {% csrf_token %}
             {% if form.non_field_errors %}
                 <div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>
@@ -21,7 +21,7 @@
             {% endfor %}
             <button type="submit" class="btn btn-light w-100 py-3">Enter FOREIGN</button>
         </form>
-        <p class="mt-4 text-center text-white-50">
+        <p class="mt-4 text-center text-white-50" data-animate="fade-up" data-animate-delay="0.2s">
             New here?
             <a class="link-light" href="{% url 'register' %}">Join the movement</a>
         </p>

@@ -1,0 +1,81 @@
+{% extends "core/base.html" %}
+{% block title %}Pricing · FOREIGN{% endblock %}
+{% block content %}
+<section class="container-xl py-7">
+    <div class="page-intro" data-animate="fade-up">
+        <p class="eyebrow mb-2">Pricing</p>
+        <h1 class="display-4 fw-bold tracking-tight mb-3">Choose the mission format that fits your orbit.</h1>
+        <p class="text-white-50 lead mb-0">Every tier blends live interaction, adaptive coaching, and evidence tracking. Select the modality that aligns with your goals and schedule.</p>
+        <div class="pricing-pills" data-animate="fade-up" data-animate-delay="0.15s">
+            <span class="pill">Gravity Rooms · In-person</span>
+            <span class="pill">Signal Streams · Online</span>
+            <span class="pill">Dual Engine · Hybrid</span>
+        </div>
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="pricing-grid">
+        {% for tier in tiers %}
+            <article class="pricing-card {% if tier.highlight %}highlight{% endif %}" data-animate="{{ tier.animations.card }}" data-animate-delay="0.{{ forloop.counter }}s" data-tilt="4">
+                <p class="eyebrow mb-2" data-animate="{{ tier.animations.badge }}" data-animate-delay="0.{{ forloop.counter }}s">{{ tier.label }}</p>
+                <h2 class="h3 tracking-tight mb-2">{{ tier.name }}</h2>
+                <p class="display-6 fw-bold mb-4">{{ tier.price }}</p>
+                <p class="text-white-50 mb-4">{{ tier.description }}</p>
+                <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-4">
+                    {% for feature in tier.features %}
+                        <li>• {{ feature }}</li>
+                    {% endfor %}
+                </ul>
+                <a class="btn {% if tier.highlight %}btn-light{% else %}btn-outline-light{% endif %} btn-lg w-100" href="{% url 'experiences' %}">Start with {{ tier.name }}</a>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="row g-4 pricing-compare">
+        <div class="col-lg-4" data-animate="fade-up" data-tilt="3">
+            <div class="pricing-compare-card">
+                <p class="eyebrow mb-2">What’s included</p>
+                <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-0">
+                    <li>Placement + quarterly recalibration</li>
+                    <li>Personal mentor strategist checkpoint</li>
+                    <li>FOREIGN app with evidence vault & AI rehearsal</li>
+                    <li>Community accountability pods</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-lg-8" data-animate="fade-up" data-animate-delay="0.1s" data-tilt="3">
+            <div class="pricing-compare-card">
+                <p class="eyebrow mb-2">Custom partnerships</p>
+                <div class="row g-3">
+                    {% for extra in extras %}
+                        <div class="col-md-4">
+                            <div class="pricing-extra">
+                                <h3 class="h6 tracking-tight mb-2">{{ extra.title }}</h3>
+                                <p class="text-white-50 small mb-0">{{ extra.summary }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="glass-panel p-5 p-lg-6" data-animate="fade-scale" data-tilt="3">
+        <div class="row g-4 align-items-center">
+            <div class="col-lg-7">
+                <p class="eyebrow mb-2">Need a custom orbit?</p>
+                <h2 class="h4 tracking-tight mb-3">Enterprise, leadership cohorts, and campus partnerships</h2>
+                <p class="text-white-50 mb-0">Build a bespoke FOREIGN layer for your team—multi-market activations, executive shadow programs, or culture onboarding. Tell us the impact you need and we’ll chart the route.</p>
+            </div>
+            <div class="col-lg-5 text-lg-end">
+                <a class="btn btn-light btn-lg px-5" href="mailto:command@foreign.club?subject=FOREIGN%20Enterprise">Book a strategy call</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

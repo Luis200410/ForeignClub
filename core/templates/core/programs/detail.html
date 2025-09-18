@@ -2,7 +2,7 @@
 {% block title %}{{ program.title }} · FOREIGN{% endblock %}
 {% block content %}
 <section class="container-xl py-7 program-detail">
-    <div class="glass-panel p-5 p-lg-6 mb-5" data-animate="fade-up">
+    <div class="glass-panel p-5 p-lg-6 mb-5" data-animate="fade-up" data-tilt="3">
         <p class="eyebrow mb-2">Program</p>
         <h1 class="display-4 fw-bold tracking-tight mb-3">{{ program.title }}</h1>
         <p class="text-white-50 lead mb-0">{{ program.headline }}</p>
@@ -14,15 +14,15 @@
                 <h2 class="h4 tracking-tight mb-3">Mission staging area</h2>
                 <p class="text-white-50 mb-4">This is where we will publish the full mission map for {{ program.title }}. Expect phase breakdowns, milestone gates, and integrated mentor prompts.</p>
                 <div class="placeholder-grid">
-                    <div class="placeholder-block">
+                    <div class="placeholder-block" data-animate="fade-up" data-animate-delay="0.1s" data-tilt="3">
                         <span class="placeholder-title">Immersion labs</span>
                         <p class="text-white-50 small mb-0">Live exchanges, scenario play, and adaptive coaching tailored to this level.</p>
                     </div>
-                    <div class="placeholder-block">
+                    <div class="placeholder-block" data-animate="fade-up" data-animate-delay="0.15s" data-tilt="3">
                         <span class="placeholder-title">Game missions</span>
                         <p class="text-white-50 small mb-0">Interactive storylines and feedback loops that calibrate to your instincts in real time.</p>
                     </div>
-                    <div class="placeholder-block">
+                    <div class="placeholder-block" data-animate="fade-up" data-animate-delay="0.2s" data-tilt="3">
                         <span class="placeholder-title">Performance labs</span>
                         <p class="text-white-50 small mb-0">Recording bays, peer panels, and rapid review feedback to reinforce breakthroughs.</p>
                     </div>
@@ -37,7 +37,7 @@
                 {% if has_courses %}
                     <ul class="program-course-list">
                         {% for course in courses %}
-                            <li class="course-card" data-animate="fade-up" data-animate-delay="{{ forloop.counter0|add:1 }}00ms">
+                            <li class="course-card" data-animate="fade-up" data-animate-delay="{{ forloop.counter0|add:1 }}00ms" data-tilt="5">
                                 <div class="d-flex flex-wrap gap-3 mb-3">
                                     <span class="badge badge-outline">{{ course.get_delivery_mode_display }}</span>
                                     <span class="badge badge-soft">{{ course.get_difficulty_display }}</span>

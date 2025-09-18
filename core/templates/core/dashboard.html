@@ -2,17 +2,17 @@
 {% block title %}Dashboard · FOREIGN{% endblock %}
 {% block content %}
 {% if not dashboard_ready %}
-<section class="container-xl py-7">
+<section class="container-xl py-7" data-animate="fade-up">
     <div class="dashboard-panel">
         <h1 class="h4 mb-3">We are preparing your dashboard</h1>
         <p class="text-white-50 mb-0">Your account is almost synced. Please refresh in a few seconds or contact support if this persists.</p>
     </div>
 </section>
 {% else %}
-<section class="dashboard-hero container-xl py-7">
-    <div class="glass-panel p-5 p-lg-6">
+<section class="dashboard-hero container-xl py-7" data-animate="fade-up">
+    <div class="glass-panel p-5 p-lg-6" data-tilt="3">
         <div class="row g-5 align-items-center">
-            <div class="col-lg-7">
+            <div class="col-lg-7" data-animate="slide-right">
                 <p class="eyebrow mb-3">Command center</p>
                 <h1 class="display-5 fw-bold tracking-tight mb-3">Welcome back, {{ profile.display_name|default:user.get_username }}.</h1>
                 <p class="text-white-50 mb-4">{{ profile.headline|default:"Your journey continues—immerse, adapt, and own every conversation." }}</p>
@@ -25,7 +25,7 @@
                     {% endif %}
                 </div>
             </div>
-            <div class="col-lg-5">
+            <div class="col-lg-5" data-animate="slide-left" data-animate-delay="0.1s">
                 <div class="dashboard-stat-grid">
                     <div class="stat-card">
                         <span class="stat-label">Active goals</span>
@@ -54,19 +54,44 @@
     </div>
 </section>
 
+<section class="container-xl pb-7" data-animate="fade-up">
+    {% if featured_course and module_links %}
+        <div class="dashboard-panel">
+            <div class="panel-header d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <p class="eyebrow mb-1">Weekly missions</p>
+                    <h2 class="h4 tracking-tight mb-0">{{ featured_course.title }}</h2>
+                </div>
+                <a class="btn btn-outline-light btn-sm px-3" href="{% url 'course_detail' featured_course.slug %}">View course</a>
+            </div>
+            <div class="row g-3">
+                {% for module in module_links %}
+                    <div class="col-md-6 col-xl-4">
+                        <a class="module-link-card" href="{% url 'course_module' featured_course.slug module.order %}">
+                            <span class="module-link-order">Week {{ module.order }}</span>
+                            <span class="module-link-title">{{ module.title }}</span>
+                            <span class="module-link-theme text-white-50">{{ module.description|default:""|truncatechars:80 }}</span>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</section>
+
 <section class="container-xl pb-7">
     <div class="row g-4">
-        <div class="col-xl-6">
+        <div class="col-xl-6" data-animate="fade-up">
             <div class="dashboard-panel">
                 <div class="panel-header d-flex justify-content-between align-items-center mb-4">
                     <div>
                         <p class="eyebrow mb-1">Mission priority</p>
                         <h2 class="h4 tracking-tight mb-0">Primary learning goal</h2>
                     </div>
-                    <a class="btn btn-outline-light btn-sm px-3" href="#">Update goal</a>
+                    <a class="btn btn-outline-light btn-sm px-3" href="{% url 'manage_goal' %}">Update goal</a>
                 </div>
                 {% if primary_goal %}
-                    <div class="goal-card highlight">
+                    <div class="goal-card highlight" data-animate="fade-up" data-animate-delay="0.05s">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
                                 <h3 class="h5 mb-2">{{ primary_goal.title }}</h3>
@@ -82,18 +107,18 @@
                         </div>
                     </div>
                 {% else %}
-                    <div class="empty-state">
+                    <div class="empty-state" data-animate="fade-up" data-animate-delay="0.05s">
                         <p class="mb-1 fw-semibold">Set your first goal</p>
                         <p class="text-white-50 mb-0">Define what fluency looks like for you to unlock tailored sessions.</p>
                     </div>
                 {% endif %}
 
                 {% if secondary_goals %}
-                    <div class="mt-4">
+                    <div class="mt-4" data-animate="fade-up" data-animate-delay="0.1s">
                         <p class="eyebrow mb-3">Supporting focus</p>
                         <div class="goal-grid">
                             {% for goal in secondary_goals %}
-                                <div class="goal-card">
+                                <div class="goal-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <h3 class="h6 mb-0">{{ goal.title }}</h3>
                                         <span class="badge badge-outline">{{ goal.get_focus_area_display }}</span>
@@ -113,19 +138,19 @@
                 {% endif %}
             </div>
         </div>
-        <div class="col-xl-6">
+        <div class="col-xl-6" data-animate="fade-up" data-animate-delay="0.1s">
             <div class="dashboard-panel h-100">
                 <div class="panel-header d-flex justify-content-between align-items-center mb-4">
                     <div>
                         <p class="eyebrow mb-1">Momentum</p>
                         <h2 class="h4 tracking-tight mb-0">Recent progress notes</h2>
                     </div>
-                    <a class="btn btn-outline-light btn-sm px-3" href="#">Add progress</a>
+                    <a class="btn btn-outline-light btn-sm px-3" href="{% url 'progress_add' %}">Add progress</a>
                 </div>
                 {% if recent_progress %}
                     <ul class="progress-timeline">
                         {% for entry in recent_progress %}
-                            <li>
+                            <li data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
                                 <div class="timeline-dot"></div>
                                 <div class="timeline-content">
                                     <div class="d-flex justify-content-between align-items-center">
@@ -158,19 +183,19 @@
 
 <section class="container-xl pb-7">
     <div class="row g-4">
-        <div class="col-lg-6">
+        <div class="col-lg-6" data-animate="fade-up">
             <div class="dashboard-panel h-100">
                 <div class="panel-header d-flex justify-content-between align-items-center mb-4">
                     <div>
                         <p class="eyebrow mb-1">Live readiness</p>
                         <h2 class="h4 tracking-tight mb-0">Availability windows</h2>
                     </div>
-                    <a class="btn btn-outline-light btn-sm px-3" href="#">Edit windows</a>
+                    <a class="btn btn-outline-light btn-sm px-3" href="{% url 'availability_manage' %}">Edit windows</a>
                 </div>
                 {% if availability_windows %}
                     <ul class="availability-list">
                         {% for slot in availability_windows %}
-                            <li>
+                            <li data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
                                 <div>
                                     <h3 class="h6 mb-1">{{ slot.get_day_of_week_display }}</h3>
                                     <p class="text-white-50 small mb-0">{{ slot.start_time|time:"H:i" }} &ndash; {{ slot.end_time|time:"H:i" }} ({{ slot.timezone }})</p>
@@ -189,19 +214,19 @@
                 {% endif %}
             </div>
         </div>
-        <div class="col-lg-6">
+        <div class="col-lg-6" data-animate="fade-up" data-animate-delay="0.1s">
             <div class="dashboard-panel h-100">
                 <div class="panel-header d-flex justify-content-between align-items-center mb-4">
                     <div>
                         <p class="eyebrow mb-1">Calibration</p>
                         <h2 class="h4 tracking-tight mb-0">Recent assessments</h2>
                     </div>
-                    <a class="btn btn-outline-light btn-sm px-3" href="#">Upload evidence</a>
+                    <a class="btn btn-outline-light btn-sm px-3" href="{% url 'assessment_upload' %}">Upload evidence</a>
                 </div>
                 {% if assessments %}
                     <ul class="assessment-list">
                         {% for assessment in assessments %}
-                            <li>
+                            <li data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <h3 class="h6 mb-0">{{ assessment.get_assessment_type_display }}</h3>
                                     <span class="badge badge-soft">{{ assessment.assessed_at|date:"M j" }}</span>

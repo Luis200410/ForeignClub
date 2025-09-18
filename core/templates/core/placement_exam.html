@@ -1,0 +1,37 @@
+{% extends "core/base.html" %}
+{% block title %}Placement Mission · FOREIGN{% endblock %}
+{% block content %}
+<section class="container-sm py-7">
+    <div class="glass-panel p-5 mx-auto" style="max-width: 680px;" data-animate="fade-up" data-tilt="3">
+        <p class="eyebrow mb-2 text-center">Placement</p>
+        <h1 class="h3 fw-bold tracking-tight mb-3 text-center">Calibrate your FOREIGN arena</h1>
+        <p class="text-white-50 mb-5 text-center">Choose the level that reflects your current instincts and tell us where you want to stretch. This unlocks your mission map.</p>
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="form-label text-uppercase small text-white-50">{{ form.level.label }}</label>
+                <div class="d-grid gap-2">
+                    {% for subwidget in form.level %}
+                        <label class="form-check form-switch d-flex align-items-center gap-2">
+                            {{ subwidget.tag }}
+                            <span>{{ subwidget.choice_label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+                {% if form.level.errors %}<div class="text-danger small mt-1">{{ form.level.errors|join:" " }}</div>{% endif %}
+            </div>
+            <div class="mb-4">
+                <label class="form-label text-uppercase small text-white-50">{{ form.focus.label }}</label>
+                {{ form.focus }}
+                {% if form.focus.errors %}<div class="text-danger small mt-1">{{ form.focus.errors|join:" " }}</div>{% endif %}
+            </div>
+            <div class="mb-4">
+                <label class="form-label text-uppercase small text-white-50">{{ form.intent.label }}</label>
+                {{ form.intent }}
+                {% if form.intent.errors %}<div class="text-danger small mt-1">{{ form.intent.errors|join:" " }}</div>{% endif %}
+            </div>
+            <button type="submit" class="btn btn-light btn-lg w-100">Confirm my level</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

@@ -10,7 +10,7 @@
 
     <div class="program-grid mt-5">
         {% for level in program_levels %}
-            <article class="program-card" data-animate="fade-up" data-animate-delay="{{ forloop.counter0|add:1 }}00ms">
+            <article class="program-card" data-animate="fade-up" data-animate-delay="{{ forloop.counter0|add:1 }}00ms" data-tilt="4">
                 <header class="program-card__header">
                     <div class="program-card__code">{{ level.title }}</div>
                     <span class="badge badge-soft">{{ level.course_count|default:0 }} courses</span>

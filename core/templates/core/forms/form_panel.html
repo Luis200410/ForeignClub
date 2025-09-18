@@ -1,0 +1,26 @@
+{% extends "core/base.html" %}
+{% block title %}FOREIGN · {{ form_title|default:"Action" }}{% endblock %}
+{% block content %}
+<section class="container-sm py-7">
+    <div class="glass-panel p-5 mx-auto" style="max-width: 720px;" data-animate="fade-up" data-tilt="3">
+        <p class="eyebrow mb-2 text-center">{{ form_title|default:"Action" }}</p>
+        <p class="text-white-50 text-center mb-4">{{ form_message|default:"" }}</p>
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {{ form.media }}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>
+            {% endif %}
+            {% for field in form %}
+                <div class="mb-4">
+                    <label class="form-label text-uppercase small text-white-50">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<div class="text-white-50 small mt-1">{{ field.help_text }}</div>{% endif %}
+                    {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|join:" " }}</div>{% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-light btn-lg w-100">{{ submit_label|default:"Submit" }}</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

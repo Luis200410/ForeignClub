@@ -48,6 +48,8 @@ class Profile(models.Model):
     linkedin_url = models.URLField(blank=True)
     phone_number = models.CharField(max_length=32, blank=True)
     onboarding_completed_at = models.DateTimeField(null=True, blank=True)
+    placement_completed = models.BooleanField(default=False)
+    placement_completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

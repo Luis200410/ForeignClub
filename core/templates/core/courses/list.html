@@ -1,8 +1,8 @@
 {% extends "core/base.html" %}
 {% block title %}Courses · FOREIGN{% endblock %}
 {% block content %}
-<section class="container-xl py-7">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-4 mb-5">
+<section class="container-xl py-7" data-animate="fade-up">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-4 mb-5" data-animate="fade-up">
         <div>
             <p class="eyebrow mb-2">Courses</p>
             <h1 class="display-5 fw-bold tracking-tight mb-3">Choose the mission that amplifies your voice.</h1>
@@ -16,7 +16,7 @@
             {% for item in course_cards %}
                 {% with course=item.course enrollment=item.enrollment %}
                     <div class="col-xl-4 col-lg-6">
-                        <article class="course-card h-100" data-animate="fade-up" data-animate-delay="{{ forloop.counter0|add:1 }}00ms">
+                        <article class="course-card h-100" data-animate="fade-up" data-animate-delay="{{ forloop.counter0|add:1 }}00ms" data-tilt="5">
                             <div class="course-card__header">
                                 <span class="badge badge-outline">{{ course.get_delivery_mode_display }}</span>
                                 <span class="badge badge-soft">{{ course.get_difficulty_display }}</span>

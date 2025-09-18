@@ -135,3 +135,10 @@ class CourseEnrollmentAdmin(admin.ModelAdmin):
 admin.site.site_header = "FOREIGN Command Center"
 admin.site.site_title = "FOREIGN Admin"
 admin.site.index_title = "Operations Dashboard"
+
+
+def _superuser_only(self, request):
+    return request.user.is_active and request.user.is_superuser
+
+
+admin.site.has_permission = _superuser_only.__get__(admin.site, admin.AdminSite)

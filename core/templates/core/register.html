@@ -2,10 +2,10 @@
 {% block title %}Join FOREIGN{% endblock %}
 {% block content %}
 <section class="auth-section container-sm py-7">
-    <div class="glass-panel p-5 mx-auto" style="max-width: 620px;">
+    <div class="glass-panel p-5 mx-auto" style="max-width: 620px;" data-animate="fade-up">
         <p class="eyebrow text-center">Join FOREIGN</p>
         <h1 class="h2 fw-bold tracking-tight mb-4 text-center">Where fearless learners become fluent leaders.</h1>
-        <form method="post" novalidate>
+        <form method="post" novalidate data-animate="fade-up" data-animate-delay="0.1s">
             {% csrf_token %}
             {% if messages %}
                 {% for message in messages %}
@@ -31,7 +31,7 @@
             </div>
             <button type="submit" class="btn btn-light w-100 py-3 mt-4">Claim your spot</button>
         </form>
-        <p class="mt-4 text-center text-white-50">
+        <p class="mt-4 text-center text-white-50" data-animate="fade-up" data-animate-delay="0.2s">
             Already part of FOREIGN? <a class="link-light" href="{% url 'login' %}">Log in</a>
         </p>
     </div>
