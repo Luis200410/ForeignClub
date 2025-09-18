@@ -69,31 +69,28 @@
     <div class="container-xl">
         <div class="text-center mb-5">
             <p class="eyebrow">Method</p>
-            <h2 class="display-5 fw-bold tracking-tight">The FOREIGN immersion arc</h2>
-            <p class="text-white-50 lead">A three-phase loop that repeats weekly so your learning compounds fast.</p>
+            <h2 class="display-5 fw-bold tracking-tight">Launch Pad → Flight Deck → Afterburner</h2>
+            <p class="text-white-50 lead">Three stages, one weekly arc. Prime instincts, live the mission, and lock the gains—repeat until English feels native.</p>
         </div>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="method-card">
-                    <span class="method-step">01</span>
-                    <h3 class="h4 mb-3">Prime</h3>
-                    <p class="text-white-50">Set targets, unlock vocabulary packs, and rehearse with micro-scenarios inside the app.</p>
+        <div class="module-stage-grid landing-stage-grid">
+            {% for stage in stage_details %}
+                <article class="module-stage-card landing-stage-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s" data-tilt="4">
+                    <span class="module-stage-ordinal">{{ stage.order|stringformat:"02d" }}</span>
+                    <div class="module-stage-card__body">
+                        <span class="stage-chip">{{ stage.label }} · {{ stage.tagline }}</span>
+                        <h3 class="module-stage-title mb-1">{{ stage.label }}</h3>
+                        <p class="module-stage-subtitle">{{ stage.summary }}</p>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+        <div class="landing-metrics" data-animate="fade-up" data-animate-delay="0.3s">
+            {% for stat in landing_metrics %}
+                <div class="landing-metric">
+                    <span class="landing-metric__value">{{ stat.value }}</span>
+                    <span class="landing-metric__label">{{ stat.label }}</span>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="method-card">
-                    <span class="method-step">02</span>
-                    <h3 class="h4 mb-3">Immerse</h3>
-                    <p class="text-white-50">Dive into live exchanges, cinematic missions, and responsive games with real people.</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="method-card">
-                    <span class="method-step">03</span>
-                    <h3 class="h4 mb-3">Elevate</h3>
-                    <p class="text-white-50">Review instant feedback, get mentor nudges, and lock in new instincts with targeted drills.</p>
-                </div>
-            </div>
+            {% endfor %}
         </div>
     </div>
 </section>

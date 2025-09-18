@@ -382,6 +382,41 @@ class CourseSession(models.Model):
         return f"{self.module.course.title} · {self.title}"
 
 
+class ModuleStageProgress(models.Model):
+    """Track completion of stage tasks for a learner within a module."""
+
+    class StageKey(models.TextChoices):
+        LAUNCH_PAD = "launch-pad", "Launch Pad"
+        FLIGHT_DECK = "flight-deck", "Flight Deck"
+        AFTERBURNER = "afterburner", "Afterburner"
+
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        related_name="stage_progress",
+    )
+    module = models.ForeignKey(
+        CourseModule,
+        on_delete=models.CASCADE,
+        related_name="stage_progress",
+    )
+    stage_key = models.CharField(max_length=32, choices=StageKey.choices)
+    completed_tasks = models.JSONField(default=list, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("profile", "module", "stage_key")
+        indexes = [
+            models.Index(fields=["profile", "module", "stage_key"], name="stage_progress_idx"),
+        ]
+        verbose_name = "Module stage progress"
+        verbose_name_plural = "Module stage progress"
+
+    def __str__(self) -> str:
+        return f"{self.profile.display_name} · {self.module} · {self.stage_key}"
+
+
 class CourseEnrollment(models.Model):
     """Enrollment linking a learner profile to a course."""
 

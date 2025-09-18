@@ -8,7 +8,7 @@
                 <p class="eyebrow mb-2">{{ course.title }}</p>
                 <div class="module-stage-pills">
                     {% for stage in stage_cards %}
-                        <span class="pill">{{ stage.label }} · {{ stage.tagline }}</span>
+                        <span class="stage-chip">{{ stage.label }} · {{ stage.tagline }}</span>
                     {% endfor %}
                 </div>
 
@@ -25,11 +25,24 @@
 
                 <div class="module-stage-grid" data-animate="fade-up" data-animate-delay="0.05s">
                     {% for stage in stage_cards %}
-                        <a class="module-stage-card" href="{{ stage.url }}">
-                            <span class="stage-label">Stage {{ stage.order }}</span>
-                            <h2 class="h5 tracking-tight mb-1">{{ stage.label }}</h2>
-                            <p class="text-white-50 small mb-0">{{ stage.tagline }}</p>
-                        </a>
+                        {% if stage.is_unlocked %}
+                            <a class="module-stage-card module-stage-card--open" href="{{ stage.url }}">
+                                <span class="module-stage-ordinal">{{ stage.order|stringformat:"02d" }}</span>
+                                <div class="module-stage-card__body">
+                                    <h2 class="module-stage-title">{{ stage.label }}</h2>
+                                    <p class="module-stage-subtitle">{{ stage.summary }}</p>
+                                </div>
+                            </a>
+                        {% else %}
+                            <div class="module-stage-card module-stage-card--locked">
+                                <span class="module-stage-ordinal">{{ stage.order|stringformat:"02d" }}</span>
+                                <div class="module-stage-card__body">
+                                    <h2 class="module-stage-title">{{ stage.label }}</h2>
+                                    <p class="module-stage-subtitle">{{ stage.summary }}</p>
+                                    <span class="module-stage-locked">Unlock by completing Launch Pad tasks</span>
+                                </div>
+                            </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
             </article>

@@ -21,7 +21,14 @@ from .forms import (
     SignUpForm,
     SkillAssessmentForm,
 )
-from .models import Course, CourseEnrollment, CourseModule, Profile, SkillAssessment
+from .models import (
+    Course,
+    CourseEnrollment,
+    CourseModule,
+    ModuleStageProgress,
+    Profile,
+    SkillAssessment,
+)
 
 
 
@@ -111,6 +118,49 @@ POST_SESSION_TASKS = [
     "Evidence upload checkpoint",
 ]
 
+ALLOWED_ENROLLMENT_STATUSES = {
+    CourseEnrollment.EnrollmentStatus.ACTIVE,
+    CourseEnrollment.EnrollmentStatus.COMPLETED,
+}
+
+STAGE_EXTENSION_MAP = {
+    "launch-pad": {
+        "description": "Launch Pad lays the groundwork. Learners align goals, unlock NotebookLM mission packs, and rehearse core patterns before stepping into the live arena.",
+        "highlights": [
+            "Calibration interview + mission blueprint",
+            "NotebookLM mission decks & pronunciation drills",
+            "AI warmups that surface vocabulary and rhythm gaps",
+        ],
+        "promise": "We prime every learner with personalized mission data so the live arena never feels like guesswork.",
+    },
+    "flight-deck": {
+        "description": "Flight Deck is the weekly live studio. Squads choose their labs, mentors orchestrate cinematic missions, and momentum compounds in real time.",
+        "highlights": [
+            "Curated live labs with ambitious peers",
+            "Mentor-led playbooks that adapt mid-session",
+            "Adaptive AI rehearsal woven between live exchanges",
+        ],
+        "promise": "Every lab feels like stepping into the scenario you actually need—because it is designed around your targets.",
+    },
+    "afterburner": {
+        "description": "Afterburner locks in the gains. Game missions, spaced repetition, and evidence reviews encode new instincts and set up the next launch.",
+        "highlights": [
+            "Arcade-style retention missions",
+            "Spaced repetition loops across the week",
+            "Coach retros and evidence reels to measure the jump",
+        ],
+        "promise": "We close every loop with proof—so confidence stays high and every next mission feels inevitable.",
+    },
+}
+
+PROGRAM_STAGE_DETAILS = [
+    {
+        **stage,
+        **STAGE_EXTENSION_MAP.get(stage["key"], {}),
+    }
+    for stage in MODULE_STAGE_SEQUENCE
+]
+
 
 class PlacementRequiredMixin(LoginRequiredMixin):
     placement_redirect_url = 'placement_exam'
@@ -137,7 +187,18 @@ class PlacementRequiredMixin(LoginRequiredMixin):
 
 def landing(request):
     """Landing page introducing the FOREIGN experience."""
-    return render(request, "core/landing.html")
+    return render(
+        request,
+        "core/landing.html",
+        {
+            "stage_details": PROGRAM_STAGE_DETAILS,
+            "landing_metrics": [
+                {"value": "12 weeks", "label": "To rewire instinct with our weekly loop"},
+                {"value": "3 stages", "label": "Launch Pad · Flight Deck · Afterburner"},
+                {"value": "90%", "label": "Members reporting faster live reactions"},
+            ],
+        },
+    )
 
 
 class AuthLoginView(LoginView):
@@ -268,6 +329,47 @@ class CourseListView(PlacementRequiredMixin, TemplateView):
         return context
 
 
+def _get_enrollment_and_access(user, course):
+    profile = getattr(user, "profile", None)
+    enrollment = None
+    if profile:
+        enrollment = CourseEnrollment.objects.filter(profile=profile, course=course).first()
+    can_view = bool(
+        enrollment and enrollment.status in ALLOWED_ENROLLMENT_STATUSES
+    ) or user.is_staff or user.is_superuser
+    return enrollment, can_view
+
+
+def _get_stage_unlocks(user, course, module, enrollment=None, can_view_course=False):
+    unlocks = {stage["key"]: False for stage in MODULE_STAGE_SEQUENCE}
+    unlocks["launch-pad"] = can_view_course
+    if not unlocks["launch-pad"]:
+        return unlocks
+
+    profile = getattr(user, "profile", None)
+    if profile is None:
+        return unlocks
+
+    try:
+        progress = ModuleStageProgress.objects.get(
+            profile=profile,
+            module=module,
+            stage_key=ModuleStageProgress.StageKey.LAUNCH_PAD,
+        )
+        tasks = list(progress.completed_tasks or [])
+    except ModuleStageProgress.DoesNotExist:
+        tasks = []
+
+    required = len(PRE_SESSION_TASKS)
+    if len(tasks) < required:
+        tasks.extend([False] * (required - len(tasks)))
+
+    stage_one_complete = required > 0 and all(bool(flag) for flag in tasks[:required])
+    unlocks["flight-deck"] = stage_one_complete
+    unlocks["afterburner"] = stage_one_complete
+    return unlocks
+
+
 class CourseDetailView(PlacementRequiredMixin, TemplateView):
     template_name = "core/courses/detail.html"
     login_url = "login"
@@ -284,10 +386,7 @@ class CourseDetailView(PlacementRequiredMixin, TemplateView):
             slug=kwargs["slug"],
             is_published=True,
         )
-        profile = getattr(self.request.user, "profile", None)
-        enrollment = None
-        if profile:
-            enrollment = CourseEnrollment.objects.filter(profile=profile, course=course).first()
+        enrollment, can_view_course = _get_enrollment_and_access(self.request.user, course)
 
         modules = (
             CourseModule.objects.filter(course=course)
@@ -295,11 +394,21 @@ class CourseDetailView(PlacementRequiredMixin, TemplateView):
             .order_by("order")
         )
 
+        total_modules = modules.count()
+        max_unlocked_order = 0
+        if can_view_course and total_modules:
+            completion_rate = float(getattr(enrollment, "completion_rate", 0) or 0)
+            estimated_completed = int(
+                max(0, min(total_modules, round((completion_rate / 100) * total_modules)))
+            )
+            max_unlocked_order = min(total_modules, max(1, estimated_completed + 1))
+
         module_cards = []
         for module in modules:
             weeks = {
                 "module": module,
                 "sessions": module.sessions.all(),
+                "is_unlocked": module.order <= max_unlocked_order,
             }
             module_cards.append(weeks)
 
@@ -309,6 +418,8 @@ class CourseDetailView(PlacementRequiredMixin, TemplateView):
                 "modules": module_cards,
                 "enrollment": enrollment,
                 "form": CourseEnrollmentForm(),
+                "max_unlocked_order": max_unlocked_order,
+                "can_view_course": can_view_course,
             }
         )
         return context
@@ -334,6 +445,13 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
             slug=slug,
             is_published=True,
         )
+
+        user = self.request.user
+        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+
+        if not can_view_course:
+            messages.warning(self.request, "Finish your application to unlock weekly missions.")
+            return redirect("course_detail", slug=slug)
         module = get_object_or_404(
             CourseModule.objects.prefetch_related("sessions"),
             course=course,
@@ -344,6 +462,8 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
         previous_order = order - 1 if order > 1 else None
         next_order = order + 1 if order < total_modules else None
 
+        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+
         stage_cards = [
             {
                 **stage,
@@ -351,6 +471,7 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
                     "course_module_stage",
                     args=[course.slug, module.order, stage["key"]],
                 ),
+                "is_unlocked": stage_unlocks.get(stage["key"], False),
             }
             for stage in MODULE_STAGE_SEQUENCE
         ]
@@ -363,6 +484,8 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
                 "previous_order": previous_order,
                 "next_order": next_order,
                 "stage_cards": stage_cards,
+                "stage_unlocks": stage_unlocks,
+                "can_view_course": can_view_course,
             }
         )
         return context
@@ -392,11 +515,21 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             slug=slug,
             is_published=True,
         )
+        user = self.request.user
+        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        if not can_view_course:
+            messages.warning(self.request, "Finish your application to unlock weekly missions.")
+            return redirect("course_detail", slug=slug)
         module = get_object_or_404(
             CourseModule.objects.prefetch_related("sessions"),
             course=course,
             order=order,
         )
+        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+
+        if stage_key != "launch-pad" and not stage_unlocks.get(stage_key, False):
+            messages.warning(self.request, "Complete the previous stage to unlock this mission.")
+            return redirect("course_module", slug=slug, order=order)
 
         sessions = module.sessions.all().order_by("order")
 
@@ -419,9 +552,32 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                     args=[course.slug, module.order, stage["key"]],
                 ),
                 "is_active": stage["key"] == stage_key,
+                "is_unlocked": stage_unlocks.get(stage["key"], False),
             }
             for stage in MODULE_STAGE_SEQUENCE
         ]
+
+        profile = getattr(user, "profile", None)
+        launch_tasks = []
+        if stage_key == ModuleStageProgress.StageKey.LAUNCH_PAD and profile:
+            progress, _ = ModuleStageProgress.objects.get_or_create(
+                profile=profile,
+                module=module,
+                stage_key=ModuleStageProgress.StageKey.LAUNCH_PAD,
+            )
+            tasks_state = list(progress.completed_tasks or [])
+            required = len(PRE_SESSION_TASKS)
+            if len(tasks_state) < required:
+                tasks_state.extend([False] * (required - len(tasks_state)))
+            for idx, resource in enumerate(pre_session_resources, start=1):
+                launch_tasks.append(
+                    {
+                        "index": idx,
+                        "title": resource["title"],
+                        "url": resource["url"],
+                        "completed": tasks_state[idx - 1],
+                    }
+                )
 
         context.update(
             {
@@ -434,9 +590,69 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                 "pre_session_resources": pre_session_resources,
                 "post_session_games": post_session_games,
                 "post_session_loops": post_session_loops,
+                "stage_unlocks": stage_unlocks,
+                "launch_pad_tasks": launch_tasks,
+                "can_view_course": can_view_course,
             }
         )
         return context
+
+
+class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
+    login_url = "login"
+
+    def post(self, request, slug: str, order: int, stage: str, index: int):
+        stage_key = stage
+        if stage_key != ModuleStageProgress.StageKey.LAUNCH_PAD:
+            raise Http404
+
+        course = get_object_or_404(
+            Course.objects.prefetch_related(
+                Prefetch(
+                    "modules",
+                    queryset=CourseModule.objects.prefetch_related("sessions").order_by("order"),
+                )
+            ),
+            slug=slug,
+            is_published=True,
+        )
+        user = request.user
+        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        if not can_view_course:
+            messages.warning(request, "Finish your application to unlock weekly missions.")
+            return redirect("course_detail", slug=slug)
+
+        module = get_object_or_404(
+            CourseModule.objects.prefetch_related("sessions"),
+            course=course,
+            order=order,
+        )
+
+        profile = getattr(user, "profile", None)
+        if profile is None:
+            messages.error(request, "Complete your profile to track progress.")
+            return redirect("course_module_stage", slug=slug, order=order, stage=stage_key)
+
+        progress, _ = ModuleStageProgress.objects.get_or_create(
+            profile=profile,
+            module=module,
+            stage_key=ModuleStageProgress.StageKey.LAUNCH_PAD,
+        )
+
+        tasks_state = list(progress.completed_tasks or [])
+        required = len(PRE_SESSION_TASKS)
+        if len(tasks_state) < required:
+            tasks_state.extend([False] * (required - len(tasks_state)))
+
+        if index < 1 or index > required:
+            raise Http404
+
+        task_idx = index - 1
+        tasks_state[task_idx] = not bool(tasks_state[task_idx])
+        progress.completed_tasks = tasks_state
+        progress.save(update_fields=["completed_tasks", "updated_at"])
+
+        return redirect("course_module_stage", slug=slug, order=order, stage=stage_key)
 
 class CourseEnrollView(PlacementRequiredMixin, View):
     login_url = "login"
@@ -461,11 +677,41 @@ class CourseEnrollView(PlacementRequiredMixin, View):
 
         if not form.is_valid():
             enrollment = CourseEnrollment.objects.filter(profile=profile, course=course).first()
+            modules_qs = (
+                CourseModule.objects.filter(course=course)
+                .prefetch_related("sessions")
+                .order_by("order")
+            )
+            total_modules = modules_qs.count()
+            user = request.user
+            can_view_course = bool(
+                enrollment and enrollment.status in ALLOWED_ENROLLMENT_STATUSES
+            ) or user.is_staff or user.is_superuser
+
+            max_unlocked_order = 0
+            if can_view_course and total_modules:
+                completion_rate = float(getattr(enrollment, "completion_rate", 0) or 0)
+                estimated_completed = int(
+                    max(0, min(total_modules, round((completion_rate / 100) * total_modules)))
+                )
+                max_unlocked_order = min(total_modules, max(1, estimated_completed + 1))
+
+            modules_payload = [
+                {
+                    "module": module,
+                    "sessions": module.sessions.all(),
+                    "is_unlocked": module.order <= max_unlocked_order,
+                }
+                for module in modules_qs
+            ]
+
             context = {
                 "course": course,
-                "modules": course.modules.all(),
+                "modules": modules_payload,
                 "enrollment": enrollment,
                 "form": form,
+                "max_unlocked_order": max_unlocked_order,
+                "can_view_course": can_view_course,
             }
             return render(request, "core/courses/detail.html", context, status=400)
 
@@ -726,6 +972,7 @@ class PromiseView(TemplateView):
         context = super().get_context_data(**kwargs)
         context.update(
             {
+                "stage_details": PROGRAM_STAGE_DETAILS,
                 "pillars": [
                     {
                         "title": "Human-first immersion",
@@ -800,35 +1047,7 @@ class MethodView(TemplateView):
         context = super().get_context_data(**kwargs)
         context.update(
             {
-                "phases": [
-                    {
-                        "step": "Prime",
-                        "headline": "Shape the target",
-                        "points": [
-                            "Personal calibration calls",
-                            "Goal architecture + fluency baselines",
-                            "Vocabulary and mindset warmups",
-                        ],
-                    },
-                    {
-                        "step": "Immerse",
-                        "headline": "Live the language",
-                        "points": [
-                            "Cinematic missions and performance labs",
-                            "Pair + squad exchanges engineered for transfer",
-                            "Adaptive AI rehearsal between live missions",
-                        ],
-                    },
-                    {
-                        "step": "Elevate",
-                        "headline": "Lock the instinct",
-                        "points": [
-                            "Rapid feedback sprints",
-                            "Coach retros + reflection rituals",
-                            "Evidence reels to measure the jump",
-                        ],
-                    },
-                ],
+                "stage_details": PROGRAM_STAGE_DETAILS,
                 "rituals": [
                     {
                         "title": "Sunday Systems Reset",

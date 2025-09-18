@@ -5,7 +5,22 @@
     <div class="page-intro" data-animate="fade-up">
         <p class="eyebrow mb-2">The Promise</p>
         <h1 class="display-4 fw-bold tracking-tight mb-3">Fluency that sticks because you live it, not memorize it.</h1>
-        <p class="text-white-50 lead mb-0">FOREIGN is engineered to transform English from something you study into a sense of self you embody. This is how we guarantee the shift.</p>
+        <p class="text-white-50 lead mb-0">We guarantee results by moving every learner through Launch Pad, Flight Deck, and Afterburner—each stage engineered for proof, not theory.</p>
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="module-stage-grid">
+        {% for stage in stage_details %}
+            <article class="module-stage-card promise-stage-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s" data-tilt="4">
+                <span class="module-stage-ordinal">{{ stage.order|stringformat:"02d" }}</span>
+                <div class="module-stage-card__body">
+                    <span class="stage-chip">{{ stage.label }} · {{ stage.tagline }}</span>
+                    <p class="module-stage-subtitle mb-3">{{ stage.summary }}</p>
+                    <p class="text-white-50 small mb-0">{{ stage.promise }}</p>
+                </div>
+            </article>
+        {% endfor %}
     </div>
 </section>
 
@@ -65,7 +80,7 @@
         </div>
     </div>
 </section>
-{% endblock %}
+
 <section class="container-xl pb-7">
     <div class="glass-panel p-5 p-lg-6" data-animate="fade-scale" data-tilt="3">
         <p class="eyebrow mb-2">In the wild</p>
@@ -119,3 +134,4 @@
         </ol>
     </div>
 </section>
+{% endblock %}

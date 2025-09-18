@@ -106,10 +106,17 @@
                 <p class="eyebrow mb-2">Stage navigation</p>
                 <div class="stage-nav d-grid gap-2 mb-4">
                     {% for item in stage_cards %}
-                        <a class="stage-nav-link{% if item.is_active %} active{% endif %}" href="{{ item.url }}">
-                            <span class="stage-nav-label">Stage {{ item.order }}</span>
-                            <span class="stage-nav-title">{{ item.label }}</span>
-                        </a>
+                        {% if item.is_unlocked %}
+                            <a class="stage-nav-link{% if item.is_active %} active{% endif %}" href="{{ item.url }}">
+                                <span class="stage-nav-label">Stage {{ item.order }}</span>
+                                <span class="stage-nav-title">{{ item.label }}</span>
+                            </a>
+                        {% else %}
+                            <span class="stage-nav-link stage-nav-link--locked{% if item.is_active %} active{% endif %}" role="button" aria-disabled="true">
+                                <span class="stage-nav-label">Stage {{ item.order }}</span>
+                                <span class="stage-nav-title">{{ item.label }}</span>
+                            </span>
+                        {% endif %}
                     {% endfor %}
                 </div>
                 <div class="d-grid gap-2">
