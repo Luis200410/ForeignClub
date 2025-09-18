@@ -6,6 +6,12 @@
         <div class="col-lg-8">
             <article class="module-card glass-panel p-5 p-lg-6 mb-5" data-tilt="3">
                 <p class="eyebrow mb-2">{{ course.title }}</p>
+                <div class="module-stage-pills">
+                    <span class="pill">Pre-meeting · Momentum Build</span>
+                    <span class="pill">Meeting · Studio Missions</span>
+                    <span class="pill">Post-meeting · Retain & Play</span>
+                </div>
+
                 <h1 class="h3 fw-bold tracking-tight mb-3">{{ module.title }}</h1>
                 {% if module.description %}
                     <p class="text-white-50 mb-4">{{ module.description|linebreaksbr }}</p>

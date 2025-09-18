@@ -291,6 +291,24 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
         previous_order = order - 1 if order > 1 else None
         next_order = order + 1 if order < total_modules else None
 
+        pre_session_tasks = [
+            "NotebookLM briefing: theme overview",
+            "Vocabulary pack with pronunciation clips",
+            "Speaking drill: record a 30-second practice",
+            "Micro-quiz to check comprehension",
+            "Cultural insight drop",
+            "Mission reflection prompt",
+        ]
+
+        post_session_tasks = [
+            "NotebookLM game mission",
+            "Spaced repetition review (48h)",
+            "Peer feedback exchange",
+            "Mini challenge unlocked via app",
+            "Signal reminder: next live cue",
+            "Evidence upload checkpoint",
+        ]
+
         context.update(
             {
                 "course": course,
@@ -298,6 +316,8 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
                 "sessions": sessions,
                 "previous_order": previous_order,
                 "next_order": next_order,
+                "pre_session_tasks": pre_session_tasks,
+                "post_session_tasks": post_session_tasks,
             }
         )
         return context
