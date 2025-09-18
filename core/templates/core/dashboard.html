@@ -55,24 +55,26 @@
 </section>
 
 <section class="container-xl pb-7" data-animate="fade-up">
-    {% if featured_course and module_links %}
+    {% if active_enrollments %}
         <div class="dashboard-panel">
             <div class="panel-header d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <p class="eyebrow mb-1">Weekly missions</p>
-                    <h2 class="h4 tracking-tight mb-0">{{ featured_course.title }}</h2>
+                    <h2 class="h4 tracking-tight mb-0">{{ primary_course.title }}</h2>
                 </div>
-                <a class="btn btn-outline-light btn-sm px-3" href="{% url 'course_detail' featured_course.slug %}">View course</a>
+                <a class="btn btn-outline-light btn-sm px-3" href="{% url 'course_detail' primary_course.slug %}">View course</a>
             </div>
             <div class="row g-3">
-                {% for module in module_links %}
+                {% for enrollment in active_enrollments %}
+                    {% with course=enrollment.course %}
                     <div class="col-md-6 col-xl-4">
-                        <a class="module-link-card" href="{% url 'course_module' featured_course.slug module.order %}">
-                            <span class="module-link-order">Week {{ module.order }}</span>
-                            <span class="module-link-title">{{ module.title }}</span>
-                            <span class="module-link-theme text-white-50">{{ module.description|default:""|truncatechars:80 }}</span>
+                        <a class="module-link-card" href="{% url 'course_detail' course.slug %}">
+                            <span class="module-link-order">Status: {{ enrollment.get_status_display }}</span>
+                            <span class="module-link-title">{{ course.title }}</span>
+                            <span class="module-link-theme text-white-50">{{ course.subtitle|default:course.summary|truncatechars:80 }}</span>
                         </a>
                     </div>
+                    {% endwith %}
                 {% endfor %}
             </div>
         </div>

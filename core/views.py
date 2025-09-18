@@ -67,6 +67,51 @@ PROGRAM_LEVELS = [
 PROGRAM_LOOKUP = {level["code"]: level for level in PROGRAM_LEVELS}
 
 
+MODULE_STAGE_SEQUENCE = [
+    {
+        "key": "launch-pad",
+        "label": "Launch Pad",
+        "tagline": "NotebookLM Prep",
+        "summary": "Prime your instincts with curated NotebookLM missions before we go live.",
+    },
+    {
+        "key": "flight-deck",
+        "label": "Flight Deck",
+        "tagline": "Live Studio",
+        "summary": "Choose the live labs you will join and lock your Friday agenda.",
+    },
+    {
+        "key": "afterburner",
+        "label": "Afterburner",
+        "tagline": "Retention Lab",
+        "summary": "Play, review, and loop spaced repetition to secure retention.",
+    },
+]
+
+for idx, stage in enumerate(MODULE_STAGE_SEQUENCE, start=1):
+    stage["order"] = idx
+
+MODULE_STAGE_LOOKUP = {stage["key"]: stage for stage in MODULE_STAGE_SEQUENCE}
+
+PRE_SESSION_TASKS = [
+    "NotebookLM briefing: theme overview",
+    "Vocabulary pack with pronunciation clips",
+    "Speaking drill: record a 30-second practice",
+    "Micro-quiz to check comprehension",
+    "Cultural insight drop",
+    "Mission reflection prompt",
+]
+
+POST_SESSION_TASKS = [
+    "NotebookLM game mission",
+    "Spaced repetition review (48h)",
+    "Peer feedback exchange",
+    "Mini challenge unlocked via app",
+    "Signal reminder: next live cue",
+    "Evidence upload checkpoint",
+]
+
+
 class PlacementRequiredMixin(LoginRequiredMixin):
     placement_redirect_url = 'placement_exam'
 
@@ -157,10 +202,18 @@ class DashboardView(PlacementRequiredMixin, TemplateView):
         primary_goal = goals_qs.filter(is_primary=True).first()
         secondary_goals = goals_qs.exclude(pk=getattr(primary_goal, "pk", None))[:3]
 
-        featured_course = Course.objects.filter(is_published=True).order_by('position', 'title').first() if hasattr(Course, 'position') else Course.objects.filter(is_published=True).order_by('title').first()
-        module_links = []
-        if featured_course:
-            module_links = list(featured_course.modules.all().order_by('order')[:6])
+        active_enrollments = list(
+            profile.enrollments.select_related("course")
+            .filter(
+                status__in=[
+                    CourseEnrollment.EnrollmentStatus.APPLIED,
+                    CourseEnrollment.EnrollmentStatus.ACTIVE,
+                ]
+            )
+            .order_by("-joined_at")
+        )
+
+        primary_course = active_enrollments[0].course if active_enrollments else None
 
         context.update(
             {
@@ -177,8 +230,8 @@ class DashboardView(PlacementRequiredMixin, TemplateView):
                     "last_assessment": assessments_qs.first(),
                     "progress_notes": progress_qs.count(),
                 },
-                "module_links": module_links,
-                "featured_course": featured_course,
+                "active_enrollments": active_enrollments,
+                "primary_course": primary_course,
             }
         )
 
@@ -291,22 +344,15 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
         previous_order = order - 1 if order > 1 else None
         next_order = order + 1 if order < total_modules else None
 
-        pre_session_tasks = [
-            "NotebookLM briefing: theme overview",
-            "Vocabulary pack with pronunciation clips",
-            "Speaking drill: record a 30-second practice",
-            "Micro-quiz to check comprehension",
-            "Cultural insight drop",
-            "Mission reflection prompt",
-        ]
-
-        post_session_tasks = [
-            "NotebookLM game mission",
-            "Spaced repetition review (48h)",
-            "Peer feedback exchange",
-            "Mini challenge unlocked via app",
-            "Signal reminder: next live cue",
-            "Evidence upload checkpoint",
+        stage_cards = [
+            {
+                **stage,
+                "url": reverse(
+                    "course_module_stage",
+                    args=[course.slug, module.order, stage["key"]],
+                ),
+            }
+            for stage in MODULE_STAGE_SEQUENCE
         ]
 
         context.update(
@@ -316,8 +362,78 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
                 "sessions": sessions,
                 "previous_order": previous_order,
                 "next_order": next_order,
-                "pre_session_tasks": pre_session_tasks,
-                "post_session_tasks": post_session_tasks,
+                "stage_cards": stage_cards,
+            }
+        )
+        return context
+
+
+class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
+    template_name = "core/modules/stage.html"
+    login_url = "login"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        slug = kwargs["slug"]
+        order = kwargs["order"]
+        stage_key = kwargs["stage"]
+
+        stage_config = MODULE_STAGE_LOOKUP.get(stage_key)
+        if stage_config is None:
+            raise Http404("Unknown module stage")
+
+        course = get_object_or_404(
+            Course.objects.prefetch_related(
+                Prefetch(
+                    "modules",
+                    queryset=CourseModule.objects.prefetch_related("sessions").order_by("order"),
+                )
+            ),
+            slug=slug,
+            is_published=True,
+        )
+        module = get_object_or_404(
+            CourseModule.objects.prefetch_related("sessions"),
+            course=course,
+            order=order,
+        )
+
+        sessions = module.sessions.all().order_by("order")
+
+        pre_session_resources = [
+            {
+                "title": task,
+                "url": "#",
+            }
+            for task in PRE_SESSION_TASKS
+        ]
+
+        post_session_games = POST_SESSION_TASKS[:3]
+        post_session_loops = POST_SESSION_TASKS[3:]
+
+        stage_cards = [
+            {
+                **stage,
+                "url": reverse(
+                    "course_module_stage",
+                    args=[course.slug, module.order, stage["key"]],
+                ),
+                "is_active": stage["key"] == stage_key,
+            }
+            for stage in MODULE_STAGE_SEQUENCE
+        ]
+
+        context.update(
+            {
+                "course": course,
+                "module": module,
+                "sessions": sessions,
+                "stage": stage_config,
+                "stage_key": stage_key,
+                "stage_cards": stage_cards,
+                "pre_session_resources": pre_session_resources,
+                "post_session_games": post_session_games,
+                "post_session_loops": post_session_loops,
             }
         )
         return context
@@ -908,4 +1024,3 @@ class ProgramDetailView(PlacementRequiredMixin, TemplateView):
             }
         )
         return context
-

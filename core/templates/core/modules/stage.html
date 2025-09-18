@@ -1,0 +1,123 @@
+{% extends "core/base.html" %}
+{% block title %}{{ stage.label }} · {{ module.title }}{% endblock %}
+{% block content %}
+<section class="container-xl py-7">
+    <div class="row g-5">
+        <div class="col-lg-8">
+            <article class="module-card glass-panel p-5 p-lg-6 mb-5" data-tilt="3">
+                <p class="eyebrow mb-2">Stage {{ stage.order }} · {{ course.title }}</p>
+                <h1 class="h3 fw-bold tracking-tight mb-2">{{ stage.label }} · {{ stage.tagline }}</h1>
+                <p class="text-white-50 mb-4">{{ stage.summary }}</p>
+
+                {% if stage_key == "launch-pad" %}
+                    <div class="module-stage" data-animate="fade-up" data-animate-delay="0.05s">
+                        <div class="stage-header">
+                            <div>
+                                <p class="eyebrow mb-1">NotebookLM missions</p>
+                                <h2 class="h5 tracking-tight mb-1">Complete all six warmups before Friday</h2>
+                            </div>
+                            <p class="text-white-50 small mb-0">Links open in a new tab. Update with your NotebookLM workspace when ready.</p>
+                        </div>
+                        <div class="todo-grid">
+                            {% for resource in pre_session_resources %}
+                                <a class="todo-card" href="{{ resource.url }}" target="_blank" rel="noopener">
+                                    <span class="todo-step">0{{ forloop.counter }}</span>
+                                    <span class="todo-title">{{ resource.title }}</span>
+                                    <span class="todo-link">Open NotebookLM</span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% elif stage_key == "flight-deck" %}
+                    <div class="module-stage" data-animate="fade-up" data-animate-delay="0.05s">
+                        <div class="stage-header">
+                            <div>
+                                <p class="eyebrow mb-1">Live selections</p>
+                                <h2 class="h5 tracking-tight mb-1">Lock your Friday studios</h2>
+                            </div>
+                            <p class="text-white-50 small mb-0">Pick the missions you plan to attend. Scheduling sync is coming soon.</p>
+                        </div>
+                        {% if sessions %}
+                            <div class="meeting-grid">
+                                {% for session in sessions %}
+                                    <label class="meeting-option">
+                                        <input type="checkbox" name="session_{{ session.id }}" />
+                                        <div class="meeting-content">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h3 class="h6 mb-0">{{ session.title }}</h3>
+                                                <span class="badge badge-soft">{{ session.duration_minutes }} min</span>
+                                            </div>
+                                            <p class="text-white-50 small mb-1">{{ session.get_session_type_display }}</p>
+                                            {% if session.description %}
+                                                <p class="text-white-50 small mb-0">{{ session.description|linebreaksbr }}</p>
+                                            {% endif %}
+                                            {% if session.resources %}
+                                                <ul class="text-white-50 small mb-0 list-unstyled d-grid gap-1 mt-2">
+                                                    {% for resource in session.resources %}
+                                                        <li>• {{ resource.label }}: {{ resource.detail }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% endif %}
+                                        </div>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <p class="text-white-50 small mb-0">Selections save to your profile soon. For now, screenshot to remember.</p>
+                                <button class="btn btn-outline-light btn-sm" type="button" disabled>Confirm picks</button>
+                            </div>
+                        {% else %}
+                            <p class="text-white-50 small mb-0">Live studio schedule will be announced shortly.</p>
+                        {% endif %}
+                    </div>
+                {% elif stage_key == "afterburner" %}
+                    <div class="module-stage" data-animate="fade-up" data-animate-delay="0.05s">
+                        <div class="stage-header">
+                            <div>
+                                <p class="eyebrow mb-1">Retention lab</p>
+                                <h2 class="h5 tracking-tight mb-1">Play, review, and lock in the gains</h2>
+                            </div>
+                            <p class="text-white-50 small mb-0">Blend games with spaced repetition to encode what you learned.</p>
+                        </div>
+                        <div class="post-grid">
+                            <div>
+                                <h3 class="h6 mb-2">Arcade Boosters</h3>
+                                <ul class="post-list">
+                                    {% for item in post_session_games %}
+                                        <li>{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 class="h6 mb-2">Repetition Loops</h3>
+                                <ul class="post-list">
+                                    {% for item in post_session_loops %}
+                                        <li>{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </article>
+        </div>
+        <div class="col-lg-4">
+            <aside class="glass-panel p-4 p-lg-5" data-tilt="4">
+                <p class="eyebrow mb-2">Stage navigation</p>
+                <div class="stage-nav d-grid gap-2 mb-4">
+                    {% for item in stage_cards %}
+                        <a class="stage-nav-link{% if item.is_active %} active{% endif %}" href="{{ item.url }}">
+                            <span class="stage-nav-label">Stage {{ item.order }}</span>
+                            <span class="stage-nav-title">{{ item.label }}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+                <div class="d-grid gap-2">
+                    <a class="btn btn-light" href="{% url 'course_module' course.slug module.order %}">Back to week overview</a>
+                    <a class="btn btn-outline-light" href="{% url 'course_detail' course.slug %}">All weeks</a>
+                </div>
+            </aside>
+        </div>
+    </div>
+</section>
+{% endblock %}

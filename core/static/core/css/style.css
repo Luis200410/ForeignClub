@@ -1174,3 +1174,171 @@ section {
     display: block;
     font-weight: 600;
 }
+
+.module-stage-grid {
+    display: grid;
+    gap: 1.4rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.module-stage-card {
+    position: relative;
+    display: block;
+    padding: 1.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--white);
+    text-decoration: none;
+    transition: transform 0.35s var(--transition-base), border-color 0.35s var(--transition-base);
+}
+
+.module-stage-card:hover,
+.module-stage-card:focus {
+    transform: translateY(-8px);
+    border-color: rgba(255, 255, 255, 0.32);
+}
+
+.module-stage-card .stage-label {
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+}
+
+.stage-nav-link {
+    display: block;
+    padding: 1.2rem 1.4rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--white);
+    text-decoration: none;
+    transition: transform 0.3s var(--transition-base), border-color 0.3s var(--transition-base), background 0.3s var(--transition-base);
+}
+
+.stage-nav-link:hover,
+.stage-nav-link:focus {
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.28);
+}
+
+.stage-nav-link.active {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.32);
+}
+
+.stage-nav-label {
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.stage-nav-title {
+    font-weight: 600;
+    margin-top: 0.35rem;
+}
+
+.todo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.todo-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 22px;
+    padding: 1.4rem 1.6rem;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--white);
+    text-decoration: none;
+    transition: transform 0.3s var(--transition-base), border-color 0.3s var(--transition-base);
+}
+
+.todo-card:hover,
+.todo-card:focus {
+    transform: translateY(-6px);
+    border-color: rgba(255, 255, 255, 0.32);
+}
+
+.todo-step {
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.todo-title {
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.todo-link {
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.meeting-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.meeting-option {
+    display: flex;
+    gap: 1.2rem;
+    align-items: flex-start;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 22px;
+    padding: 1.4rem 1.6rem;
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    transition: transform 0.3s var(--transition-base), border-color 0.3s var(--transition-base);
+}
+
+.meeting-option:hover,
+.meeting-option:focus-within {
+    transform: translateY(-6px);
+    border-color: rgba(255, 255, 255, 0.32);
+}
+
+.meeting-option input {
+    margin-top: 0.25rem;
+    accent-color: var(--white);
+}
+
+.meeting-content {
+    flex: 1;
+}
+
+.post-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.post-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.post-list li {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    padding: 1rem 1.2rem;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.92rem;
+}

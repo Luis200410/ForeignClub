@@ -49,46 +49,27 @@
                 {% if course.modules.exists %}
                     <div class="module-accordion">
                         {% for module in course.modules.all %}
-                            <a class="module-card-link" href="{% url 'course_module' course.slug module.order %}">
-                                <article class="module-card" data-tilt="3">
-                                    <header class="module-card__header">
-                                        <div>
-                                            <p class="eyebrow mb-1">Week {{ module.order }}</p>
-                                            <h3 class="h5 tracking-tight mb-1">{{ module.title }}</h3>
-                                            {% if module.focus_keyword %}<span class="badge badge-outline">{{ module.focus_keyword }}</span>{% endif %}
-                                        </div>
-                                    </header>
-                                    {% if module.description %}
-                                        <p class="text-white-50 mb-3">{{ module.description|linebreaksbr }}</p>
-                                    {% endif %}
-                                    {% if module.outcomes %}
-                                        <div class="module-outcomes mb-3">
-                                            <span class="course-label">Outcomes</span>
-                                            <p class="text-white-50 mb-0">{{ module.outcomes|linebreaksbr }}</p>
-                                        </div>
-                                    {% endif %}
-                                    {% if module.sessions.all %}
-                                        <ul class="session-list">
-                                            {% for session in module.sessions.all %}
-                                                <li>
-                                                    <h4 class="h6 mb-1">{{ session.title }}</h4>
-                                                    <p class="text-white-50 small mb-1">{{ session.get_session_type_display }} · {{ session.duration_minutes }} min</p>
-                                                    {% if session.description %}
-                                                        <p class="text-white-50 small mb-1">{{ session.description|linebreaksbr }}</p>
-                                                    {% endif %}
-                                                    {% if session.resources %}
-                                                        <ul class="text-white-50 small mb-0 list-unstyled d-grid gap-1">
-                                                            {% for resource in session.resources %}
-                                                                <li>• {{ resource.label }}: {{ resource.detail }}</li>
-                                                            {% endfor %}
-                                                        </ul>
-                                                    {% endif %}
-                                                </li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                </article>
-                            </a>
+                            <article class="module-card" data-tilt="3">
+                                <header class="module-card__header">
+                                    <div>
+                                        <p class="eyebrow mb-1">Week {{ module.order }}</p>
+                                        <h3 class="h5 tracking-tight mb-1">{{ module.title }}</h3>
+                                        {% if module.focus_keyword %}<span class="badge badge-outline">{{ module.focus_keyword }}</span>{% endif %}
+                                    </div>
+                                </header>
+                                {% if module.description %}
+                                    <p class="text-white-50 mb-3">{{ module.description|linebreaksbr }}</p>
+                                {% endif %}
+                                {% if module.outcomes %}
+                                    <div class="module-outcomes mb-0">
+                                        <span class="course-label">Outcomes</span>
+                                        <p class="text-white-50 mb-0">{{ module.outcomes|linebreaksbr }}</p>
+                                    </div>
+                                {% endif %}
+                                <a class="stretched-link" href="{% url 'course_module' course.slug module.order %}">
+                                    <span class="visually-hidden">Explore week {{ module.order }} for {{ course.title }}</span>
+                                </a>
+                            </article>
                         {% endfor %}
                     </div>
                 {% else %}
