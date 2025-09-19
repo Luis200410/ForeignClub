@@ -17,6 +17,8 @@ from .views import (
     PlacementExamView,
     CourseModuleDetailView,
     CourseModuleStageView,
+    ModuleMeetingCancelView,
+    ModuleMeetingSignupView,
     ModuleStageTaskToggleView,
     GoalManageView,
     ProgressCreateView,
@@ -42,6 +44,16 @@ urlpatterns = [
         "courses/<slug:slug>/module/<int:order>/<str:stage>/",
         CourseModuleStageView.as_view(),
         name="course_module_stage",
+    ),
+    path(
+        "courses/<slug:slug>/module/<int:order>/flight-deck/meetings/select/",
+        ModuleMeetingSignupView.as_view(),
+        name="course_module_meeting_select",
+    ),
+    path(
+        "courses/<slug:slug>/module/<int:order>/flight-deck/meetings/cancel/",
+        ModuleMeetingCancelView.as_view(),
+        name="course_module_meeting_cancel",
     ),
     path(
         "courses/<slug:slug>/module/<int:order>/<str:stage>/task/<int:index>/toggle/",

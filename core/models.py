@@ -417,6 +417,71 @@ class ModuleStageProgress(models.Model):
         return f"{self.profile.display_name} · {self.module} · {self.stage_key}"
 
 
+class ModuleLiveMeeting(models.Model):
+    """Admin-configured live meeting option for a module."""
+
+    module = models.ForeignKey(
+        CourseModule,
+        on_delete=models.CASCADE,
+        related_name="live_meeting_options",
+    )
+    title = models.CharField(max_length=160, blank=True)
+    scheduled_for = models.DateTimeField()
+    duration_minutes = models.PositiveSmallIntegerField(default=60)
+    agenda = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["scheduled_for"]
+        verbose_name = "Module live meeting option"
+        verbose_name_plural = "Module live meeting options"
+        indexes = [
+            models.Index(
+                fields=["module", "scheduled_for"],
+                name="module_live_meeting_idx",
+            )
+        ]
+
+    def __str__(self) -> str:
+        title = self.title or f"Live mission · Week {self.module.order}"
+        return f"{self.module.course.title} · {title} · {self.scheduled_for:%Y-%m-%d %H:%M}"
+
+
+class ModuleLiveMeetingSignup(models.Model):
+    """Learner selection of a module's live meeting."""
+
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        related_name="live_meeting_signups",
+    )
+    module = models.ForeignKey(
+        CourseModule,
+        on_delete=models.CASCADE,
+        related_name="live_meeting_signups",
+    )
+    meeting = models.ForeignKey(
+        ModuleLiveMeeting,
+        on_delete=models.CASCADE,
+        related_name="signups",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("profile", "module")
+        indexes = [
+            models.Index(fields=["profile", "module"], name="module_live_signup_idx"),
+        ]
+
+    def save(self, *args, **kwargs):
+        self.module = self.meeting.module
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.profile.display_name} · {self.module} · {self.meeting.scheduled_for:%Y-%m-%d %H:%M}"
+
+
 class CourseEnrollment(models.Model):
     """Enrollment linking a learner profile to a course."""
 

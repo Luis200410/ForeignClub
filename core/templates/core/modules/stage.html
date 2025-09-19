@@ -22,9 +22,10 @@
                             {% if launch_pad_tasks %}
                                 {% for task in launch_pad_tasks %}
                                     <form
-                                        class="todo-card js-launch-task-form{% if task.completed %} todo-card--done{% endif %}"
+                                        class="todo-card js-stage-task-toggle{% if task.completed %} todo-card--done{% endif %}"
                                         action="{% url 'course_module_stage_task_toggle' course.slug module.order stage_key task.index %}"
                                         method="post"
+                                        data-stage-key="{{ stage_key }}"
                                     >
                                         {% csrf_token %}
                                         <div class="todo-card__body">
@@ -65,39 +66,143 @@
                                 <p class="eyebrow mb-1">Live selections</p>
                                 <h2 class="h5 tracking-tight mb-1">Lock your Friday studios</h2>
                             </div>
-                            <p class="text-white-50 small mb-0">Pick the missions you plan to attend. Scheduling sync is coming soon.</p>
+                            <p class="text-white-50 small mb-0">Knock out these three moves so you're ready to go live.</p>
                         </div>
-                        {% if sessions %}
-                            <div class="meeting-grid">
-                                {% for session in sessions %}
-                                    <label class="meeting-option">
-                                        <input type="checkbox" name="session_{{ session.id }}" />
-                                        <div class="meeting-content">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <h3 class="h6 mb-0">{{ session.title }}</h3>
-                                                <span class="badge badge-soft">{{ session.duration_minutes }} min</span>
+                        {% if flight_deck_tasks %}
+                            <div class="todo-grid">
+                                {% for task in flight_deck_tasks %}
+                                {% if task.type == "scheduler" %}
+                                        <div class="todo-card todo-card--scheduler{% if task.completed %} todo-card--done{% endif %}"
+                                            data-cancel-url="{{ task.cancel_url }}">
+                                            <div class="todo-card__body">
+                                                <span class="todo-step">0{{ task.index }}</span>
+                                                <span class="todo-title">{{ task.title }}</span>
+                                                {% if task.subtitle %}
+                                                    <p class="text-white-50 small mb-2">{{ task.subtitle }}</p>
+                                                {% endif %}
+                                                {% if task.meeting_options %}
+                                                    <div class="meeting-option-grid">
+                                                        {% for option in task.meeting_options %}
+                                                            <form
+                                                                class="meeting-option js-meeting-select{% if option.id == task.selected_meeting_id %} meeting-option--active{% endif %}"
+                                                                action="{% url 'course_module_meeting_select' course.slug module.order %}"
+                                                                method="post"
+                                                                data-meeting-id="{{ option.id }}"
+                                                            >
+                                                                {% csrf_token %}
+                                                                <input type="hidden" name="meeting_id" value="{{ option.id }}">
+                                                                <div class="meeting-option__meta">
+                                                                    <h3 class="h6 mb-1">{{ option.title|default:"Live mission" }}</h3>
+                                                                    <p class="text-white-50 small mb-2">{{ option.scheduled_for|date:"M j, Y · H:i" }} · {{ option.duration_minutes }} min</p>
+                                                                    {% if option.agenda %}
+                                                                        <p class="text-white-50 small mb-0">{{ option.agenda }}</p>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <div class="meeting-option__actions">
+                                                                    <button class="todo-check" type="submit" data-default-label="Join this slot">
+                                                                        {% if option.id == task.selected_meeting_id %}Selected{% else %}Join this slot{% endif %}
+                                                                    </button>
+                                                                </div>
+                                                            </form>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% else %}
+                                                    <p class="text-white-50 small mb-0">Schedule for this week goes live shortly.</p>
+                                                {% endif %}
+                                                <div class="meeting-summary mt-3" data-meeting-summary>
+                                                    <p class="meeting-summary__details{% if not task.selected_meeting %} d-none{% endif %}" data-meeting-summary-details>
+                                                        <strong data-meeting-summary-text>
+                                                            {% if task.selected_meeting %}
+                                                                {{ task.selected_meeting.scheduled_for|date:"M j, Y · H:i" }} · {{ task.selected_meeting.duration_minutes }} min{% if task.selected_meeting.title %} · {{ task.selected_meeting.title }}{% endif %}
+                                                            {% endif %}
+                                                        </strong>
+                                                    </p>
+                                                    <p class="text-white-50 small mb-0{% if task.selected_meeting %} d-none{% endif %}" data-meeting-summary-empty>No slot selected yet.</p>
+                                                    <div class="meeting-summary__actions{% if not task.selected_meeting %} d-none{% endif %}" data-meeting-summary-actions>
+                                                        {% if task.selected_meeting %}
+                                                            {% if task.can_cancel %}
+                                                                <form class="meeting-cancel-form js-meeting-cancel" action="{{ task.cancel_url }}" method="post">
+                                                                    {% csrf_token %}
+                                                                    <input type="hidden" name="meeting_id" value="{{ task.selected_meeting.id }}">
+                                                                    <button class="todo-check todo-check--ghost" type="submit">Cancel slot</button>
+                                                                </form>
+                                                                <p class="text-white-50 small mb-0 mt-2">You can un-join up to 48h before go-live.</p>
+                                                            {% else %}
+                                                                <p class="text-white-50 small mb-0">Changes within 48 hours require a fee — contact support.</p>
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <p class="text-white-50 small mb-1">{{ session.get_session_type_display }}</p>
-                                            {% if session.description %}
-                                                <p class="text-white-50 small mb-0">{{ session.description|linebreaksbr }}</p>
-                                            {% endif %}
-                                            {% if session.resources %}
-                                                <ul class="text-white-50 small mb-0 list-unstyled d-grid gap-1 mt-2">
-                                                    {% for resource in session.resources %}
-                                                        <li>• {{ resource.label }}: {{ resource.detail }}</li>
-                                                    {% endfor %}
-                                                </ul>
-                                            {% endif %}
                                         </div>
-                                    </label>
+                                    {% elif task.type == "notebook" %}
+                                        <form
+                                            class="todo-card todo-card--flight js-stage-task-toggle{% if task.completed %} todo-card--done{% endif %}"
+                                            action="{% url 'course_module_stage_task_toggle' course.slug module.order stage_key task.index %}"
+                                            method="post"
+                                            data-stage-key="{{ stage_key }}"
+                                        >
+                                            {% csrf_token %}
+                                            <div class="todo-card__body">
+                                                <span class="todo-step">0{{ task.index }}</span>
+                                                <span class="todo-title">{{ task.title }}</span>
+                                                {% if task.subtitle %}
+                                                    <p class="text-white-50 small mb-2">{{ task.subtitle }}</p>
+                                                {% endif %}
+                                            </div>
+                                            <div class="todo-card__actions">
+                                                <a class="todo-check todo-check--cta" href="{{ task.url }}" target="_blank" rel="noopener">
+                                                    {{ task.link_label }}
+                                                </a>
+                                                <button
+                                                    class="todo-check{% if task.completed %} todo-check--completed{% endif %}"
+                                                    type="submit"
+                                                    aria-pressed="{% if task.completed %}true{% else %}false{% endif %}"
+                                                >
+                                                    {% if task.completed %}Done{% else %}Mark Done{% endif %}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    {% else %}
+                                        <form
+                                            class="todo-card todo-card--recorder js-stage-task-toggle{% if task.completed %} todo-card--done{% endif %}"
+                                            action="{% url 'course_module_stage_task_toggle' course.slug module.order stage_key task.index %}"
+                                            method="post"
+                                            data-stage-key="{{ stage_key }}"
+                                        >
+                                            {% csrf_token %}
+                                            <div class="todo-card__body js-recorder-card">
+                                                <span class="todo-step">0{{ task.index }}</span>
+                                                <span class="todo-title">{{ task.title }}</span>
+                                                {% if task.subtitle %}
+                                                    <p class="text-white-50 small mb-2">{{ task.subtitle }}</p>
+                                                {% endif %}
+                                                <div class="recorder-panel">
+                                                    <div class="recorder-controls">
+                                                        <button class="todo-check todo-check--ghost" type="button" data-recorder-action="start">Start Recording</button>
+                                                        <button class="todo-check todo-check--ghost" type="button" data-recorder-action="stop">Stop</button>
+                                                        <button class="todo-check todo-check--ghost" type="button" data-recorder-action="play">Play</button>
+                                                        <a class="todo-check todo-check--ghost js-recorder-download" href="#" download="flight-deck-recording.webm" hidden>Download</a>
+                                                    </div>
+                                                    <p class="recorder-status js-recorder-status text-white-50 small mb-0">Recorder idle.</p>
+                                                    <audio class="recorder-audio" controls hidden></audio>
+                                                </div>
+                                            </div>
+                                            <div class="todo-card__actions">
+                                                <button
+                                                    class="todo-check{% if task.completed %} todo-check--completed{% endif %}"
+                                                    type="submit"
+                                                    aria-pressed="{% if task.completed %}true{% else %}false{% endif %}"
+                                                >
+                                                    {% if task.completed %}Done{% else %}Mark Done{% endif %}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    {% endif %}
                                 {% endfor %}
                             </div>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <p class="text-white-50 small mb-0">Selections save to your profile soon. For now, screenshot to remember.</p>
-                                <button class="btn btn-outline-light btn-sm" type="button" disabled>Confirm picks</button>
-                            </div>
                         {% else %}
-                            <p class="text-white-50 small mb-0">Live studio schedule will be announced shortly.</p>
+                            <p class="text-white-50 small mb-0">Live studio checklist will be announced shortly.</p>
                         {% endif %}
                     </div>
                 {% elif stage_key == "afterburner" %}
@@ -221,10 +326,7 @@
                 return result;
             };
 
-            const forms = document.querySelectorAll('.js-launch-task-form');
-            if (!forms.length) {
-                return;
-            }
+            const toggleForms = document.querySelectorAll('.js-stage-task-toggle');
 
             const updateNav = function (stageKey, unlocked) {
                 const navEl = document.querySelector('[data-stage-nav="' + stageKey + '"]');
@@ -286,11 +388,11 @@
                 }
             };
 
-            forms.forEach(function (form) {
+            toggleForms.forEach(function (form) {
                 form.addEventListener('submit', function (event) {
                     event.preventDefault();
 
-                    const submitButton = form.querySelector('.todo-check');
+                    const submitButton = form.querySelector('button[type="submit"]');
                     if (!submitButton) {
                         return;
                     }
@@ -310,6 +412,14 @@
                         body: formData,
                     })
                         .then(function (response) {
+                            if (response.status === 403) {
+                                return response.json().then(function (data) {
+                                    if (data && data.redirect_url) {
+                                        window.location.href = data.redirect_url;
+                                    }
+                                    throw new Error('Access denied');
+                                });
+                            }
                             if (!response.ok) {
                                 throw new Error('Network response was not ok');
                             }
@@ -339,6 +449,402 @@
                         });
                 });
             });
+
+            const schedulerCard = document.querySelector('.todo-card--scheduler');
+            const meetingSummary = schedulerCard ? schedulerCard.querySelector('[data-meeting-summary]') : null;
+            const csrfTokenGlobal = document.querySelector('input[name=csrfmiddlewaretoken]') ? document.querySelector('input[name=csrfmiddlewaretoken]').value : '';
+
+            const updateOptionStates = function (selectedId) {
+                const meetingForms = document.querySelectorAll('.js-meeting-select');
+                meetingForms.forEach(function (form) {
+                    const button = form.querySelector('button[type="submit"]');
+                    const defaultLabel = button ? button.getAttribute('data-default-label') || 'Join this slot' : 'Join this slot';
+                    const formMeetingId = form.dataset.meetingId;
+                    const isActive = selectedId && String(formMeetingId) === String(selectedId);
+                    form.classList.toggle('meeting-option--active', Boolean(isActive));
+                    if (button) {
+                        button.textContent = isActive ? 'Selected' : defaultLabel;
+                        button.disabled = false;
+                    }
+                });
+            };
+
+            const setSelectedMeetingUI = function (meetingData) {
+                if (!schedulerCard || !meetingSummary) {
+                    return;
+                }
+                const details = meetingSummary.querySelector('[data-meeting-summary-details]');
+                const detailText = meetingSummary.querySelector('[data-meeting-summary-text]');
+                const empty = meetingSummary.querySelector('[data-meeting-summary-empty]');
+                const actions = meetingSummary.querySelector('[data-meeting-summary-actions]');
+
+                if (meetingData) {
+                    schedulerCard.classList.add('todo-card--done');
+                    if (details) {
+                        details.classList.remove('d-none');
+                    }
+                    if (detailText) {
+                        const titlePart = meetingData.title ? ' · ' + meetingData.title : '';
+                        detailText.textContent = meetingData.scheduled_for + ' · ' + meetingData.duration_minutes + ' min' + titlePart;
+                    }
+                    if (empty) {
+                        empty.classList.add('d-none');
+                    }
+                    if (actions) {
+                        actions.classList.remove('d-none');
+                        actions.innerHTML = '';
+                        if (meetingData.can_cancel) {
+                            const cancelForm = document.createElement('form');
+                            cancelForm.className = 'meeting-cancel-form js-meeting-cancel';
+                            cancelForm.action = schedulerCard.dataset.cancelUrl || '';
+                            cancelForm.method = 'post';
+
+                            const csrfInput = document.createElement('input');
+                            csrfInput.type = 'hidden';
+                            csrfInput.name = 'csrfmiddlewaretoken';
+                            csrfInput.value = csrfTokenGlobal;
+                            cancelForm.appendChild(csrfInput);
+
+                            const meetingIdInput = document.createElement('input');
+                            meetingIdInput.type = 'hidden';
+                            meetingIdInput.name = 'meeting_id';
+                            meetingIdInput.value = meetingData.id;
+                            cancelForm.appendChild(meetingIdInput);
+
+                            const cancelButton = document.createElement('button');
+                            cancelButton.className = 'todo-check todo-check--ghost';
+                            cancelButton.type = 'submit';
+                            cancelButton.textContent = 'Cancel slot';
+                            cancelForm.appendChild(cancelButton);
+
+                            actions.appendChild(cancelForm);
+
+                            const note = document.createElement('p');
+                            note.className = 'text-white-50 small mb-0 mt-2';
+                            note.textContent = 'You can un-join up to 48h before go-live.';
+                            actions.appendChild(note);
+                        } else {
+                            const feeNote = document.createElement('p');
+                            feeNote.className = 'text-white-50 small mb-0';
+                            feeNote.textContent = 'Changes within 48 hours require a fee — contact support.';
+                            actions.appendChild(feeNote);
+                        }
+                    }
+                } else {
+                    schedulerCard.classList.remove('todo-card--done');
+                    if (details) {
+                        details.classList.add('d-none');
+                    }
+                    if (detailText) {
+                        detailText.textContent = '';
+                    }
+                    if (empty) {
+                        empty.classList.remove('d-none');
+                    }
+                    if (actions) {
+                        actions.classList.add('d-none');
+                        actions.innerHTML = '';
+                    }
+                }
+
+                bindCancelForms();
+            };
+
+            const bindCancelForms = function () {
+                const cancelForms = schedulerCard ? schedulerCard.querySelectorAll('.js-meeting-cancel') : [];
+                cancelForms.forEach(function (form) {
+                    if (form.dataset.bound === 'true') {
+                        return;
+                    }
+                    form.dataset.bound = 'true';
+                    form.addEventListener('submit', function (event) {
+                        event.preventDefault();
+                        const csrfInput = form.querySelector('input[name=csrfmiddlewaretoken]');
+                        const csrfToken = csrfInput ? csrfInput.value : csrfTokenGlobal;
+                        const formData = new FormData(form);
+                        const submitButton = form.querySelector('button[type="submit"]');
+
+                        if (!window.confirm('Cancel this mission slot? Within 48 hours fees may apply.')) {
+                            return;
+                        }
+
+                        if (submitButton) {
+                            submitButton.disabled = true;
+                            submitButton.textContent = 'Processing…';
+                        }
+
+                        fetch(form.action, {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                                'X-CSRFToken': csrfToken,
+                            },
+                            body: formData,
+                        })
+                            .then(function (response) {
+                                if (response.status === 403) {
+                                    return response.json().then(function (data) {
+                                        if (data && data.redirect_url) {
+                                            window.location.href = data.redirect_url;
+                                        }
+                                        throw new Error('Access denied');
+                                    });
+                                }
+                                if (!response.ok) {
+                                    throw new Error('Network response was not ok');
+                                }
+                                return response.json();
+                            })
+                            .then(function (data) {
+                                setSelectedMeetingUI(null);
+                                updateOptionStates(null);
+                                if (data.stage_unlocks && typeof data.stage_unlocks === 'object') {
+                                    if (Object.prototype.hasOwnProperty.call(data.stage_unlocks, 'flight-deck')) {
+                                        updateNav('flight-deck', Boolean(data.stage_unlocks['flight-deck']));
+                                    }
+                                    if (Object.prototype.hasOwnProperty.call(data.stage_unlocks, 'afterburner')) {
+                                        updateNav('afterburner', Boolean(data.stage_unlocks['afterburner']));
+                                    }
+                                }
+                            })
+                            .catch(function (error) {
+                                console.error('Unable to cancel meeting slot:', error);
+                                alert('We could not cancel this slot. Please contact support if the issue persists.');
+                            })
+                            .finally(function () {
+                                if (submitButton) {
+                                    submitButton.disabled = false;
+                                    submitButton.textContent = 'Cancel slot';
+                                }
+                            });
+                    });
+                });
+            };
+
+            bindCancelForms();
+
+            const initialActiveForm = document.querySelector('.js-meeting-select.meeting-option--active');
+            updateOptionStates(initialActiveForm ? initialActiveForm.dataset.meetingId : null);
+
+            const meetingForms = document.querySelectorAll('.js-meeting-select');
+            meetingForms.forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    if (!submitButton) {
+                        return;
+                    }
+                    const defaultLabel = submitButton.getAttribute('data-default-label') || 'Join this slot';
+                    if (!window.confirm('Confirm this live mission slot? Within 48 hours changes require a fee.')) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = defaultLabel;
+                        return;
+                    }
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Booking…';
+                    const csrfInput = form.querySelector('input[name=csrfmiddlewaretoken]');
+                    const csrfToken = csrfInput ? csrfInput.value : csrfTokenGlobal;
+                    const formData = new FormData(form);
+
+                    fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                            'X-CSRFToken': csrfToken,
+                        },
+                        body: formData,
+                    })
+                        .then(function (response) {
+                            if (response.status === 403) {
+                                return response.json().then(function (data) {
+                                    if (data && data.redirect_url) {
+                                        window.location.href = data.redirect_url;
+                                    }
+                                    throw new Error('Access denied');
+                                });
+                            }
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(function (data) {
+                            updateOptionStates(data.selected_meeting ? data.selected_meeting.id : null);
+                            if (data.selected_meeting) {
+                                setSelectedMeetingUI(data.selected_meeting);
+                            }
+                            if (data.stage_unlocks && typeof data.stage_unlocks === 'object') {
+                                if (Object.prototype.hasOwnProperty.call(data.stage_unlocks, 'flight-deck')) {
+                                    updateNav('flight-deck', Boolean(data.stage_unlocks['flight-deck']));
+                                }
+                                if (Object.prototype.hasOwnProperty.call(data.stage_unlocks, 'afterburner')) {
+                                    updateNav('afterburner', Boolean(data.stage_unlocks['afterburner']));
+                                }
+                            }
+                        })
+                        .catch(function (error) {
+                            console.error('Unable to book meeting slot:', error);
+                            alert('We could not lock this slot. Please try again or contact support.');
+                        })
+                        .finally(function () {
+                            submitButton.disabled = false;
+                            const isActive = form.classList.contains('meeting-option--active');
+                            submitButton.textContent = isActive ? 'Selected' : defaultLabel;
+                        });
+                });
+            });
         })();
     </script>
+    {% if stage_key == 'flight-deck' %}
+        <script>
+            (function () {
+                const recorderCard = document.querySelector('.js-recorder-card');
+                if (!recorderCard || !navigator.mediaDevices) {
+                    return;
+                }
+
+                let mediaRecorder = null;
+                let mediaRecorderMimeType = '';
+                let activeStream = null;
+                let recordedChunks = [];
+                const statusEl = recorderCard.querySelector('.js-recorder-status');
+                const audioEl = recorderCard.querySelector('.recorder-audio');
+                const downloadEl = recorderCard.querySelector('.js-recorder-download');
+
+                const setStatus = function (text) {
+                    if (statusEl) {
+                        statusEl.textContent = text;
+                    }
+                };
+
+                const resetRecording = function () {
+                    recordedChunks = [];
+                    if (audioEl) {
+                        audioEl.src = '';
+                        audioEl.hidden = true;
+                    }
+                    if (downloadEl) {
+                        downloadEl.hidden = true;
+                        downloadEl.removeAttribute('href');
+                    }
+                };
+
+                const handleDataAvailable = function (event) {
+                    if (event.data && event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+
+                const pickMimeType = function () {
+                    const candidates = [
+                        'audio/webm;codecs=opus',
+                        'audio/webm',
+                        'audio/mp4',
+                        'audio/mp4;codecs=mp4a.40.2',
+                    ];
+                    for (let i = 0; i < candidates.length; i += 1) {
+                        if (MediaRecorder.isTypeSupported(candidates[i])) {
+                            return candidates[i];
+                        }
+                    }
+                    return '';
+                };
+
+                const startRecording = function () {
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        setStatus('Recording is not supported in this browser.');
+                        return;
+                    }
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        setStatus('Recording already in progress… hit stop to finish.');
+                        return;
+                    }
+                    navigator.mediaDevices.getUserMedia({ audio: true })
+                        .then(function (stream) {
+                            resetRecording();
+                            activeStream = stream;
+                            mediaRecorderMimeType = pickMimeType();
+                            const options = mediaRecorderMimeType ? { mimeType: mediaRecorderMimeType } : undefined;
+                            try {
+                                mediaRecorder = new MediaRecorder(stream, options);
+                            } catch (error) {
+                                console.error('Unable to create media recorder:', error);
+                                setStatus('Recorder unavailable. Try a different browser.');
+                                return;
+                            }
+                            mediaRecorder.ondataavailable = handleDataAvailable;
+                            mediaRecorder.onstop = function () {
+                                const blobType = mediaRecorderMimeType || 'audio/webm';
+                                const blob = new Blob(recordedChunks, { type: blobType });
+                                const url = URL.createObjectURL(blob);
+                                if (audioEl) {
+                                    audioEl.src = url;
+                                    try {
+                                        audioEl.load();
+                                    } catch (error) {
+                                        console.error('Unable to load audio element:', error);
+                                    }
+                                    audioEl.hidden = false;
+                                }
+                                if (downloadEl) {
+                                    downloadEl.href = url;
+                                    downloadEl.hidden = false;
+                                }
+                                setStatus('Recording ready. Hit play or download.');
+                                mediaRecorder = null;
+                            };
+                            mediaRecorder.start();
+                            setStatus('Recording… hit stop when you are ready.');
+                        })
+                        .catch(function (error) {
+                            console.error('Unable to access microphone:', error);
+                            setStatus('Microphone permission denied. Please enable audio access.');
+                        });
+                };
+
+                const stopRecording = function () {
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                        setStatus('Processing recording…');
+                    }
+                    if (activeStream) {
+                        activeStream.getTracks().forEach(function (track) {
+                            track.stop();
+                        });
+                        activeStream = null;
+                    }
+                };
+
+                const playRecording = function () {
+                    if (audioEl && audioEl.src) {
+                        audioEl.play();
+                    }
+                };
+
+                if (audioEl) {
+                    audioEl.addEventListener('error', function () {
+                        setStatus('Playback error. Try downloading the clip and playing locally.');
+                    });
+                }
+
+                recorderCard.addEventListener('click', function (event) {
+                    const control = event.target.closest('[data-recorder-action]');
+                    if (!control) {
+                        return;
+                    }
+                    event.preventDefault();
+                    const action = control.getAttribute('data-recorder-action');
+                    if (action === 'start') {
+                        startRecording();
+                    } else if (action === 'stop') {
+                        stopRecording();
+                    } else if (action === 'play') {
+                        playRecording();
+                    }
+                });
+            })();
+        </script>
+    {% endif %}
 {% endblock %}

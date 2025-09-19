@@ -132,6 +132,25 @@ class CourseEnrollmentAdmin(admin.ModelAdmin):
     search_fields = ("profile__display_name", "course__title")
     autocomplete_fields = ("profile", "course")
     readonly_fields = ("joined_at",)
+
+
+@admin.register(models.ModuleLiveMeeting)
+class ModuleLiveMeetingAdmin(admin.ModelAdmin):
+    list_display = ("module", "scheduled_for", "duration_minutes", "title")
+    list_filter = ("module__course", "scheduled_for")
+    search_fields = ("title", "module__title", "module__course__title")
+    autocomplete_fields = ("module",)
+    ordering = ("module", "scheduled_for")
+
+
+@admin.register(models.ModuleLiveMeetingSignup)
+class ModuleLiveMeetingSignupAdmin(admin.ModelAdmin):
+    list_display = ("profile", "module", "meeting", "created_at")
+    list_filter = ("module__course", "created_at")
+    search_fields = ("profile__display_name", "module__title", "meeting__title")
+    autocomplete_fields = ("profile", "module", "meeting")
+    ordering = ("-created_at",)
+
 admin.site.site_header = "FOREIGN Command Center"
 admin.site.site_title = "FOREIGN Admin"
 admin.site.index_title = "Operations Dashboard"

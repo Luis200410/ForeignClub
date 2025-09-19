@@ -1,4 +1,6 @@
 """Views powering the FOREIGN experience."""
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView
@@ -25,6 +27,8 @@ from .models import (
     Course,
     CourseEnrollment,
     CourseModule,
+    ModuleLiveMeeting,
+    ModuleLiveMeetingSignup,
     ModuleStageProgress,
     Profile,
     SkillAssessment,
@@ -152,6 +156,25 @@ STAGE_EXTENSION_MAP = {
         "promise": "We close every loop with proof—so confidence stays high and every next mission feels inevitable.",
     },
 }
+
+NOTEBOOK_LM_APP_URL = "https://notebooklm.google.com/app"
+
+FLIGHT_DECK_TASKS = [
+    {
+        "title": "Schedule your live mission",
+        "subtitle": "Lock your Friday studio slot directly from this page.",
+    },
+    {
+        "title": "Prep your NotebookLM workspace",
+        "subtitle": "Spin up a fresh set of notes for this week's mission. Capture vocabulary, new expressions, and personal takeaways inside NotebookLM so you can revisit them later.",
+        "url": NOTEBOOK_LM_APP_URL,
+        "link_label": "NotebookLM Notes",
+    },
+    {
+        "title": "Get your recorder ready",
+        "subtitle": "Capture your live mission for reflection and evidence uploads",
+    },
+]
 
 PROGRAM_STAGE_DETAILS = [
     {
@@ -366,7 +389,59 @@ def _get_stage_unlocks(user, course, module, enrollment=None, can_view_course=Fa
 
     stage_one_complete = required > 0 and all(bool(flag) for flag in tasks[:required])
     unlocks["flight-deck"] = stage_one_complete
-    unlocks["afterburner"] = False
+
+    flight_tasks_required = _get_stage_required_tasks(
+        ModuleStageProgress.StageKey.FLIGHT_DECK, module
+    )
+    if flight_tasks_required:
+        flight_progress = None
+        try:
+            flight_progress = ModuleStageProgress.objects.get(
+                profile=profile,
+                module=module,
+                stage_key=ModuleStageProgress.StageKey.FLIGHT_DECK,
+            )
+            flight_tasks = list(flight_progress.completed_tasks or [])
+        except ModuleStageProgress.DoesNotExist:
+            flight_tasks = []
+
+        if len(flight_tasks) < flight_tasks_required:
+            flight_tasks.extend([False] * (flight_tasks_required - len(flight_tasks)))
+        elif len(flight_tasks) > flight_tasks_required:
+            flight_tasks = flight_tasks[:flight_tasks_required]
+
+        meetings_exist = ModuleLiveMeetingSignup.objects.filter(
+            profile=profile,
+            module=module,
+        ).exists()
+
+        if meetings_exist:
+            if not flight_tasks:
+                flight_tasks = [False] * flight_tasks_required
+            if not flight_tasks[0]:
+                flight_tasks[0] = True
+                if flight_progress is None:
+                    flight_progress = ModuleStageProgress.objects.create(
+                        profile=profile,
+                        module=module,
+                        stage_key=ModuleStageProgress.StageKey.FLIGHT_DECK,
+                        completed_tasks=flight_tasks,
+                    )
+                else:
+                    flight_progress.completed_tasks = flight_tasks
+                    flight_progress.save(update_fields=["completed_tasks", "updated_at"])
+
+        elif flight_tasks and flight_tasks[0]:
+            flight_tasks[0] = False
+            if flight_progress is not None:
+                flight_progress.completed_tasks = flight_tasks
+                flight_progress.save(update_fields=["completed_tasks", "updated_at"])
+
+        flight_stage_complete = all(bool(flag) for flag in flight_tasks[:flight_tasks_required])
+    else:
+        flight_stage_complete = False
+
+    unlocks["afterburner"] = flight_stage_complete
     return unlocks
 
 
@@ -402,6 +477,14 @@ def _is_module_unlocked(user, course, module, enrollment=None, can_view_course=F
         can_view_course=can_view_course,
     )
     return bool(previous_unlocks.get("flight-deck", False))
+
+
+def _get_stage_required_tasks(stage_key: str, module: CourseModule) -> int:
+    if stage_key == ModuleStageProgress.StageKey.LAUNCH_PAD:
+        return len(PRE_SESSION_TASKS)
+    if stage_key == ModuleStageProgress.StageKey.FLIGHT_DECK:
+        return len(FLIGHT_DECK_TASKS)
+    return 0
 
 
 class CourseDetailView(PlacementRequiredMixin, TemplateView):
@@ -498,7 +581,8 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
                 f"Complete Week {previous_week} Launch Pad missions to unlock Week {module.order}.",
             )
             return redirect("course_module", slug=slug, order=previous_week)
-        sessions = module.sessions.all().order_by("order")
+        sessions_qs = module.sessions.all().order_by("order")
+        sessions = list(sessions_qs)
         total_modules = course.modules.count()
         previous_order = order - 1 if order > 1 else None
         next_order = order + 1 if order < total_modules else None
@@ -580,7 +664,8 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             messages.warning(self.request, "Complete the previous stage to unlock this mission.")
             return redirect("course_module", slug=slug, order=order)
 
-        sessions = module.sessions.all().order_by("order")
+        sessions_qs = module.sessions.all().order_by("order")
+        sessions = list(sessions_qs)
 
         pre_session_resources = [
             {
@@ -608,25 +693,85 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
 
         profile = getattr(user, "profile", None)
         launch_tasks = []
-        if stage_key == ModuleStageProgress.StageKey.LAUNCH_PAD and profile:
-            progress, _ = ModuleStageProgress.objects.get_or_create(
-                profile=profile,
-                module=module,
-                stage_key=ModuleStageProgress.StageKey.LAUNCH_PAD,
-            )
-            tasks_state = list(progress.completed_tasks or [])
-            required = len(PRE_SESSION_TASKS)
-            if len(tasks_state) < required:
-                tasks_state.extend([False] * (required - len(tasks_state)))
-            for idx, resource in enumerate(pre_session_resources, start=1):
-                launch_tasks.append(
-                    {
+        flight_deck_tasks = []
+        existing_signup = None
+        meeting_options = []
+        selected_meeting = None
+        can_cancel_meeting = False
+        if profile:
+            if stage_key == ModuleStageProgress.StageKey.LAUNCH_PAD:
+                progress, _ = ModuleStageProgress.objects.get_or_create(
+                    profile=profile,
+                    module=module,
+                    stage_key=ModuleStageProgress.StageKey.LAUNCH_PAD,
+                )
+                tasks_state = list(progress.completed_tasks or [])
+                required = len(PRE_SESSION_TASKS)
+                if len(tasks_state) < required:
+                    tasks_state.extend([False] * (required - len(tasks_state)))
+                elif len(tasks_state) > required:
+                    tasks_state = tasks_state[:required]
+                for idx, resource in enumerate(pre_session_resources, start=1):
+                    launch_tasks.append(
+                        {
+                            "index": idx,
+                            "title": resource["title"],
+                            "url": resource["url"],
+                            "completed": tasks_state[idx - 1],
+                        }
+                    )
+            elif stage_key == ModuleStageProgress.StageKey.FLIGHT_DECK:
+                progress, _ = ModuleStageProgress.objects.get_or_create(
+                    profile=profile,
+                    module=module,
+                    stage_key=ModuleStageProgress.StageKey.FLIGHT_DECK,
+                )
+                tasks_state = list(progress.completed_tasks or [])
+                required = len(FLIGHT_DECK_TASKS)
+                if len(tasks_state) < required:
+                    tasks_state.extend([False] * (required - len(tasks_state)))
+                elif len(tasks_state) > required:
+                    tasks_state = tasks_state[:required]
+                existing_signup = ModuleLiveMeetingSignup.objects.filter(
+                    profile=profile,
+                    module=module,
+                ).select_related("meeting").first()
+                scheduler_complete = bool(existing_signup)
+                meeting_options = list(
+                    ModuleLiveMeeting.objects.filter(module=module).order_by("scheduled_for")
+                )
+                if existing_signup:
+                    selected_meeting = existing_signup.meeting
+                    can_cancel_meeting = selected_meeting.scheduled_for - timezone.now() >= timedelta(hours=48)
+                if scheduler_complete != bool(tasks_state[0]):
+                    tasks_state[0] = scheduler_complete
+                    progress.completed_tasks = tasks_state
+                    progress.save(update_fields=["completed_tasks", "updated_at"])
+                for idx, task in enumerate(FLIGHT_DECK_TASKS, start=1):
+                    task_type = "scheduler" if idx == 1 else ("notebook" if idx == 2 else "recorder")
+                    entry = {
                         "index": idx,
-                        "title": resource["title"],
-                        "url": resource["url"],
+                        "type": task_type,
+                        "title": task["title"],
+                        "subtitle": task.get("subtitle"),
+                        "url": task.get("url"),
+                        "link_label": task.get("link_label", "Open Link"),
                         "completed": tasks_state[idx - 1],
                     }
-                )
+                    if task_type == "scheduler":
+                        entry.update(
+                            {
+                                "meeting_options": meeting_options,
+                                "selected_meeting_id": selected_meeting.id if selected_meeting else None,
+                                "selected_meeting": selected_meeting,
+                                "can_cancel": can_cancel_meeting,
+                                "cancel_url": reverse(
+                                    "course_module_meeting_cancel",
+                                    args=[course.slug, module.order],
+                                ),
+                            }
+                        )
+                    flight_deck_tasks.append(entry)
 
         context.update(
             {
@@ -641,10 +786,215 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                 "post_session_loops": post_session_loops,
                 "stage_unlocks": stage_unlocks,
                 "launch_pad_tasks": launch_tasks,
+                "flight_deck_tasks": flight_deck_tasks,
+                "selected_meeting": selected_meeting,
                 "can_view_course": can_view_course,
             }
         )
         return context
+
+
+class ModuleMeetingSignupView(PlacementRequiredMixin, View):
+    login_url = "login"
+
+    def post(self, request, slug: str, order: int):
+        course = get_object_or_404(
+            Course.objects.prefetch_related(
+                Prefetch(
+                    "modules",
+                    queryset=CourseModule.objects.prefetch_related("sessions").order_by("order"),
+                )
+            ),
+            slug=slug,
+            is_published=True,
+        )
+        user = request.user
+        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        if not can_view_course:
+            messages.warning(request, "Finish your application to unlock weekly missions.")
+            return redirect("course_detail", slug=slug)
+
+        module = get_object_or_404(
+            CourseModule.objects.prefetch_related("sessions"),
+            course=course,
+            order=order,
+        )
+
+        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+            previous_week = max(1, module.order - 1)
+            messages.warning(
+                request,
+                f"Complete Week {previous_week} Launch Pad missions to unlock Week {module.order}.",
+            )
+            return redirect("course_module", slug=slug, order=previous_week)
+
+        profile = getattr(user, "profile", None)
+        if profile is None:
+            messages.error(request, "Complete your profile to track progress.")
+            return redirect("course_module_stage", slug=slug, order=order, stage=ModuleStageProgress.StageKey.FLIGHT_DECK)
+
+        meeting_id = request.POST.get("meeting_id")
+        if not meeting_id:
+            messages.error(request, "Select a meeting slot to continue.")
+            return redirect(
+                "course_module_stage",
+                slug=slug,
+                order=order,
+                stage=ModuleStageProgress.StageKey.FLIGHT_DECK,
+            )
+
+        meeting = get_object_or_404(ModuleLiveMeeting, id=meeting_id, module=module)
+
+        ModuleLiveMeetingSignup.objects.update_or_create(
+            profile=profile,
+            module=module,
+            defaults={"meeting": meeting},
+        )
+
+        progress, _ = ModuleStageProgress.objects.get_or_create(
+            profile=profile,
+            module=module,
+            stage_key=ModuleStageProgress.StageKey.FLIGHT_DECK,
+        )
+        tasks_state = list(progress.completed_tasks or [])
+        required = _get_stage_required_tasks(ModuleStageProgress.StageKey.FLIGHT_DECK, module)
+        if len(tasks_state) < required:
+            tasks_state.extend([False] * (required - len(tasks_state)))
+        tasks_state[0] = True
+        progress.completed_tasks = tasks_state[:required]
+        progress.save(update_fields=["completed_tasks", "updated_at"])
+
+        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse(
+                {
+                    "selected_meeting": {
+                        "id": meeting.id,
+                        "title": meeting.title,
+                        "scheduled_for": timezone.localtime(meeting.scheduled_for).strftime("%b %d, %Y · %H:%M"),
+                        "duration_minutes": meeting.duration_minutes,
+                        "can_cancel": meeting.scheduled_for - timezone.now() >= timedelta(hours=48),
+                    },
+                    "stage_unlocks": stage_unlocks,
+                }
+            )
+
+        messages.success(request, "Live mission locked in. See you in Flight Deck.")
+        return redirect(
+            "course_module_stage",
+            slug=slug,
+            order=order,
+            stage=ModuleStageProgress.StageKey.FLIGHT_DECK,
+        )
+
+
+class ModuleMeetingCancelView(PlacementRequiredMixin, View):
+    login_url = "login"
+
+    def post(self, request, slug: str, order: int):
+        course = get_object_or_404(
+            Course.objects.prefetch_related(
+                Prefetch(
+                    "modules",
+                    queryset=CourseModule.objects.prefetch_related("sessions").order_by("order"),
+                )
+            ),
+            slug=slug,
+            is_published=True,
+        )
+        user = request.user
+        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        if not can_view_course:
+            messages.warning(request, "Finish your application to unlock weekly missions.")
+            return redirect("course_detail", slug=slug)
+
+        module = get_object_or_404(
+            CourseModule.objects.prefetch_related("sessions"),
+            course=course,
+            order=order,
+        )
+
+        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+            previous_week = max(1, module.order - 1)
+            messages.warning(
+                request,
+                f"Complete Week {previous_week} Launch Pad missions to unlock Week {module.order}.",
+            )
+            return redirect("course_module", slug=slug, order=previous_week)
+
+        profile = getattr(user, "profile", None)
+        if profile is None:
+            messages.error(request, "Complete your profile to track progress.")
+            return redirect("course_module_stage", slug=slug, order=order, stage=ModuleStageProgress.StageKey.FLIGHT_DECK)
+
+        signup = ModuleLiveMeetingSignup.objects.filter(profile=profile, module=module).select_related("meeting").first()
+        if signup is None:
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({"error": "not_registered"}, status=400)
+            messages.info(request, "You are not booked for this mission.")
+            return redirect(
+                "course_module_stage",
+                slug=slug,
+                order=order,
+                stage=ModuleStageProgress.StageKey.FLIGHT_DECK,
+            )
+
+        meeting = signup.meeting
+        meeting_id = request.POST.get("meeting_id")
+        if meeting_id and str(meeting.id) != str(meeting_id):
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({"error": "mismatch"}, status=400)
+            messages.error(request, "We couldn't match that booking. Please refresh and try again.")
+            return redirect(
+                "course_module_stage",
+                slug=slug,
+                order=order,
+                stage=ModuleStageProgress.StageKey.FLIGHT_DECK,
+            )
+
+        if meeting.scheduled_for - timezone.now() < timedelta(hours=48):
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({"error": "window_closed"}, status=400)
+            messages.error(request, "Changes within 48 hours require a fee. Contact support to adjust.")
+            return redirect(
+                "course_module_stage",
+                slug=slug,
+                order=order,
+                stage=ModuleStageProgress.StageKey.FLIGHT_DECK,
+            )
+
+        signup.delete()
+
+        progress, _ = ModuleStageProgress.objects.get_or_create(
+            profile=profile,
+            module=module,
+            stage_key=ModuleStageProgress.StageKey.FLIGHT_DECK,
+        )
+        tasks_state = list(progress.completed_tasks or [])
+        required = _get_stage_required_tasks(ModuleStageProgress.StageKey.FLIGHT_DECK, module)
+        if len(tasks_state) < required:
+            tasks_state.extend([False] * (required - len(tasks_state)))
+        tasks_state[0] = False
+        progress.completed_tasks = tasks_state[:required]
+        progress.save(update_fields=["completed_tasks", "updated_at"])
+
+        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse(
+                {
+                    "stage_unlocks": stage_unlocks,
+                }
+            )
+
+        messages.info(request, "You're no longer booked. Choose another slot when you're ready.")
+        return redirect(
+            "course_module_stage",
+            slug=slug,
+            order=order,
+            stage=ModuleStageProgress.StageKey.FLIGHT_DECK,
+        )
 
 
 class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
@@ -652,7 +1002,11 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
 
     def post(self, request, slug: str, order: int, stage: str, index: int):
         stage_key = stage
-        if stage_key != ModuleStageProgress.StageKey.LAUNCH_PAD:
+        allowed_stage_keys = {
+            ModuleStageProgress.StageKey.LAUNCH_PAD,
+            ModuleStageProgress.StageKey.FLIGHT_DECK,
+        }
+        if stage_key not in allowed_stage_keys:
             raise Http404
 
         course = get_object_or_404(
@@ -703,15 +1057,20 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
         progress, _ = ModuleStageProgress.objects.get_or_create(
             profile=profile,
             module=module,
-            stage_key=ModuleStageProgress.StageKey.LAUNCH_PAD,
+            stage_key=stage_key,
         )
 
         tasks_state = list(progress.completed_tasks or [])
-        required = len(PRE_SESSION_TASKS)
+        required = _get_stage_required_tasks(stage_key, module)
         if len(tasks_state) < required:
             tasks_state.extend([False] * (required - len(tasks_state)))
+        elif len(tasks_state) > required:
+            tasks_state = tasks_state[:required]
 
         if index < 1 or index > required:
+            raise Http404
+
+        if stage_key == ModuleStageProgress.StageKey.FLIGHT_DECK and index == 1:
             raise Http404
 
         task_idx = index - 1
