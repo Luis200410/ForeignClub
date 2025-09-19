@@ -4,7 +4,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Prefetch
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -366,8 +366,42 @@ def _get_stage_unlocks(user, course, module, enrollment=None, can_view_course=Fa
 
     stage_one_complete = required > 0 and all(bool(flag) for flag in tasks[:required])
     unlocks["flight-deck"] = stage_one_complete
-    unlocks["afterburner"] = stage_one_complete
+    unlocks["afterburner"] = False
     return unlocks
+
+
+def _is_module_unlocked(user, course, module, enrollment=None, can_view_course=False):
+    if getattr(user, "is_staff", False) or getattr(user, "is_superuser", False):
+        return True
+
+    if module.order <= 1:
+        return True
+
+    previous_order = module.order - 1
+    previous_module = None
+
+    if hasattr(course, "modules"):
+        for candidate in course.modules.all():
+            if candidate.order == previous_order:
+                previous_module = candidate
+                break
+
+    if previous_module is None:
+        previous_module = (
+            CourseModule.objects.filter(course=course, order=previous_order).first()
+        )
+
+    if previous_module is None:
+        return True
+
+    previous_unlocks = _get_stage_unlocks(
+        user,
+        course,
+        previous_module,
+        enrollment=enrollment,
+        can_view_course=can_view_course,
+    )
+    return bool(previous_unlocks.get("flight-deck", False))
 
 
 class CourseDetailView(PlacementRequiredMixin, TemplateView):
@@ -457,6 +491,13 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
             course=course,
             order=order,
         )
+        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+            previous_week = max(1, module.order - 1)
+            messages.warning(
+                self.request,
+                f"Complete Week {previous_week} Launch Pad missions to unlock Week {module.order}.",
+            )
+            return redirect("course_module", slug=slug, order=previous_week)
         sessions = module.sessions.all().order_by("order")
         total_modules = course.modules.count()
         previous_order = order - 1 if order > 1 else None
@@ -485,6 +526,7 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
                 "next_order": next_order,
                 "stage_cards": stage_cards,
                 "stage_unlocks": stage_unlocks,
+                "flight_deck_unlocked": stage_unlocks.get("flight-deck", False),
                 "can_view_course": can_view_course,
             }
         )
@@ -525,6 +567,13 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             course=course,
             order=order,
         )
+        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+            previous_week = max(1, module.order - 1)
+            messages.warning(
+                self.request,
+                f"Complete Week {previous_week} Launch Pad missions to unlock Week {module.order}.",
+            )
+            return redirect("course_module", slug=slug, order=previous_week)
         stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
 
         if stage_key != "launch-pad" and not stage_unlocks.get(stage_key, False):
@@ -627,6 +676,24 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
             course=course,
             order=order,
         )
+        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+            previous_week = max(1, module.order - 1)
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse(
+                    {
+                        "error": "Module locked",
+                        "redirect_url": reverse(
+                            "course_module",
+                            args=[course.slug, previous_week],
+                        ),
+                    },
+                    status=403,
+                )
+            messages.warning(
+                request,
+                f"Complete Week {previous_week} Launch Pad missions to unlock Week {module.order}.",
+            )
+            return redirect("course_module", slug=slug, order=previous_week)
 
         profile = getattr(user, "profile", None)
         if profile is None:
@@ -651,6 +718,18 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
         tasks_state[task_idx] = not bool(tasks_state[task_idx])
         progress.completed_tasks = tasks_state
         progress.save(update_fields=["completed_tasks", "updated_at"])
+
+        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse(
+                {
+                    "completed": bool(tasks_state[task_idx]),
+                    "completed_count": sum(1 for flag in tasks_state if flag),
+                    "required": required,
+                    "stage_unlocks": stage_unlocks,
+                }
+            )
 
         return redirect("course_module_stage", slug=slug, order=order, stage=stage_key)
 

@@ -56,7 +56,28 @@
                     {% endif %}
                     <a class="btn btn-light" href="{% url 'course_detail' course.slug %}">Back to course overview</a>
                     {% if next_order %}
-                        <a class="btn btn-outline-light" href="{% url 'course_module' course.slug next_order %}">Week {{ next_order }} →</a>
+                        {% if flight_deck_unlocked %}
+                            <a class="btn btn-outline-light d-flex align-items-center justify-content-between" href="{% url 'course_module' course.slug next_order %}">
+                                <span>Week {{ next_order }} →</span>
+                            </a>
+                        {% else %}
+                            <span class="btn btn-outline-light disabled stage-next-btn stage-next-btn--locked d-flex align-items-center justify-content-between" role="button" aria-disabled="true">
+                                <span>Week {{ next_order }} →</span>
+                                <span class="module-lock module-lock--compact" aria-hidden="true">
+                                    <svg class="lock-icon lock-icon--closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                                        <rect x="5.5" y="10.5" width="13" height="9" rx="2.5" />
+                                        <path d="M8.5 10.5v-2.8a3.5 3.5 0 0 1 7 0v2.8" />
+                                        <circle cx="12" cy="15.5" r="1.4" />
+                                    </svg>
+                                    <svg class="lock-icon lock-icon--open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                                        <rect x="5.5" y="10.5" width="13" height="9" rx="2.5" />
+                                        <path d="M15.5 10.5v-2.8a3.5 3.5 0 1 0-7 0" />
+                                        <circle cx="12" cy="15.5" r="1.4" />
+                                    </svg>
+                                </span>
+                            </span>
+                            <span class="stage-next-note text-white-50 small">Complete Launch Pad to unlock Week {{ next_order }}</span>
+                        {% endif %}
                     {% endif %}
                 </div>
             </aside>

@@ -1656,8 +1656,12 @@ section {
     }
 }
 
+
 .stage-nav-link {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
     padding: 1.2rem 1.4rem;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 18px;
@@ -1685,6 +1689,12 @@ section {
     background: rgba(255, 255, 255, 0.04);
 }
 
+.stage-nav-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
 .stage-nav-label {
     display: block;
     font-size: 0.68rem;
@@ -1695,7 +1705,72 @@ section {
 
 .stage-nav-title {
     font-weight: 600;
-    margin-top: 0.35rem;
+    margin-top: 0;
+}
+
+.stage-nav-lock {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.stage-nav-link--locked .stage-nav-lock {
+    color: rgba(255, 255, 255, 0.48);
+}
+
+.stage-nav-link:not(.stage-nav-link--locked) .stage-nav-lock {
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.module-lock--compact {
+    width: 26px;
+    height: 26px;
+}
+
+.module-lock--compact svg {
+    stroke-width: 1.4;
+}
+
+.stage-nav-link--locked .module-lock .lock-icon--closed,
+.stage-next-btn--locked .module-lock .lock-icon--closed {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    animation: none;
+}
+
+.stage-nav-link--locked .module-lock .lock-icon--open,
+.stage-next-btn--locked .module-lock .lock-icon--open {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.6);
+    animation: none;
+}
+
+.stage-nav-link:not(.stage-nav-link--locked) .module-lock .lock-icon--open {
+    opacity: 1;
+    animation: unlockPop 0.6s ease forwards;
+}
+
+.stage-nav-link:not(.stage-nav-link--locked) .module-lock .lock-icon--closed {
+    opacity: 0;
+    animation: lockFade 0.6s ease forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .stage-nav-link:not(.stage-nav-link--locked) .module-lock .lock-icon--open,
+    .stage-nav-link:not(.stage-nav-link--locked) .module-lock .lock-icon--closed {
+        animation: none;
+    }
+}
+
+.stage-next-btn {
+    cursor: not-allowed;
+}
+
+.stage-next-note {
+    display: inline-block;
+    margin-top: 0.4rem;
 }
 
 .todo-grid {
