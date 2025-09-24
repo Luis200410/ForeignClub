@@ -417,6 +417,42 @@ class ModuleStageProgress(models.Model):
         return f"{self.profile.display_name} · {self.module} · {self.stage_key}"
 
 
+class ModuleGame(models.Model):
+    """Configurable learning games attached to a module's stage."""
+
+    class GameType(models.TextChoices):
+        LETTER_SEQUENCE = "letter-sequence", "Letter Sequence"
+
+    module = models.ForeignKey(
+        CourseModule,
+        on_delete=models.CASCADE,
+        related_name="games",
+    )
+    title = models.CharField(max_length=160, blank=True)
+    description = models.TextField(blank=True)
+    game_type = models.CharField(
+        max_length=32,
+        choices=GameType.choices,
+        default=GameType.LETTER_SEQUENCE,
+    )
+    word = models.CharField(max_length=64, blank=True)
+    definition = models.TextField(blank=True)
+    order = models.PositiveSmallIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["module", "order"]
+        verbose_name = "Module game"
+        verbose_name_plural = "Module games"
+        unique_together = ("module", "order")
+
+    def __str__(self) -> str:
+        base = self.title or dict(ModuleGame.GameType.choices).get(self.game_type, "Game")
+        return f"{self.module} · {base}"
+
+
 class ModuleLiveMeeting(models.Model):
     """Admin-configured live meeting option for a module."""
 

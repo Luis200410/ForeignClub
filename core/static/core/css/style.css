@@ -2024,6 +2024,116 @@ section {
     width: 100%;
 }
 
+.afterburner-techniques-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-bottom: 1.6rem;
+}
+
+.afterburner-card,
+.afterburner-game-card {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 22px;
+    padding: 1.4rem 1.6rem;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(18px);
+    transition: transform 0.3s var(--transition-base), border-color 0.3s var(--transition-base);
+}
+
+.afterburner-card:hover,
+.afterburner-card:focus,
+.afterburner-game-card:hover,
+.afterburner-game-card:focus {
+    transform: translateY(-6px);
+    border-color: rgba(255, 255, 255, 0.28);
+}
+
+.afterburner-card--done {
+    border-color: rgba(52, 199, 89, 0.32);
+    background: linear-gradient(135deg, rgba(52, 199, 89, 0.18), rgba(255, 255, 255, 0.05));
+}
+
+.afterburner-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.afterburner-card .todo-check {
+    align-self: flex-end;
+    margin-top: 0.75rem;
+}
+
+.afterburner-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.afterburner-step {
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.letter-sequence-game {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.letter-sequence__bank,
+.letter-sequence__answer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.letter-sequence__answer {
+    min-height: 44px;
+    align-items: center;
+    padding: 0.55rem 0.75rem;
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+    border-radius: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+}
+
+.letter-sequence__controls {
+    display: flex;
+    gap: 0.6rem;
+}
+
+.letter-tile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.88);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.2s var(--transition-base), border-color 0.2s var(--transition-base), background 0.2s var(--transition-base);
+}
+
+.letter-tile:hover,
+.letter-tile:focus {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.36);
+}
+
+.letter-tile--used {
+    opacity: 0.35;
+    pointer-events: none;
+}
+
 .post-grid {
     display: grid;
     gap: 1.5rem;

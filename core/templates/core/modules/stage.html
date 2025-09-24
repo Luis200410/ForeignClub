@@ -214,24 +214,68 @@
                             </div>
                             <p class="text-white-50 small mb-0">Blend games with spaced repetition to encode what you learned.</p>
                         </div>
-                        <div class="post-grid">
-                            <div>
-                                <h3 class="h6 mb-2">Arcade Boosters</h3>
-                                <ul class="post-list">
-                                    {% for item in post_session_games %}
-                                        <li>{{ item }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                            <div>
-                                <h3 class="h6 mb-2">Repetition Loops</h3>
-                                <ul class="post-list">
-                                    {% for item in post_session_loops %}
-                                        <li>{{ item }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
+                        <div class="afterburner-techniques-grid">
+                            {% for technique in afterburner_cards %}
+                                <form
+                                    class="todo-card afterburner-card js-stage-task-toggle{% if technique.completed %} afterburner-card--done{% endif %}"
+                                    action="{% url 'course_module_stage_task_toggle' course.slug module.order stage_key technique.index %}"
+                                    method="post"
+                                >
+                                    {% csrf_token %}
+                                    <div class="afterburner-card__body">
+                                        <span class="afterburner-step">0{{ technique.index }}</span>
+                                        <h3 class="h6 mb-1">{{ technique.title }}</h3>
+                                        <p class="text-white-50 small mb-0">{{ technique.description }}</p>
+                                    </div>
+                                    <button
+                                        class="todo-check{% if technique.completed %} todo-check--completed{% endif %}"
+                                        type="submit"
+                                        aria-pressed="{% if technique.completed %}true{% else %}false{% endif %}"
+                                    >
+                                        {% if technique.completed %}Done{% else %}Mark Done{% endif %}
+                                    </button>
+                                </form>
+                            {% endfor %}
                         </div>
+                        {% if afterburner_game_card %}
+                            <form
+                                class="todo-card afterburner-card afterburner-game-card js-stage-task-toggle{% if afterburner_game_card.completed %} afterburner-card--done{% endif %}"
+                                action="{% url 'course_module_stage_task_toggle' course.slug module.order stage_key afterburner_game_card.index %}"
+                                method="post"
+                            >
+                                {% csrf_token %}
+                                <div class="afterburner-card__body">
+                                    <span class="afterburner-step">0{{ afterburner_game_card.index }}</span>
+                                    <h3 class="h6 mb-2">{{ afterburner_game_card.title }}</h3>
+                                    <p class="text-white-50 small mb-2">{{ afterburner_game_card.description }}</p>
+                                    {% if afterburner_game_card.game_type == 'letter-sequence' %}
+                                        <div
+                                            class="letter-sequence-game"
+                                            data-word="{{ afterburner_game_card.word|default:''|upper }}"
+                                            data-definition="{{ afterburner_game_card.definition|default:''|escape }}"
+                                        >
+                                            <div class="letter-sequence__bank" data-letter-bank></div>
+                                            <div class="letter-sequence__answer" data-letter-answer></div>
+                                            <div class="letter-sequence__controls">
+                                                <button class="todo-check todo-check--ghost" type="button" data-letter-reset>Reset</button>
+                                            </div>
+                                            <p class="text-danger small mb-0 d-none" data-letter-error>Not quite right. Reset and try again.</p>
+                                            <p class="text-white-50 small mb-0 d-none" data-letter-definition></p>
+                                            <p class="text-white-50 small mb-0 d-none" data-letter-missing>Game content coming soon.</p>
+                                        </div>
+                                    {% else %}
+                                        <p class="text-white-50 small mb-0">Interactive game coming soon.</p>
+                                    {% endif %}
+                                </div>
+                                <button
+                                    class="todo-check{% if afterburner_game_card.completed %} todo-check--completed{% endif %}"
+                                    type="submit"
+                                    aria-pressed="{% if afterburner_game_card.completed %}true{% else %}false{% endif %}"
+                                >
+                                    {% if afterburner_game_card.completed %}Completed{% else %}Mark Done{% endif %}
+                                </button>
+                            </form>
+                        {% endif %}
                     </div>
                 {% endif %}
             </article>
@@ -389,6 +433,7 @@
             };
 
             toggleForms.forEach(function (form) {
+                form.dataset.autoLock = form.dataset.autoLock || 'false';
                 form.addEventListener('submit', function (event) {
                     event.preventDefault();
 
@@ -400,6 +445,7 @@
                     const csrfToken = csrfInput ? csrfInput.value : '';
                     const formData = new FormData(form);
 
+                    let shouldLock = false;
                     submitButton.disabled = true;
 
                     fetch(form.action, {
@@ -428,8 +474,15 @@
                         .then(function (data) {
                             const completed = Boolean(data.completed);
                             form.classList.toggle('todo-card--done', completed);
+                            form.classList.toggle('afterburner-card--done', completed);
                             submitButton.classList.toggle('todo-check--completed', completed);
-                            submitButton.textContent = completed ? 'Done' : 'Mark Done';
+                            shouldLock = form.dataset.autoLock === 'true';
+                            if (shouldLock) {
+                                submitButton.textContent = 'Completed';
+                                submitButton.disabled = true;
+                            } else {
+                                submitButton.textContent = completed ? 'Done' : 'Mark Done';
+                            }
                             submitButton.setAttribute('aria-pressed', completed ? 'true' : 'false');
 
                             if (data.stage_unlocks && typeof data.stage_unlocks === 'object') {
@@ -445,7 +498,9 @@
                             console.error('Unable to toggle task state via AJAX:', error);
                         })
                         .finally(function () {
-                            submitButton.disabled = false;
+                            if (!shouldLock) {
+                                submitButton.disabled = false;
+                            }
                         });
                 });
             });
@@ -694,6 +749,199 @@
                             submitButton.textContent = isActive ? 'Selected' : defaultLabel;
                         });
                 });
+            });
+
+            const letterGames = document.querySelectorAll('.letter-sequence-game');
+            letterGames.forEach(function (game) {
+                const form = game.closest('form');
+                if (!form) {
+                    return;
+                }
+
+                const submitButton = form.querySelector('button[type="submit"]');
+                const wordRaw = (game.dataset.word || '').trim();
+                const definition = (game.dataset.definition || '').trim();
+                const letterBankEl = game.querySelector('[data-letter-bank]');
+                const answerEl = game.querySelector('[data-letter-answer]');
+                const resetBtn = game.querySelector('[data-letter-reset]');
+                const errorEl = game.querySelector('[data-letter-error]');
+                const definitionEl = game.querySelector('[data-letter-definition]');
+                const missingEl = game.querySelector('[data-letter-missing]');
+
+                const normalized = wordRaw.replace(/\s+/g, '').toUpperCase();
+
+                const showDefinition = function () {
+                    if (definitionEl) {
+                        definitionEl.textContent = definition || 'Definition coming soon.';
+                        definitionEl.classList.remove('d-none');
+                    }
+                };
+
+                const showMissing = function () {
+                    if (missingEl) {
+                        missingEl.classList.remove('d-none');
+                    }
+                    if (letterBankEl) {
+                        letterBankEl.innerHTML = '';
+                    }
+                    if (answerEl) {
+                        answerEl.classList.add('d-none');
+                    }
+                    if (resetBtn) {
+                        resetBtn.classList.add('d-none');
+                    }
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                    }
+                };
+
+                if (!normalized) {
+                    showMissing();
+                    return;
+                }
+
+                const shuffle = function (array) {
+                    const copy = array.slice();
+                    for (let i = copy.length - 1; i > 0; i -= 1) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [copy[i], copy[j]] = [copy[j], copy[i]];
+                    }
+                    return copy;
+                };
+
+                const tileButtons = [];
+                const originalWord = normalized;
+                let scramble = [];
+                let currentAnswer = [];
+
+                const clearError = function () {
+                    if (errorEl) {
+                        errorEl.classList.add('d-none');
+                    }
+                };
+
+                const updateAnswer = function () {
+                    if (answerEl) {
+                        answerEl.classList.remove('d-none');
+                        answerEl.textContent = currentAnswer.join('');
+                    }
+                };
+
+                const disableTiles = function () {
+                    tileButtons.forEach(function (tile) {
+                        tile.disabled = true;
+                        tile.classList.add('letter-tile--used');
+                    });
+                };
+
+                const solvedState = function () {
+                    form.dataset.autoLock = 'true';
+                    currentAnswer = originalWord.split('');
+                    updateAnswer();
+                    disableTiles();
+                    if (resetBtn) {
+                        resetBtn.disabled = true;
+                    }
+                    showDefinition();
+                    clearError();
+                    form.classList.add('afterburner-card--done');
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                        submitButton.textContent = 'Completed';
+                    }
+                };
+
+                const renderTiles = function () {
+                    if (!letterBankEl) {
+                        return;
+                    }
+                    letterBankEl.innerHTML = '';
+                    tileButtons.length = 0;
+                    scramble.forEach(function (letter, index) {
+                        const tile = document.createElement('button');
+                        tile.type = 'button';
+                        tile.className = 'letter-tile';
+                        tile.textContent = letter;
+                        tile.dataset.index = String(index);
+                        tile.addEventListener('click', function () {
+                            if (tile.classList.contains('letter-tile--used')) {
+                                return;
+                            }
+                            tile.classList.add('letter-tile--used');
+                            tile.disabled = true;
+                            currentAnswer.push(letter);
+                            clearError();
+                            updateAnswer();
+                            checkCompletion();
+                        });
+                        tileButtons.push(tile);
+                        letterBankEl.appendChild(tile);
+                    });
+                };
+
+                const buildScramble = function () {
+                    if (originalWord.length <= 1) {
+                        scramble = originalWord.split('');
+                        return;
+                    }
+                    let attempt = shuffle(originalWord.split(''));
+                    if (attempt.join('') === originalWord) {
+                        attempt = shuffle(originalWord.split(''));
+                    }
+                    scramble = attempt;
+                };
+
+                const resetGame = function () {
+                    form.dataset.autoLock = 'false';
+                    currentAnswer = [];
+                    clearError();
+                    if (definitionEl) {
+                        definitionEl.classList.add('d-none');
+                        definitionEl.textContent = '';
+                    }
+                    if (resetBtn) {
+                        resetBtn.disabled = false;
+                    }
+                    buildScramble();
+                    renderTiles();
+                    updateAnswer();
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                        submitButton.textContent = 'Mark Done';
+                    }
+                };
+
+                const checkCompletion = function () {
+                    if (currentAnswer.join('') === originalWord) {
+                        if (!form.classList.contains('afterburner-card--done')) {
+                            solvedState();
+                            form.requestSubmit();
+                        }
+                    } else if (currentAnswer.length === originalWord.length) {
+                        if (errorEl) {
+                            errorEl.textContent = 'Not quite right. Reset and try again.';
+                            errorEl.classList.remove('d-none');
+                        }
+                    }
+                };
+
+                if (form.classList.contains('afterburner-card--done')) {
+                    solvedState();
+                    showDefinition();
+                    return;
+                }
+
+                if (submitButton) {
+                    submitButton.disabled = true;
+                }
+
+                resetGame();
+
+                if (resetBtn) {
+                    resetBtn.addEventListener('click', function () {
+                        resetGame();
+                    });
+                }
             });
         })();
     </script>

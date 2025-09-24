@@ -143,6 +143,15 @@ class ModuleLiveMeetingAdmin(admin.ModelAdmin):
     ordering = ("module", "scheduled_for")
 
 
+@admin.register(models.ModuleGame)
+class ModuleGameAdmin(admin.ModelAdmin):
+    list_display = ("module", "order", "game_type", "title", "is_active")
+    list_filter = ("game_type", "is_active", "module__course")
+    search_fields = ("title", "module__title", "module__course__title")
+    autocomplete_fields = ("module",)
+    ordering = ("module", "order")
+
+
 @admin.register(models.ModuleLiveMeetingSignup)
 class ModuleLiveMeetingSignupAdmin(admin.ModelAdmin):
     list_display = ("profile", "module", "meeting", "created_at")

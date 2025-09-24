@@ -27,6 +27,7 @@ from .models import (
     Course,
     CourseEnrollment,
     CourseModule,
+    ModuleGame,
     ModuleLiveMeeting,
     ModuleLiveMeetingSignup,
     ModuleStageProgress,
@@ -122,6 +123,35 @@ POST_SESSION_TASKS = [
     "Evidence upload checkpoint",
 ]
 
+AFTERBURNER_TECHNIQUES = [
+    {
+        "key": "interval-stacking",
+        "title": "Technique 1 · Interval Stacking",
+        "description": "Cycle core phrases at expanding intervals (15m · 12h · 48h) to cement reflexes.",
+    },
+    {
+        "key": "scenario-loop",
+        "title": "Technique 2 · Scenario Loop",
+        "description": "Replay the mission dialogue with escalating variations to trigger adaptive recall.",
+    },
+    {
+        "key": "shadow-surge",
+        "title": "Technique 3 · Shadow Surge",
+        "description": "Shadow the mentor recording at 1.2x speed to synchronize pronunciation and pace.",
+    },
+    {
+        "key": "insight-flashcards",
+        "title": "Technique 4 · Insight Flashcards",
+        "description": "Capture new vocabulary and cultural cues in micro cards for rapid-fire review.",
+    },
+]
+
+AFTERBURNER_GAME = {
+    "key": "mission-remix",
+    "title": "Didactic Game · Mission Remix",
+    "description": "A collaborative remix where squads reimagine the week’s mission with new stakes, vocabulary, and constraints.",
+}
+
 ALLOWED_ENROLLMENT_STATUSES = {
     CourseEnrollment.EnrollmentStatus.ACTIVE,
     CourseEnrollment.EnrollmentStatus.COMPLETED,
@@ -175,6 +205,30 @@ FLIGHT_DECK_TASKS = [
         "subtitle": "Capture your live mission for reflection and evidence uploads",
     },
 ]
+
+AFTERBURNER_TECHNIQUES = [
+    {
+        "title": "Technique 1 · Interval Stacking",
+        "description": "Cycle core phrases at expanding intervals (15m · 12h · 48h) to cement reflexes.",
+    },
+    {
+        "title": "Technique 2 · Scenario Loop",
+        "description": "Replay the mission dialogue with escalating variations to trigger adaptive recall.",
+    },
+    {
+        "title": "Technique 3 · Shadow Surge",
+        "description": "Shadow the mentor recording at 1.2x speed to synchronize pronunciation and pace.",
+    },
+    {
+        "title": "Technique 4 · Insight Flashcards",
+        "description": "Capture new vocabulary and cultural cues in micro cards for rapid-fire review.",
+    },
+]
+
+AFTERBURNER_GAME = {
+    "title": "Didactic Game · Mission Remix",
+    "description": "A collaborative remix where squads reimagine the week’s mission with new stakes, vocabulary, and constraints.",
+}
 
 PROGRAM_STAGE_DETAILS = [
     {
@@ -484,6 +538,8 @@ def _get_stage_required_tasks(stage_key: str, module: CourseModule) -> int:
         return len(PRE_SESSION_TASKS)
     if stage_key == ModuleStageProgress.StageKey.FLIGHT_DECK:
         return len(FLIGHT_DECK_TASKS)
+    if stage_key == ModuleStageProgress.StageKey.AFTERBURNER:
+        return len(AFTERBURNER_TECHNIQUES) + 1  # techniques + game
     return 0
 
 
@@ -694,6 +750,37 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
         profile = getattr(user, "profile", None)
         launch_tasks = []
         flight_deck_tasks = []
+        afterburner_cards = [
+            {
+                "index": idx,
+                "title": technique["title"],
+                "description": technique["description"],
+                "completed": False,
+            }
+            for idx, technique in enumerate(AFTERBURNER_TECHNIQUES, start=1)
+        ]
+        afterburner_game_card = {
+            "index": len(AFTERBURNER_TECHNIQUES) + 1,
+            "title": AFTERBURNER_GAME["title"],
+            "description": AFTERBURNER_GAME["description"],
+            "completed": False,
+            "game_type": ModuleGame.GameType.LETTER_SEQUENCE,
+            "word": "",
+            "definition": "",
+        }
+        module_game = (
+            ModuleGame.objects.filter(module=module, is_active=True).order_by("order").first()
+        )
+        if module_game:
+            afterburner_game_card.update(
+                {
+                    "title": module_game.title or AFTERBURNER_GAME["title"],
+                    "description": module_game.description or AFTERBURNER_GAME["description"],
+                    "game_type": module_game.game_type,
+                    "word": (module_game.word or "").strip(),
+                    "definition": (module_game.definition or "").strip(),
+                }
+            )
         existing_signup = None
         meeting_options = []
         selected_meeting = None
@@ -772,6 +859,23 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                             }
                         )
                     flight_deck_tasks.append(entry)
+            elif stage_key == ModuleStageProgress.StageKey.AFTERBURNER:
+                progress, _ = ModuleStageProgress.objects.get_or_create(
+                    profile=profile,
+                    module=module,
+                    stage_key=ModuleStageProgress.StageKey.AFTERBURNER,
+                )
+                tasks_state = list(progress.completed_tasks or [])
+                required = _get_stage_required_tasks(ModuleStageProgress.StageKey.AFTERBURNER, module)
+                if len(tasks_state) < required:
+                    tasks_state.extend([False] * (required - len(tasks_state)))
+                elif len(tasks_state) > required:
+                    tasks_state = tasks_state[:required]
+
+                for idx, card in enumerate(afterburner_cards, start=1):
+                    card["completed"] = bool(tasks_state[idx - 1])
+                game_index = afterburner_game_card["index"]
+                afterburner_game_card["completed"] = bool(tasks_state[game_index - 1])
 
         context.update(
             {
@@ -784,6 +888,8 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                 "pre_session_resources": pre_session_resources,
                 "post_session_games": post_session_games,
                 "post_session_loops": post_session_loops,
+                "afterburner_cards": afterburner_cards,
+                "afterburner_game_card": afterburner_game_card,
                 "stage_unlocks": stage_unlocks,
                 "launch_pad_tasks": launch_tasks,
                 "flight_deck_tasks": flight_deck_tasks,
@@ -1005,6 +1111,7 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
         allowed_stage_keys = {
             ModuleStageProgress.StageKey.LAUNCH_PAD,
             ModuleStageProgress.StageKey.FLIGHT_DECK,
+            ModuleStageProgress.StageKey.AFTERBURNER,
         }
         if stage_key not in allowed_stage_keys:
             raise Http404
