@@ -422,6 +422,7 @@ class ModuleGame(models.Model):
 
     class GameType(models.TextChoices):
         LETTER_SEQUENCE = "letter-sequence", "Letter Sequence"
+        ADAPTIVE_FLASHCARDS = "adaptive-flashcards", "Adaptive Flashcards"
 
     module = models.ForeignKey(
         CourseModule,
@@ -451,6 +452,208 @@ class ModuleGame(models.Model):
     def __str__(self) -> str:
         base = self.title or dict(ModuleGame.GameType.choices).get(self.game_type, "Game")
         return f"{self.module} · {base}"
+
+
+class ModuleGameFlashcard(models.Model):
+    """Static flashcard content for adaptive flashcard games."""
+
+    game = models.ForeignKey(
+        ModuleGame,
+        on_delete=models.CASCADE,
+        related_name="flashcards",
+    )
+    order = models.PositiveSmallIntegerField(default=1)
+    word = models.CharField(max_length=80)
+    image_url = models.URLField(blank=True)
+    audio_url = models.URLField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["game", "order", "id"]
+        verbose_name = "Adaptive flashcard"
+        verbose_name_plural = "Adaptive flashcards"
+        unique_together = ("game", "order")
+
+    def __str__(self) -> str:
+        return f"{self.game} · {self.word}"
+
+
+class ModuleGameFlashcardProgress(models.Model):
+    """Per-learner spaced repetition tracking for flashcard games."""
+
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        related_name="flashcard_progress",
+    )
+    flashcard = models.ForeignKey(
+        ModuleGameFlashcard,
+        on_delete=models.CASCADE,
+        related_name="progress_entries",
+    )
+    interval_index = models.PositiveSmallIntegerField(default=0)
+    next_review_at = models.DateTimeField()
+    correct_streak = models.PositiveSmallIntegerField(default=0)
+    seen_count = models.PositiveIntegerField(default=0)
+    last_outcome = models.CharField(max_length=12, blank=True)
+    total_points = models.PositiveIntegerField(default=0)
+    last_reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["profile", "flashcard"]
+        unique_together = ("profile", "flashcard")
+        verbose_name = "Adaptive flashcard progress"
+        verbose_name_plural = "Adaptive flashcard progress"
+        indexes = [
+            models.Index(fields=["profile", "next_review_at"], name="flashcard_progress_due_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.profile.display_name} · {self.flashcard.word}"
+
+
+class ModuleGameFlashcardLog(models.Model):
+    """Analytics log for adaptive flashcard reviews."""
+
+    progress = models.ForeignKey(
+        ModuleGameFlashcardProgress,
+        on_delete=models.CASCADE,
+        related_name="logs",
+    )
+    outcome = models.CharField(max_length=12)
+    streak_length = models.PositiveSmallIntegerField(default=0)
+    time_spent_ms = models.PositiveIntegerField(default=0)
+    points_awarded = models.IntegerField(default=0)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-recorded_at"]
+        verbose_name = "Adaptive flashcard log"
+        verbose_name_plural = "Adaptive flashcard logs"
+
+    def __str__(self) -> str:
+        return f"{self.progress} · {self.outcome}"
+
+
+class ModuleMeetingActivity(models.Model):
+    """Planned activity inside a module meeting."""
+
+    module = models.ForeignKey(
+        CourseModule,
+        on_delete=models.CASCADE,
+        related_name="meeting_activities",
+    )
+    title = models.CharField(max_length=160)
+    description = models.TextField(blank=True)
+    order = models.PositiveSmallIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["module", "order"]
+        verbose_name = "Module meeting activity"
+        verbose_name_plural = "Module meeting activities"
+        unique_together = ("module", "order")
+
+    def __str__(self) -> str:
+        return f"{self.module} · {self.title}"
+
+
+class ModuleFlightDeckActivity(models.Model):
+    """Configurable cards for Flight Deck (stage two) activities."""
+
+    class Slot(models.TextChoices):
+        SCHEDULER = "scheduler", "Meeting Scheduler"
+        NOTEBOOK = "notebook", "Notebook Prep"
+        RECORDER = "recorder", "Mission Recorder"
+
+    SLOT_DEFAULT_ORDER = {
+        Slot.SCHEDULER: 1,
+        Slot.NOTEBOOK: 2,
+        Slot.RECORDER: 3,
+    }
+
+    module = models.ForeignKey(
+        CourseModule,
+        on_delete=models.CASCADE,
+        related_name="flightdeck_activities",
+    )
+    slot = models.CharField(max_length=32, choices=Slot.choices)
+    title = models.CharField(max_length=160)
+    subtitle = models.CharField(max_length=250, blank=True)
+    description = models.TextField(blank=True)
+    link_label = models.CharField(max_length=120, blank=True)
+    link_url = models.URLField(blank=True)
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveSmallIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["module", "order", "slot"]
+        verbose_name = "Stage 2 · Flight Deck activity"
+        verbose_name_plural = "Stage 2 · Flight Deck activities"
+        unique_together = ("module", "slot")
+
+    def __str__(self) -> str:
+        return f"{self.module} · {self.get_slot_display()}"
+
+    def save(self, *args, **kwargs):
+        if not self.order:
+            self.order = self.SLOT_DEFAULT_ORDER.get(self.slot, self.order or 1)
+        super().save(*args, **kwargs)
+
+
+class ModuleAfterburnerActivity(models.Model):
+    """Configurable cards for Afterburner (stage three) activities."""
+
+    class Slot(models.TextChoices):
+        TALK_RECORD = "talk-record", "Talk & Record"
+        READING = "reading", "Read & Highlight"
+        REAL_WORLD = "real-world", "Real World Challenge"
+        GRAMMAR = "grammar", "Grammar Snapshot"
+        GAME = "game", "Game Mission"
+
+    module = models.ForeignKey(
+        CourseModule,
+        on_delete=models.CASCADE,
+        related_name="afterburner_activities",
+    )
+    slot = models.CharField(max_length=32, choices=Slot.choices)
+    title = models.CharField(max_length=160)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    game = models.ForeignKey(
+        ModuleGame,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="afterburner_activity",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["module", "slot"]
+        verbose_name = "Stage 3 · Afterburner activity"
+        verbose_name_plural = "Stage 3 · Afterburner activities"
+        unique_together = ("module", "slot")
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if self.slot == self.Slot.GAME and not self.game:
+            raise ValidationError({"game": "Select a game for the Afterburner game slot."})
+        if self.slot != self.Slot.GAME and self.game:
+            raise ValidationError({"game": "Only the game slot can be linked to a game."})
+
+    def __str__(self) -> str:
+        return f"{self.module} · {self.get_slot_display()}"
 
 
 class ModuleLiveMeeting(models.Model):

@@ -1983,6 +1983,259 @@ section {
     gap: 0.5rem;
 }
 
+.meeting-assistant-trigger {
+    justify-content: center;
+    text-align: center;
+}
+
+.meeting-activity-board {
+    margin-top: 2.2rem;
+    padding: 2.2rem 2.4rem;
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: linear-gradient(135deg, rgba(94, 92, 230, 0.16), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(18px);
+    display: grid;
+    gap: 1.6rem;
+}
+
+.meeting-activity-board__header {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.meeting-activity-board__list {
+    display: grid;
+    gap: 1rem;
+}
+
+.meeting-activity-item {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 22px;
+    padding: 1.1rem 1.3rem;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.meeting-activity-item__step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 999px;
+    font-weight: 600;
+    color: rgba(210, 220, 255, 0.92);
+    background: rgba(94, 92, 230, 0.22);
+    flex-shrink: 0;
+}
+
+.meeting-activity-item__content h4 {
+    font-weight: 600;
+}
+
+.adaptive-flashcard-game {
+    display: grid;
+    gap: 1.4rem;
+}
+
+.flashcard-stage {
+    position: relative;
+    min-height: 260px;
+}
+
+.flashcard-card {
+    position: relative;
+    width: 100%;
+    min-height: 220px;
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(20, 20, 40, 0.6));
+    box-shadow: 0 18px 32px rgba(0, 0, 0, 0.18);
+    transform-style: preserve-3d;
+    transition: transform 0.6s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+}
+
+.flashcard-card.is-flipped {
+    transform: rotateY(180deg);
+}
+
+.flashcard-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.6rem;
+    gap: 1rem;
+}
+
+.flashcard-face--back {
+    transform: rotateY(180deg);
+}
+
+.flashcard-media {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 160px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px dashed rgba(255, 255, 255, 0.16);
+    overflow: hidden;
+}
+
+.flashcard-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.flashcard-placeholder {
+    color: rgba(255, 255, 255, 0.65);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.flashcard-word {
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.flashcard-scoreboard {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.flashcard-scoreboard > div {
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.flashcard-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.flashcard-response-buttons {
+    display: flex;
+    gap: 0.6rem;
+}
+
+.flashcard-empty {
+    position: absolute;
+    inset: 0;
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: linear-gradient(135deg, rgba(52, 199, 89, 0.22), rgba(255, 255, 255, 0.08));
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 2rem 1.6rem;
+    gap: 0.6rem;
+}
+
+.flashcard-empty__icon {
+    font-size: 2.2rem;
+}
+
+.flashcard-status-enter {
+    opacity: 0;
+    transform: translateY(12px);
+}
+
+.flashcard-status-enter.flashcard-status-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.32s ease, transform 0.32s ease;
+}
+
+.flashcard-card.flashcard-card--fly-left {
+    animation: flashcardSlideLeft 0.4s ease forwards;
+}
+
+.flashcard-card.flashcard-card--fly-right {
+    animation: flashcardSlideRight 0.4s ease forwards;
+}
+
+@keyframes flashcardSlideLeft {
+    to {
+        opacity: 0;
+        transform: translateX(-140%) rotate(-10deg);
+    }
+}
+
+@keyframes flashcardSlideRight {
+    to {
+        opacity: 0;
+        transform: translateX(140%) rotate(10deg);
+    }
+}
+
+@media (max-width: 576px) {
+    .flashcard-stage {
+        min-height: 200px;
+    }
+
+    .flashcard-card {
+        min-height: 180px;
+    }
+
+    .flashcard-media {
+        height: 140px;
+    }
+
+    .flashcard-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .flashcard-response-buttons {
+        width: 100%;
+    }
+
+    .flashcard-response-buttons .todo-check {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .meeting-activity-board {
+        padding: 1.6rem 1.3rem;
+    }
+
+    .meeting-activity-item {
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+
+    .meeting-activity-item__step {
+        width: 2.1rem;
+        height: 2.1rem;
+        font-size: 0.85rem;
+    }
+}
+
 .todo-card--recorder .todo-card__body {
     gap: 0.9rem;
 }
@@ -2039,6 +2292,30 @@ section {
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(18px);
     transition: transform 0.3s var(--transition-base), border-color 0.3s var(--transition-base);
+}
+
+.afterburner-techniques-grid {
+    align-items: stretch;
+}
+
+.afterburner-card,
+.afterburner-game-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.afterburner-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    flex: 1;
+}
+
+.afterburner-card > .todo-check,
+.afterburner-game-card > .todo-check {
+    margin-top: auto;
+    align-self: flex-start;
 }
 
 .afterburner-card:hover,

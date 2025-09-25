@@ -118,8 +118,25 @@
                                                         </strong>
                                                     </p>
                                                     <p class="text-white-50 small mb-0{% if task.selected_meeting %} d-none{% endif %}" data-meeting-summary-empty>No slot selected yet.</p>
-                                                    <div class="meeting-summary__actions{% if not task.selected_meeting %} d-none{% endif %}" data-meeting-summary-actions>
+                                                    <div
+                                                        class="meeting-summary__actions{% if not task.selected_meeting %} d-none{% endif %}"
+                                                        data-meeting-summary-actions
+                                                        data-meeting-assistant-window
+                                                        {% if task.assistant_start %}data-assistant-start="{{ task.assistant_start|date:'c' }}"{% endif %}
+                                                        {% if task.assistant_end %}data-assistant-end="{{ task.assistant_end|date:'c' }}"{% endif %}
+                                                    >
                                                         {% if task.selected_meeting %}
+                                                            {% if task.assistant_url %}
+                                                                <a
+                                                                    class="todo-check todo-check--cta meeting-assistant-trigger{% if not task.assistant_available %} d-none{% endif %}"
+                                                                    href="{{ task.assistant_url }}"
+                                                                    target="_blank"
+                                                                    rel="noopener"
+                                                                    data-meeting-assistant
+                                                                >
+                                                                    Launch Mission Assistant
+                                                                </a>
+                                                            {% endif %}
                                                             {% if task.can_cancel %}
                                                                 <form class="meeting-cancel-form js-meeting-cancel" action="{{ task.cancel_url }}" method="post">
                                                                     {% csrf_token %}
@@ -204,6 +221,28 @@
                         {% else %}
                             <p class="text-white-50 small mb-0">Live studio checklist will be announced shortly.</p>
                         {% endif %}
+                        {% if meeting_activities %}
+                            <div class="meeting-activity-board" data-animate="fade-up" data-animate-delay="0.12s">
+                                <div class="meeting-activity-board__header">
+                                    <p class="eyebrow mb-1">Inside the studio</p>
+                                    <h3 class="h5 tracking-tight mb-2">Live mission run of show</h3>
+                                    <p class="text-white-50 small mb-0">Mentors will guide you through these flows once the session begins.</p>
+                                </div>
+                                <div class="meeting-activity-board__list">
+                                    {% for activity in meeting_activities %}
+                                        <div class="meeting-activity-item" data-activity-order="{{ activity.index }}">
+                                            <span class="meeting-activity-item__step">0{{ activity.index }}</span>
+                                            <div class="meeting-activity-item__content">
+                                                <h4 class="h6 mb-1">{{ activity.title }}</h4>
+                                                {% if activity.description %}
+                                                    <p class="text-white-50 small mb-0">{{ activity.description }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
                 {% elif stage_key == "afterburner" %}
                     <div class="module-stage" data-animate="fade-up" data-animate-delay="0.05s">
@@ -262,6 +301,47 @@
                                             <p class="text-danger small mb-0 d-none" data-letter-error>Not quite right. Reset and try again.</p>
                                             <p class="text-white-50 small mb-0 d-none" data-letter-definition></p>
                                             <p class="text-white-50 small mb-0 d-none" data-letter-missing>Game content coming soon.</p>
+                                        </div>
+                                    {% elif afterburner_game_card.game_type == 'adaptive-flashcards' %}
+                                        <div
+                                            class="adaptive-flashcard-game"
+                                            data-flashcard-queue-url="{{ afterburner_game_card.flashcards_api.queue }}"
+                                            data-flashcard-log-url="{{ afterburner_game_card.flashcards_api.log }}"
+                                        >
+                                            <div class="flashcard-stage" data-flashcard-stage>
+                                                <div class="flashcard-card" data-flashcard-card>
+                                                    <div class="flashcard-face flashcard-face--front" data-flashcard-face="front">
+                                                        <div class="flashcard-media" data-flashcard-image-wrapper>
+                                                            <img class="flashcard-image" data-flashcard-image src="" alt="Flashcard prompt" hidden>
+                                                            <div class="flashcard-placeholder" data-flashcard-placeholder>Tap to flip</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flashcard-face flashcard-face--back" data-flashcard-face="back">
+                                                        <div class="flashcard-word" data-flashcard-word></div>
+                                                        <button class="todo-check todo-check--ghost" type="button" data-flashcard-audio>Play audio</button>
+                                                        <p class="text-white-50 small mb-0 flashcard-pronounce-hint">Listen and repeat aloud three times.</p>
+                                                    </div>
+                                                </div>
+                                                <div class="flashcard-empty d-none" data-flashcard-empty>
+                                                    <div class="flashcard-empty__icon" aria-hidden="true">🎉</div>
+                                                    <p class="h6 mb-1">All done for now!</p>
+                                                    <p class="text-white-50 small mb-3" data-flashcard-summary>Great job reviewing today's words.</p>
+                                                    <button class="todo-check" type="button" data-flashcard-replay hidden>Replay missed cards</button>
+                                                </div>
+                                            </div>
+                                            <div class="flashcard-scoreboard" data-flashcard-scoreboard>
+                                                <div class="flashcard-score" data-flashcard-score>0 pts</div>
+                                                <div class="flashcard-streak" data-flashcard-streak>Streak · 0</div>
+                                                <div class="flashcard-reviewed" data-flashcard-reviewed>Reviewed · 0</div>
+                                            </div>
+                                            <div class="flashcard-controls" data-flashcard-controls>
+                                                <button class="todo-check todo-check--ghost" type="button" data-flashcard-action="reveal">Flip card</button>
+                                                <div class="flashcard-response-buttons">
+                                                    <button class="todo-check todo-check--cta" type="button" data-flashcard-action="knew">I knew it</button>
+                                                    <button class="todo-check" type="button" data-flashcard-action="didnt">I didn't</button>
+                                                </div>
+                                            </div>
+                                            <p class="text-white-50 small mb-0 d-none" data-flashcard-status>Loading cards…</p>
                                         </div>
                                     {% else %}
                                         <p class="text-white-50 small mb-0">Interactive game coming soon.</p>
@@ -508,6 +588,50 @@
             const schedulerCard = document.querySelector('.todo-card--scheduler');
             const meetingSummary = schedulerCard ? schedulerCard.querySelector('[data-meeting-summary]') : null;
             const csrfTokenGlobal = document.querySelector('input[name=csrfmiddlewaretoken]') ? document.querySelector('input[name=csrfmiddlewaretoken]').value : '';
+            let assistantIntervalRef = null;
+
+            const refreshAssistantWindows = function () {
+                const blocks = document.querySelectorAll('[data-meeting-assistant-window]');
+                if (!blocks.length) {
+                    return;
+                }
+                const now = new Date();
+                blocks.forEach(function (block) {
+                    const trigger = block.querySelector('.meeting-assistant-trigger');
+                    if (!trigger) {
+                        return;
+                    }
+                    const startStr = block.getAttribute('data-assistant-start') || '';
+                    const endStr = block.getAttribute('data-assistant-end') || '';
+                    if (!startStr || !endStr) {
+                        trigger.classList.add('d-none');
+                        return;
+                    }
+                    const startTime = new Date(startStr);
+                    const endTime = new Date(endStr);
+                    if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
+                        trigger.classList.add('d-none');
+                        return;
+                    }
+                    const shouldShow = now >= startTime && now <= endTime;
+                    trigger.classList.toggle('d-none', !shouldShow);
+                });
+            };
+
+            const ensureAssistantInterval = function () {
+                if (assistantIntervalRef) {
+                    return;
+                }
+                const assistantBlocks = document.querySelectorAll('[data-meeting-assistant-window]');
+                const hasWindow = Array.prototype.some.call(assistantBlocks, function (block) {
+                    return block.hasAttribute('data-assistant-start') && block.hasAttribute('data-assistant-end');
+                });
+                if (!hasWindow) {
+                    return;
+                }
+                refreshAssistantWindows();
+                assistantIntervalRef = window.setInterval(refreshAssistantWindows, 30000);
+            };
 
             const updateOptionStates = function (selectedId) {
                 const meetingForms = document.querySelectorAll('.js-meeting-select');
@@ -548,6 +672,32 @@
                     if (actions) {
                         actions.classList.remove('d-none');
                         actions.innerHTML = '';
+                        delete actions.dataset.assistantStart;
+                        delete actions.dataset.assistantEnd;
+
+                        const hasAssistantWindow = Boolean(
+                            meetingData.assistant_start &&
+                                meetingData.assistant_end &&
+                                meetingData.assistant_url
+                        );
+
+                        if (hasAssistantWindow) {
+                            actions.dataset.assistantStart = meetingData.assistant_start;
+                            actions.dataset.assistantEnd = meetingData.assistant_end;
+
+                            const assistantButton = document.createElement('a');
+                            assistantButton.className = 'todo-check todo-check--cta meeting-assistant-trigger';
+                            assistantButton.href = meetingData.assistant_url;
+                            assistantButton.target = '_blank';
+                            assistantButton.rel = 'noopener';
+                            assistantButton.dataset.meetingAssistant = 'true';
+                            assistantButton.textContent = 'Launch Mission Assistant';
+                            if (!meetingData.assistant_available) {
+                                assistantButton.classList.add('d-none');
+                            }
+                            actions.appendChild(assistantButton);
+                        }
+
                         if (meetingData.can_cancel) {
                             const cancelForm = document.createElement('form');
                             cancelForm.className = 'meeting-cancel-form js-meeting-cancel';
@@ -584,6 +734,8 @@
                             feeNote.textContent = 'Changes within 48 hours require a fee — contact support.';
                             actions.appendChild(feeNote);
                         }
+                        refreshAssistantWindows();
+                        ensureAssistantInterval();
                     }
                 } else {
                     schedulerCard.classList.remove('todo-card--done');
@@ -599,9 +751,12 @@
                     if (actions) {
                         actions.classList.add('d-none');
                         actions.innerHTML = '';
+                        delete actions.dataset.assistantStart;
+                        delete actions.dataset.assistantEnd;
                     }
                 }
 
+                refreshAssistantWindows();
                 bindCancelForms();
             };
 
@@ -679,6 +834,9 @@
 
             bindCancelForms();
 
+            refreshAssistantWindows();
+            ensureAssistantInterval();
+
             const initialActiveForm = document.querySelector('.js-meeting-select.meeting-option--active');
             updateOptionStates(initialActiveForm ? initialActiveForm.dataset.meetingId : null);
 
@@ -749,6 +907,392 @@
                             submitButton.textContent = isActive ? 'Selected' : defaultLabel;
                         });
                 });
+            });
+
+            const flashcardGames = document.querySelectorAll('.adaptive-flashcard-game');
+            flashcardGames.forEach(function (wrapper) {
+                const queueUrl = wrapper.getAttribute('data-flashcard-queue-url');
+                const logUrl = wrapper.getAttribute('data-flashcard-log-url');
+                if (!queueUrl || !logUrl) {
+                    return;
+                }
+
+                const form = wrapper.closest('form');
+                const cardEl = wrapper.querySelector('[data-flashcard-card]');
+                const emptyEl = wrapper.querySelector('[data-flashcard-empty]');
+                const summaryEl = wrapper.querySelector('[data-flashcard-summary]');
+                const replayBtn = wrapper.querySelector('[data-flashcard-replay]');
+                const statusEl = wrapper.querySelector('[data-flashcard-status]');
+                const scoreEl = wrapper.querySelector('[data-flashcard-score]');
+                const streakEl = wrapper.querySelector('[data-flashcard-streak]');
+                const reviewedEl = wrapper.querySelector('[data-flashcard-reviewed]');
+                const revealBtn = wrapper.querySelector('[data-flashcard-action="reveal"]');
+                const knewBtn = wrapper.querySelector('[data-flashcard-action="knew"]');
+                const didntBtn = wrapper.querySelector('[data-flashcard-action="didnt"]');
+                const audioBtn = wrapper.querySelector('[data-flashcard-audio]');
+                const imageEl = wrapper.querySelector('[data-flashcard-image]');
+                const placeholderEl = wrapper.querySelector('[data-flashcard-placeholder]');
+                const wordEl = wrapper.querySelector('[data-flashcard-word]');
+
+                if (!cardEl || !revealBtn || !knewBtn || !didntBtn) {
+                    return;
+                }
+
+                const submitButton = form ? form.querySelector('button[type="submit"]') : null;
+
+                let queue = [];
+                let missed = [];
+                const missedTracker = Object.create(null);
+                let activeCard = null;
+                let audioRef = null;
+                let isFlipped = false;
+                let actionsLocked = false;
+                let sessionPoints = 0;
+                let streakCount = 0;
+                let reviewedCount = 0;
+                let cardStartTime = Date.now();
+
+                const disableActions = function (state) {
+                    const disabled = Boolean(state);
+                    revealBtn.disabled = disabled || isFlipped;
+                    knewBtn.disabled = disabled || !isFlipped;
+                    didntBtn.disabled = disabled || !isFlipped;
+                    actionsLocked = disabled;
+                };
+
+                const setSubmitAvailability = function (enabled) {
+                    if (!submitButton) {
+                        return;
+                    }
+                    submitButton.disabled = !enabled;
+                    if (enabled) {
+                        submitButton.removeAttribute('aria-disabled');
+                    } else {
+                        submitButton.setAttribute('aria-disabled', 'true');
+                    }
+                };
+
+                const updateScoreboard = function () {
+                    if (scoreEl) {
+                        scoreEl.textContent = sessionPoints + ' pts';
+                    }
+                    if (streakEl) {
+                        streakEl.textContent = 'Streak · ' + streakCount;
+                    }
+                    if (reviewedEl) {
+                        reviewedEl.textContent = 'Reviewed · ' + reviewedCount;
+                    }
+                };
+
+                const stopAudio = function () {
+                    if (audioRef) {
+                        try {
+                            audioRef.pause();
+                        } catch (error) {
+                            console.warn('Unable to pause audio', error);
+                        }
+                    }
+                };
+
+                const setStatus = function (message) {
+                    if (!statusEl) {
+                        return;
+                    }
+                    statusEl.textContent = message || '';
+                    statusEl.classList.toggle('d-none', !message);
+                };
+
+                const resetCardView = function () {
+                    cardEl.classList.remove('flashcard-card--fly-left', 'flashcard-card--fly-right');
+                    cardEl.classList.remove('is-flipped', 'd-none');
+                    emptyEl && emptyEl.classList.add('d-none');
+                    if (placeholderEl) {
+                        placeholderEl.classList.remove('d-none');
+                        placeholderEl.textContent = 'Tap to flip';
+                    }
+                    if (imageEl) {
+                        imageEl.hidden = true;
+                        imageEl.removeAttribute('src');
+                    }
+                    if (wordEl) {
+                        wordEl.textContent = '';
+                    }
+                    if (audioBtn) {
+                        audioBtn.disabled = true;
+                    }
+                    isFlipped = false;
+                    disableActions(false);
+                };
+
+                const showCompletion = function () {
+                    stopAudio();
+                    cardEl.classList.add('d-none');
+                    if (emptyEl) {
+                        emptyEl.classList.remove('d-none');
+                    }
+                    if (summaryEl) {
+                        const baseSummary = 'You reviewed ' + reviewedCount + ' word' + (reviewedCount === 1 ? '' : 's') + ' today.';
+                        if (missed.length) {
+                            summaryEl.textContent = baseSummary + ' Replay the tricky ones while they are fresh.';
+                        } else {
+                            summaryEl.textContent = baseSummary;
+                        }
+                    }
+                    if (replayBtn) {
+                        replayBtn.hidden = !missed.length;
+                    }
+                    disableActions(true);
+                    if (!reviewedCount && !missed.length) {
+                        setStatus('Nothing due right now. Tap “Mark Done” to keep momentum.');
+                    } else if (missed.length) {
+                        setStatus('Great work. Replay the tricky words or tap “Mark Done” to finish.');
+                    } else {
+                        setStatus('Daily review done. Tap “Mark Done” to lock it in.');
+                    }
+                    setSubmitAvailability(true);
+                };
+
+                const renderCard = function (card) {
+                    activeCard = card;
+                    cardStartTime = Date.now();
+                    resetCardView();
+                    if (card && card.image_url && imageEl) {
+                        imageEl.src = card.image_url;
+                        imageEl.hidden = false;
+                        placeholderEl && placeholderEl.classList.add('d-none');
+                    } else if (placeholderEl) {
+                        placeholderEl.classList.remove('d-none');
+                        placeholderEl.textContent = 'Image coming soon';
+                    }
+                    if (wordEl) {
+                        wordEl.textContent = (card && card.word) ? card.word.toUpperCase() : '';
+                    }
+                    if (audioBtn) {
+                        audioBtn.disabled = !(card && card.audio_url);
+                    }
+                    disableActions(false);
+                    setSubmitAvailability(false);
+                    setStatus('Tap to flip the card.');
+                };
+
+                const advanceQueue = function () {
+                    stopAudio();
+                    if (queue.length) {
+                        renderCard(queue.shift());
+                        return;
+                    }
+                    if (missed.length) {
+                        if (replayBtn) {
+                            replayBtn.hidden = false;
+                        }
+                        showCompletion();
+                        return;
+                    }
+                    showCompletion();
+                };
+
+                const recordOutcome = function (card, outcome, pointsAwarded, streakLength, timeSpent) {
+                    const payload = {
+                        card_id: card.id,
+                        outcome: outcome,
+                        points_awarded: pointsAwarded,
+                        streak_length: streakLength,
+                        time_spent_ms: timeSpent,
+                    };
+                    fetch(logUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': csrfTokenGlobal,
+                        },
+                        body: JSON.stringify(payload),
+                    }).catch(function (error) {
+                        console.error('Unable to log flashcard outcome:', error);
+                    });
+                };
+
+                const handleOutcome = function (outcome) {
+                    if (!activeCard || actionsLocked) {
+                        return;
+                    }
+                    if (!isFlipped) {
+                        setStatus('Flip the card to check the word first.');
+                        return;
+                    }
+                    disableActions(true);
+
+                    const now = Date.now();
+                    const timeSpent = Math.max(0, now - cardStartTime);
+                    let points = 0;
+                    if (outcome === 'knew') {
+                        streakCount += 1;
+                        points += 10;
+                        if (streakCount > 0 && streakCount % 5 === 0) {
+                            points += 25;
+                        }
+                        delete missedTracker[activeCard.id];
+                        missed = missed.filter(function (item) {
+                            return item.id !== activeCard.id;
+                        });
+                        cardEl.classList.add('flashcard-card--fly-right');
+                        setStatus('Nice! +' + points + ' pts');
+                    } else {
+                        streakCount = 0;
+                        points += 0;
+                        if (!missedTracker[activeCard.id]) {
+                            missedTracker[activeCard.id] = true;
+                            missed.push({
+                                id: activeCard.id,
+                                word: activeCard.word,
+                                image_url: activeCard.image_url,
+                                audio_url: activeCard.audio_url,
+                            });
+                        }
+                        cardEl.classList.add('flashcard-card--fly-left');
+                        setStatus('We will repeat this word shortly.');
+                    }
+                    sessionPoints += points;
+                    reviewedCount += 1;
+                    updateScoreboard();
+                    recordOutcome(activeCard, outcome === 'knew' ? 'knew' : 'didnt', points, streakCount, timeSpent);
+
+                    const handledId = activeCard ? activeCard.id : null;
+                    window.setTimeout(function () {
+                        cardEl.classList.remove('flashcard-card--fly-left', 'flashcard-card--fly-right');
+                        if (activeCard && activeCard.id === handledId) {
+                            activeCard = null;
+                        }
+                        advanceQueue();
+                    }, 360);
+                };
+
+                const revealCard = function () {
+                    if (!activeCard || isFlipped || actionsLocked) {
+                        return;
+                    }
+                    cardEl.classList.add('is-flipped');
+                    isFlipped = true;
+                    disableActions(false);
+                    revealBtn.disabled = true;
+                    knewBtn.disabled = false;
+                    didntBtn.disabled = false;
+                    setStatus('Did you know this word?');
+                };
+
+                const playAudio = function () {
+                    if (!activeCard || !activeCard.audio_url) {
+                        return;
+                    }
+                    try {
+                        stopAudio();
+                        audioRef = new Audio(activeCard.audio_url);
+                        audioRef.play().catch(function (error) {
+                            console.warn('Unable to play audio', error);
+                            setStatus('Audio unavailable. Practice aloud anyway.');
+                        });
+                    } catch (error) {
+                        console.warn('Audio init failed', error);
+                    }
+                };
+
+                const refreshQueue = function () {
+                    setStatus('Loading cards…');
+                    disableActions(true);
+                    setSubmitAvailability(false);
+                    stopAudio();
+                    fetch(queueUrl, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    })
+                        .then(function (response) {
+                            if (response.status === 403) {
+                                return response.json().then(function (data) {
+                                    if (data && data.redirect_url) {
+                                        window.location.href = data.redirect_url;
+                                    }
+                                    throw new Error('Access denied');
+                                });
+                            }
+                            if (!response.ok) {
+                                throw new Error('Unable to load queue');
+                            }
+                            return response.json();
+                        })
+                        .then(function (data) {
+                            queue = Array.isArray(data.cards) ? data.cards.slice() : [];
+                            missed = [];
+                            for (const key in missedTracker) {
+                                if (Object.prototype.hasOwnProperty.call(missedTracker, key)) {
+                                    delete missedTracker[key];
+                                }
+                            }
+                            sessionPoints = 0;
+                            streakCount = 0;
+                            reviewedCount = 0;
+                            updateScoreboard();
+                            if (!queue.length) {
+                                showCompletion();
+                                return;
+                            }
+                            setStatus('');
+                            renderCard(queue.shift());
+                        })
+                        .catch(function (error) {
+                            console.error('Unable to load flashcards:', error);
+                            setStatus('Unable to load cards. Refresh the page to try again.');
+                            setSubmitAvailability(false);
+                        });
+                };
+
+                cardEl.addEventListener('click', function () {
+                    revealCard();
+                });
+
+                revealBtn.addEventListener('click', function () {
+                    revealCard();
+                });
+
+                knewBtn.addEventListener('click', function () {
+                    handleOutcome('knew');
+                });
+
+                didntBtn.addEventListener('click', function () {
+                    handleOutcome('didnt');
+                });
+
+                if (audioBtn) {
+                    audioBtn.addEventListener('click', function (event) {
+                        event.stopPropagation();
+                        playAudio();
+                    });
+                }
+
+                if (replayBtn) {
+                    replayBtn.addEventListener('click', function () {
+                        if (!missed.length) {
+                            return;
+                        }
+                        queue = missed.slice();
+                        missed = [];
+                        for (const key in missedTracker) {
+                            if (Object.prototype.hasOwnProperty.call(missedTracker, key)) {
+                                delete missedTracker[key];
+                            }
+                        }
+                        if (emptyEl) {
+                            emptyEl.classList.add('d-none');
+                        }
+                        cardEl.classList.remove('d-none');
+                        replayBtn.hidden = true;
+                        setSubmitAvailability(false);
+                        renderCard(queue.shift());
+                        setStatus('Replaying the words you missed.');
+                    });
+                }
+
+                refreshQueue();
             });
 
             const letterGames = document.querySelectorAll('.letter-sequence-game');

@@ -17,6 +17,8 @@ from .views import (
     PlacementExamView,
     CourseModuleDetailView,
     CourseModuleStageView,
+    ModuleGameFlashcardLogView,
+    ModuleGameFlashcardQueueView,
     ModuleMeetingCancelView,
     ModuleMeetingSignupView,
     ModuleStageTaskToggleView,
@@ -54,6 +56,16 @@ urlpatterns = [
         "courses/<slug:slug>/module/<int:order>/flight-deck/meetings/cancel/",
         ModuleMeetingCancelView.as_view(),
         name="course_module_meeting_cancel",
+    ),
+    path(
+        "courses/<slug:slug>/module/<int:order>/afterburner/flashcards/",
+        ModuleGameFlashcardQueueView.as_view(),
+        name="course_module_flashcards_queue",
+    ),
+    path(
+        "courses/<slug:slug>/module/<int:order>/afterburner/flashcards/log/",
+        ModuleGameFlashcardLogView.as_view(),
+        name="course_module_flashcards_log",
     ),
     path(
         "courses/<slug:slug>/module/<int:order>/<str:stage>/task/<int:index>/toggle/",

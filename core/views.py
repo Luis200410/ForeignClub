@@ -1,10 +1,14 @@
 """Views powering the FOREIGN experience."""
+import json
+import random
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.db.models import Prefetch
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -28,8 +32,14 @@ from .models import (
     CourseEnrollment,
     CourseModule,
     ModuleGame,
+    ModuleGameFlashcard,
+    ModuleGameFlashcardLog,
+    ModuleGameFlashcardProgress,
+    ModuleAfterburnerActivity,
+    ModuleFlightDeckActivity,
     ModuleLiveMeeting,
     ModuleLiveMeetingSignup,
+    ModuleMeetingActivity,
     ModuleStageProgress,
     Profile,
     SkillAssessment,
@@ -123,28 +133,116 @@ POST_SESSION_TASKS = [
     "Evidence upload checkpoint",
 ]
 
-AFTERBURNER_TECHNIQUES = [
-    {
-        "key": "interval-stacking",
-        "title": "Technique 1 · Interval Stacking",
-        "description": "Cycle core phrases at expanding intervals (15m · 12h · 48h) to cement reflexes.",
+AFTERBURNER_CARD_LIBRARY = {
+    Profile.FluencyLevel.BEGINNER: {
+        ModuleAfterburnerActivity.Slot.TALK_RECORD: {
+            "title": "Talk & Record Challenge",
+            "description": "Press record. Say the model sentence slowly. Listen. Try again with clear sounds.",
+        },
+        ModuleAfterburnerActivity.Slot.READING: {
+            "title": "Read & Highlight",
+            "description": "Read the short text out loud. Underline three new words and say them again.",
+        },
+        ModuleAfterburnerActivity.Slot.REAL_WORLD: {
+            "title": "Real World Challenge",
+            "description": "Use today's phrase in real life. Ask a friend or mirror one easy question.",
+        },
+        ModuleAfterburnerActivity.Slot.GRAMMAR: {
+            "title": "Grammar Snapshot",
+            "description": "Watch the quick grammar clip. Write two present simple sentences about you.",
+        },
     },
-    {
-        "key": "scenario-loop",
-        "title": "Technique 2 · Scenario Loop",
-        "description": "Replay the mission dialogue with escalating variations to trigger adaptive recall.",
+    Profile.FluencyLevel.ELEMENTARY: {
+        ModuleAfterburnerActivity.Slot.TALK_RECORD: {
+            "title": "Pronunciation Replay",
+            "description": "Record yourself at natural speed. Compare stress with the sample and adjust endings.",
+        },
+        ModuleAfterburnerActivity.Slot.READING: {
+            "title": "Guided Reading Burst",
+            "description": "Read the article aloud, pausing to note useful collocations and rhythm shifts.",
+        },
+        ModuleAfterburnerActivity.Slot.REAL_WORLD: {
+            "title": "Real World Challenge",
+            "description": "Start a short chat using this week's pattern. Log one win in your NotebookLM notes.",
+        },
+        ModuleAfterburnerActivity.Slot.GRAMMAR: {
+            "title": "Grammar Booster",
+            "description": "Review the focus tense and craft three personal example sentences with it.",
+        },
     },
-    {
-        "key": "shadow-surge",
-        "title": "Technique 3 · Shadow Surge",
-        "description": "Shadow the mentor recording at 1.2x speed to synchronize pronunciation and pace.",
+    Profile.FluencyLevel.INTERMEDIATE: {
+        ModuleAfterburnerActivity.Slot.TALK_RECORD: {
+            "title": "Voice Precision Lab",
+            "description": "Record a 30-second response and analyze rhythm, intonation, and connected speech.",
+        },
+        ModuleAfterburnerActivity.Slot.READING: {
+            "title": "Insight Reading Loop",
+            "description": "Annotate the text for tone shifts, then summarize the key evidence aloud.",
+        },
+        ModuleAfterburnerActivity.Slot.REAL_WORLD: {
+            "title": "Real World Challenge",
+            "description": "Apply the scenario in a real or simulated conversation and capture feedback notes.",
+        },
+        ModuleAfterburnerActivity.Slot.GRAMMAR: {
+            "title": "Grammar Systems Review",
+            "description": "Deconstruct the structure in context and rewrite complex sentences using it.",
+        },
     },
-    {
-        "key": "insight-flashcards",
-        "title": "Technique 4 · Insight Flashcards",
-        "description": "Capture new vocabulary and cultural cues in micro cards for rapid-fire review.",
+    Profile.FluencyLevel.UPPER_INTERMEDIATE: {
+        ModuleAfterburnerActivity.Slot.TALK_RECORD: {
+            "title": "Delivery Masterclass",
+            "description": "Capture a speaking sample focusing on stress, linking, and persuasive cadence.",
+        },
+        ModuleAfterburnerActivity.Slot.READING: {
+            "title": "Critical Reading Pulse",
+            "description": "Dissect the article's argument, mark discourse markers, and brief it back.",
+        },
+        ModuleAfterburnerActivity.Slot.REAL_WORLD: {
+            "title": "Real World Challenge",
+            "description": "Lead a live interaction mirroring the week's case study and reflect on outcomes.",
+        },
+        ModuleAfterburnerActivity.Slot.GRAMMAR: {
+            "title": "Grammar Structure Upgrade",
+            "description": "Integrate the grammar focus into original paragraphs, highlighting register shifts.",
+        },
     },
-]
+    Profile.FluencyLevel.ADVANCED: {
+        ModuleAfterburnerActivity.Slot.TALK_RECORD: {
+            "title": "Narrative Delivery Studio",
+            "description": "Record a concise story, refine nuance and pacing, and evaluate audience impact.",
+        },
+        ModuleAfterburnerActivity.Slot.READING: {
+            "title": "Analytical Reading Exchange",
+            "description": "Interrogate author intent, map advanced lexis, and present a critical response.",
+        },
+        ModuleAfterburnerActivity.Slot.REAL_WORLD: {
+            "title": "Real World Strategy Challenge",
+            "description": "Execute a mission-critical conversation and capture insights for a cohort debrief.",
+        },
+        ModuleAfterburnerActivity.Slot.GRAMMAR: {
+            "title": "Grammar Refinement Clinic",
+            "description": "Stress-test complex syntax by reshaping examples into formal and informal versions.",
+        },
+    },
+    Profile.FluencyLevel.PROFICIENT: {
+        ModuleAfterburnerActivity.Slot.TALK_RECORD: {
+            "title": "Executive Delivery Audit",
+            "description": "Produce a high-stakes delivery sample, calibrating executive presence and flow.",
+        },
+        ModuleAfterburnerActivity.Slot.READING: {
+            "title": "Scholarly Reading Sprint",
+            "description": "Synthesize advanced texts, extract thesis frameworks, and articulate counterpoints.",
+        },
+        ModuleAfterburnerActivity.Slot.REAL_WORLD: {
+            "title": "Real World Impact Challenge",
+            "description": "Drive an authentic negotiation or leadership moment and document measured outcomes.",
+        },
+        ModuleAfterburnerActivity.Slot.GRAMMAR: {
+            "title": "Grammar Edge Lab",
+            "description": "Manipulate nuanced structures across registers, ensuring precision under pressure.",
+        },
+    },
+}
 
 AFTERBURNER_GAME = {
     "key": "mission-remix",
@@ -152,10 +250,174 @@ AFTERBURNER_GAME = {
     "description": "A collaborative remix where squads reimagine the week’s mission with new stakes, vocabulary, and constraints.",
 }
 
+AFTERBURNER_SLOT_SEQUENCE = [
+    ModuleAfterburnerActivity.Slot.TALK_RECORD,
+    ModuleAfterburnerActivity.Slot.READING,
+    ModuleAfterburnerActivity.Slot.REAL_WORLD,
+    ModuleAfterburnerActivity.Slot.GRAMMAR,
+    ModuleAfterburnerActivity.Slot.GAME,
+]
+
+FLIGHT_DECK_SLOT_SEQUENCE = [
+    ModuleFlightDeckActivity.Slot.SCHEDULER,
+    ModuleFlightDeckActivity.Slot.NOTEBOOK,
+    ModuleFlightDeckActivity.Slot.RECORDER,
+]
+
+FLASHCARD_SRS_INTERVALS = [
+    timedelta(minutes=1),
+    timedelta(minutes=10),
+    timedelta(hours=1),
+    timedelta(hours=6),
+    timedelta(days=1),
+    timedelta(days=3),
+    timedelta(days=7),
+    timedelta(days=14),
+]
+
 ALLOWED_ENROLLMENT_STATUSES = {
     CourseEnrollment.EnrollmentStatus.ACTIVE,
     CourseEnrollment.EnrollmentStatus.COMPLETED,
 }
+
+
+def _get_afterburner_card_configs(
+    course: Course | None,
+    module: CourseModule | None = None,
+) -> list[dict[str, str]]:
+    """Return ordered Afterburner card configs, prioritising module customisations."""
+
+    fallback_level_map = AFTERBURNER_CARD_LIBRARY.get(
+        getattr(course, "fluency_level", Profile.FluencyLevel.INTERMEDIATE),
+        AFTERBURNER_CARD_LIBRARY[Profile.FluencyLevel.INTERMEDIATE],
+    )
+
+    module_activities = {}
+    if module is not None:
+        module_activities = {
+            activity.slot: activity
+            for activity in module.afterburner_activities.filter(is_active=True)
+        }
+
+    configs: list[dict[str, str]] = []
+    for slot in AFTERBURNER_SLOT_SEQUENCE:
+        activity = module_activities.get(slot)
+        fallback_card = fallback_level_map.get(slot, {})
+        if slot == ModuleAfterburnerActivity.Slot.GAME:
+            configs.append(
+                {
+                    "slot": slot,
+                    "title": (activity.title if activity and activity.title else AFTERBURNER_GAME["title"]),
+                    "description": (
+                        activity.description
+                        if activity and activity.description
+                        else AFTERBURNER_GAME["description"]
+                    ),
+                    "activity": activity,
+                }
+            )
+            continue
+
+        configs.append(
+            {
+                "slot": slot,
+                "title": (
+                    activity.title if activity and activity.title else fallback_card.get("title", "")
+                ),
+                "description": (
+                    activity.description
+                    if activity and activity.description
+                    else fallback_card.get("description", "")
+                ),
+                "activity": activity,
+            }
+        )
+
+    return configs
+
+
+def _get_flight_deck_activity_configs(module: CourseModule | None) -> list[dict[str, str]]:
+    """Return ordered Flight Deck activity configs with module overrides."""
+
+    defaults = {task["slot"]: {**task} for task in FLIGHT_DECK_TASKS}
+    if module is None:
+        return [defaults[slot] for slot in FLIGHT_DECK_SLOT_SEQUENCE]
+
+    module_activities = {
+        activity.slot: activity
+        for activity in module.flightdeck_activities.filter(is_active=True)
+    }
+
+    configs: list[dict[str, str]] = []
+    for slot in FLIGHT_DECK_SLOT_SEQUENCE:
+        base_config = defaults.get(slot, {"slot": slot})
+        activity = module_activities.get(slot)
+        config = {**base_config}
+        if activity:
+            if activity.title:
+                config["title"] = activity.title
+            if activity.subtitle:
+                config["subtitle"] = activity.subtitle
+            if activity.description:
+                config["description"] = activity.description
+            if activity.link_label:
+                config["link_label"] = activity.link_label
+            if activity.link_url:
+                config["url"] = activity.link_url
+        configs.append(config)
+
+    return configs
+
+
+def _ensure_flashcard_progress_map(
+    profile: Profile,
+    game: ModuleGame,
+) -> dict[int, ModuleGameFlashcardProgress]:
+    """Ensure progress rows exist for each active flashcard and return a map."""
+
+    now = timezone.now()
+    flashcards = list(game.flashcards.filter(is_active=True).order_by("order", "id"))
+    if not flashcards:
+        return {}
+
+    existing = (
+        ModuleGameFlashcardProgress.objects.select_related("flashcard")
+        .filter(profile=profile, flashcard__in=flashcards)
+        .all()
+    )
+    progress_map = {progress.flashcard_id: progress for progress in existing}
+
+    to_create: list[ModuleGameFlashcardProgress] = []
+    for card in flashcards:
+        if card.id not in progress_map:
+            to_create.append(
+                ModuleGameFlashcardProgress(
+                    profile=profile,
+                    flashcard=card,
+                    next_review_at=now,
+                )
+            )
+
+    if to_create:
+        ModuleGameFlashcardProgress.objects.bulk_create(to_create)
+        existing = (
+            ModuleGameFlashcardProgress.objects.select_related("flashcard")
+            .filter(profile=profile, flashcard__in=flashcards)
+            .all()
+        )
+        progress_map = {progress.flashcard_id: progress for progress in existing}
+
+    return progress_map
+
+
+def _flashcard_interval_for_index(index: int) -> timedelta:
+    if index < 0:
+        index = 0
+    if not FLASHCARD_SRS_INTERVALS:
+        return timedelta(minutes=5)
+    if index >= len(FLASHCARD_SRS_INTERVALS):
+        index = len(FLASHCARD_SRS_INTERVALS) - 1
+    return FLASHCARD_SRS_INTERVALS[index]
 
 STAGE_EXTENSION_MAP = {
     "launch-pad": {
@@ -189,46 +451,31 @@ STAGE_EXTENSION_MAP = {
 
 NOTEBOOK_LM_APP_URL = "https://notebooklm.google.com/app"
 
+MEETING_ASSISTANT_URL = getattr(
+    settings,
+    "MEETING_ASSISTANT_URL",
+    "mailto:missioncontrol@foreign.club?subject=Live%20mission%20assist",
+)
+
 FLIGHT_DECK_TASKS = [
     {
+        "slot": ModuleFlightDeckActivity.Slot.SCHEDULER,
         "title": "Schedule your live mission",
         "subtitle": "Lock your Friday studio slot directly from this page.",
     },
     {
+        "slot": ModuleFlightDeckActivity.Slot.NOTEBOOK,
         "title": "Prep your NotebookLM workspace",
         "subtitle": "Spin up a fresh set of notes for this week's mission. Capture vocabulary, new expressions, and personal takeaways inside NotebookLM so you can revisit them later.",
         "url": NOTEBOOK_LM_APP_URL,
         "link_label": "NotebookLM Notes",
     },
     {
+        "slot": ModuleFlightDeckActivity.Slot.RECORDER,
         "title": "Get your recorder ready",
         "subtitle": "Capture your live mission for reflection and evidence uploads",
     },
 ]
-
-AFTERBURNER_TECHNIQUES = [
-    {
-        "title": "Technique 1 · Interval Stacking",
-        "description": "Cycle core phrases at expanding intervals (15m · 12h · 48h) to cement reflexes.",
-    },
-    {
-        "title": "Technique 2 · Scenario Loop",
-        "description": "Replay the mission dialogue with escalating variations to trigger adaptive recall.",
-    },
-    {
-        "title": "Technique 3 · Shadow Surge",
-        "description": "Shadow the mentor recording at 1.2x speed to synchronize pronunciation and pace.",
-    },
-    {
-        "title": "Technique 4 · Insight Flashcards",
-        "description": "Capture new vocabulary and cultural cues in micro cards for rapid-fire review.",
-    },
-]
-
-AFTERBURNER_GAME = {
-    "title": "Didactic Game · Mission Remix",
-    "description": "A collaborative remix where squads reimagine the week’s mission with new stakes, vocabulary, and constraints.",
-}
 
 PROGRAM_STAGE_DETAILS = [
     {
@@ -537,9 +784,9 @@ def _get_stage_required_tasks(stage_key: str, module: CourseModule) -> int:
     if stage_key == ModuleStageProgress.StageKey.LAUNCH_PAD:
         return len(PRE_SESSION_TASKS)
     if stage_key == ModuleStageProgress.StageKey.FLIGHT_DECK:
-        return len(FLIGHT_DECK_TASKS)
+        return len(_get_flight_deck_activity_configs(module))
     if stage_key == ModuleStageProgress.StageKey.AFTERBURNER:
-        return len(AFTERBURNER_TECHNIQUES) + 1  # techniques + game
+        return len(_get_afterburner_card_configs(getattr(module, "course", None), module))
     return 0
 
 
@@ -750,41 +997,89 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
         profile = getattr(user, "profile", None)
         launch_tasks = []
         flight_deck_tasks = []
-        afterburner_cards = [
-            {
-                "index": idx,
-                "title": technique["title"],
-                "description": technique["description"],
-                "completed": False,
-            }
-            for idx, technique in enumerate(AFTERBURNER_TECHNIQUES, start=1)
-        ]
+        meeting_activities = []
+        afterburner_configs = _get_afterburner_card_configs(course, module)
+        afterburner_cards: list[dict[str, object]] = []
+        game_config: dict[str, object] | None = None
+        for config in afterburner_configs:
+            if config["slot"] == ModuleAfterburnerActivity.Slot.GAME:
+                game_config = config
+                continue
+            afterburner_cards.append(
+                {
+                    "index": len(afterburner_cards) + 1,
+                    "title": config["title"],
+                    "description": config["description"],
+                    "completed": False,
+                    "slot": config["slot"],
+                }
+            )
+
+        default_game = (
+            ModuleGame.objects.filter(module=module, is_active=True).order_by("order").first()
+        )
+        selected_game = None
+        if game_config and game_config.get("activity"):
+            selected_game = getattr(game_config["activity"], "game", None)
+        if selected_game is None:
+            selected_game = default_game
+
         afterburner_game_card = {
-            "index": len(AFTERBURNER_TECHNIQUES) + 1,
-            "title": AFTERBURNER_GAME["title"],
-            "description": AFTERBURNER_GAME["description"],
+            "index": len(afterburner_cards) + 1,
+            "title": (game_config or {}).get("title", AFTERBURNER_GAME["title"]),
+            "description": (game_config or {}).get(
+                "description", AFTERBURNER_GAME["description"]
+            ),
             "completed": False,
+            "slot": ModuleAfterburnerActivity.Slot.GAME,
             "game_type": ModuleGame.GameType.LETTER_SEQUENCE,
             "word": "",
             "definition": "",
         }
-        module_game = (
-            ModuleGame.objects.filter(module=module, is_active=True).order_by("order").first()
-        )
-        if module_game:
+
+        if selected_game:
             afterburner_game_card.update(
                 {
-                    "title": module_game.title or AFTERBURNER_GAME["title"],
-                    "description": module_game.description or AFTERBURNER_GAME["description"],
-                    "game_type": module_game.game_type,
-                    "word": (module_game.word or "").strip(),
-                    "definition": (module_game.definition or "").strip(),
+                    "title": selected_game.title or afterburner_game_card["title"],
+                    "description": selected_game.description
+                    or afterburner_game_card["description"],
+                    "game_type": selected_game.game_type,
+                    "word": (selected_game.word or "").strip(),
+                    "definition": (selected_game.definition or "").strip(),
                 }
             )
+            if selected_game.game_type == ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
+                afterburner_game_card.update(
+                    {
+                        "flashcards_api": {
+                            "queue": reverse(
+                                "course_module_flashcards_queue",
+                                args=[course.slug, module.order],
+                            ),
+                            "log": reverse(
+                                "course_module_flashcards_log",
+                                args=[course.slug, module.order],
+                            ),
+                        }
+                    }
+                )
         existing_signup = None
         meeting_options = []
         selected_meeting = None
         can_cancel_meeting = False
+        if stage_key == ModuleStageProgress.StageKey.FLIGHT_DECK:
+            meeting_activities = [
+                {
+                    "index": idx,
+                    "title": activity.title,
+                    "description": activity.description,
+                }
+                for idx, activity in enumerate(
+                    module.meeting_activities.filter(is_active=True).order_by("order"),
+                    start=1,
+                )
+            ]
+
         if profile:
             if stage_key == ModuleStageProgress.StageKey.LAUNCH_PAD:
                 progress, _ = ModuleStageProgress.objects.get_or_create(
@@ -814,7 +1109,8 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                     stage_key=ModuleStageProgress.StageKey.FLIGHT_DECK,
                 )
                 tasks_state = list(progress.completed_tasks or [])
-                required = len(FLIGHT_DECK_TASKS)
+                flight_configs = _get_flight_deck_activity_configs(module)
+                required = len(flight_configs)
                 if len(tasks_state) < required:
                     tasks_state.extend([False] * (required - len(tasks_state)))
                 elif len(tasks_state) > required:
@@ -834,8 +1130,8 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                     tasks_state[0] = scheduler_complete
                     progress.completed_tasks = tasks_state
                     progress.save(update_fields=["completed_tasks", "updated_at"])
-                for idx, task in enumerate(FLIGHT_DECK_TASKS, start=1):
-                    task_type = "scheduler" if idx == 1 else ("notebook" if idx == 2 else "recorder")
+                for idx, task in enumerate(flight_configs, start=1):
+                    task_type = task.get("slot", ModuleFlightDeckActivity.Slot.NOTEBOOK)
                     entry = {
                         "index": idx,
                         "type": task_type,
@@ -845,7 +1141,19 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                         "link_label": task.get("link_label", "Open Link"),
                         "completed": tasks_state[idx - 1],
                     }
-                    if task_type == "scheduler":
+                    if task_type == ModuleFlightDeckActivity.Slot.SCHEDULER:
+                        assistant_start = None
+                        assistant_end = None
+                        assistant_available = False
+                        assistant_url = None
+                        if selected_meeting:
+                            assistant_start = selected_meeting.scheduled_for
+                            assistant_end = assistant_start + timedelta(
+                                minutes=selected_meeting.duration_minutes
+                            )
+                            now = timezone.now()
+                            assistant_available = assistant_start <= now <= assistant_end
+                            assistant_url = MEETING_ASSISTANT_URL
                         entry.update(
                             {
                                 "meeting_options": meeting_options,
@@ -856,6 +1164,10 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                                     "course_module_meeting_cancel",
                                     args=[course.slug, module.order],
                                 ),
+                                "assistant_available": assistant_available,
+                                "assistant_start": assistant_start,
+                                "assistant_end": assistant_end,
+                                "assistant_url": assistant_url,
                             }
                         )
                     flight_deck_tasks.append(entry)
@@ -873,6 +1185,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                     tasks_state = tasks_state[:required]
 
                 for idx, card in enumerate(afterburner_cards, start=1):
+                    card["index"] = idx
                     card["completed"] = bool(tasks_state[idx - 1])
                 game_index = afterburner_game_card["index"]
                 afterburner_game_card["completed"] = bool(tasks_state[game_index - 1])
@@ -893,6 +1206,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                 "stage_unlocks": stage_unlocks,
                 "launch_pad_tasks": launch_tasks,
                 "flight_deck_tasks": flight_deck_tasks,
+                "meeting_activities": meeting_activities,
                 "selected_meeting": selected_meeting,
                 "can_view_course": can_view_course,
             }
@@ -973,6 +1287,9 @@ class ModuleMeetingSignupView(PlacementRequiredMixin, View):
         stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
 
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            assistant_start_dt = meeting.scheduled_for
+            assistant_end_dt = assistant_start_dt + timedelta(minutes=meeting.duration_minutes)
+            assistant_available = assistant_start_dt <= timezone.now() <= assistant_end_dt
             return JsonResponse(
                 {
                     "selected_meeting": {
@@ -981,6 +1298,10 @@ class ModuleMeetingSignupView(PlacementRequiredMixin, View):
                         "scheduled_for": timezone.localtime(meeting.scheduled_for).strftime("%b %d, %Y · %H:%M"),
                         "duration_minutes": meeting.duration_minutes,
                         "can_cancel": meeting.scheduled_for - timezone.now() >= timedelta(hours=48),
+                        "assistant_start": timezone.localtime(assistant_start_dt).isoformat(),
+                        "assistant_end": timezone.localtime(assistant_end_dt).isoformat(),
+                        "assistant_available": assistant_available,
+                        "assistant_url": MEETING_ASSISTANT_URL,
                     },
                     "stage_unlocks": stage_unlocks,
                 }
@@ -1102,6 +1423,238 @@ class ModuleMeetingCancelView(PlacementRequiredMixin, View):
             stage=ModuleStageProgress.StageKey.FLIGHT_DECK,
         )
 
+
+class ModuleGameFlashcardQueueView(PlacementRequiredMixin, View):
+    """Return the due flashcard queue for the adaptive flashcard game."""
+
+    login_url = "login"
+
+    def get(self, request, slug: str, order: int):
+        course = get_object_or_404(
+            Course.objects.prefetch_related(
+                Prefetch(
+                    "modules",
+                    queryset=CourseModule.objects.prefetch_related("sessions").order_by("order"),
+                )
+            ),
+            slug=slug,
+            is_published=True,
+        )
+
+        user = request.user
+        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        if not can_view_course:
+            return JsonResponse(
+                {"redirect_url": reverse("course_detail", args=[course.slug])},
+                status=403,
+            )
+
+        module = get_object_or_404(
+            CourseModule.objects.prefetch_related("sessions"),
+            course=course,
+            order=order,
+        )
+
+        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+            return JsonResponse({"error": "module_locked"}, status=403)
+
+        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        if not stage_unlocks.get(ModuleStageProgress.StageKey.AFTERBURNER, False):
+            return JsonResponse({"error": "afterburner_locked"}, status=403)
+
+        module_game = (
+            ModuleGame.objects.filter(module=module, is_active=True).order_by("order").first()
+        )
+        if (
+            module_game is None
+            or module_game.game_type != ModuleGame.GameType.ADAPTIVE_FLASHCARDS
+        ):
+            return JsonResponse({"cards": [], "meta": {"total_due": 0}}, status=200)
+
+        profile = getattr(user, "profile", None)
+        if profile is None:
+            return JsonResponse({"error": "profile_missing"}, status=403)
+
+        progress_map = _ensure_flashcard_progress_map(profile, module_game)
+        now = timezone.now()
+
+        due_progresses = [
+            progress
+            for progress in progress_map.values()
+            if progress.flashcard.is_active and progress.next_review_at <= now
+        ]
+
+        random.shuffle(due_progresses)
+
+        cards_payload = [
+            {
+                "id": progress.flashcard_id,
+                "word": progress.flashcard.word,
+                "image_url": progress.flashcard.image_url,
+                "audio_url": progress.flashcard.audio_url,
+                "interval_index": progress.interval_index,
+                "correct_streak": progress.correct_streak,
+                "seen_count": progress.seen_count,
+                "last_outcome": progress.last_outcome,
+            }
+            for progress in due_progresses
+        ]
+
+        meta = {
+            "total_due": len(cards_payload),
+            "total_active": module_game.flashcards.filter(is_active=True).count(),
+        }
+
+        return JsonResponse({"cards": cards_payload, "meta": meta})
+
+
+class ModuleGameFlashcardLogView(PlacementRequiredMixin, View):
+    """Handle learner outcomes for adaptive flashcard interactions."""
+
+    login_url = "login"
+
+    def post(self, request, slug: str, order: int):
+        try:
+            payload = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except json.JSONDecodeError:
+            payload = {}
+
+        card_id = payload.get("card_id")
+        outcome = payload.get("outcome")
+        time_spent_ms = int(payload.get("time_spent_ms") or 0)
+        streak_length = int(payload.get("streak_length") or 0)
+        points_awarded = int(payload.get("points_awarded") or 0)
+
+        if not card_id or outcome not in {"knew", "didnt"}:
+            return JsonResponse({"error": "invalid_payload"}, status=400)
+
+        course = get_object_or_404(
+            Course.objects.prefetch_related(
+                Prefetch(
+                    "modules",
+                    queryset=CourseModule.objects.prefetch_related("sessions").order_by("order"),
+                )
+            ),
+            slug=slug,
+            is_published=True,
+        )
+
+        user = request.user
+        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        if not can_view_course:
+            return JsonResponse(
+                {"redirect_url": reverse("course_detail", args=[course.slug])},
+                status=403,
+            )
+
+        module = get_object_or_404(
+            CourseModule.objects.prefetch_related("sessions"),
+            course=course,
+            order=order,
+        )
+
+        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+            return JsonResponse({"error": "module_locked"}, status=403)
+
+        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        if not stage_unlocks.get(ModuleStageProgress.StageKey.AFTERBURNER, False):
+            return JsonResponse({"error": "afterburner_locked"}, status=403)
+
+        module_game = (
+            ModuleGame.objects.filter(module=module, is_active=True).order_by("order").first()
+        )
+        if (
+            module_game is None
+            or module_game.game_type != ModuleGame.GameType.ADAPTIVE_FLASHCARDS
+        ):
+            return JsonResponse({"error": "game_unavailable"}, status=400)
+
+        profile = getattr(user, "profile", None)
+        if profile is None:
+            return JsonResponse({"error": "profile_missing"}, status=403)
+
+        flashcard = get_object_or_404(
+            ModuleGameFlashcard,
+            id=card_id,
+            game=module_game,
+        )
+
+        with transaction.atomic():
+            try:
+                progress = ModuleGameFlashcardProgress.objects.select_for_update().get(
+                    profile=profile,
+                    flashcard=flashcard,
+                )
+            except ModuleGameFlashcardProgress.DoesNotExist:
+                progress = ModuleGameFlashcardProgress.objects.create(
+                    profile=profile,
+                    flashcard=flashcard,
+                    next_review_at=timezone.now(),
+                )
+
+            now = timezone.now()
+            previous_index = progress.interval_index
+            previous_streak = progress.correct_streak
+
+            if outcome == "knew":
+                interval_index = min(previous_index + 1, len(FLASHCARD_SRS_INTERVALS) - 1)
+                correct_streak = previous_streak + 1
+                last_outcome = "correct"
+            else:
+                interval_index = max(previous_index - 1, 0)
+                correct_streak = 0
+                last_outcome = "incorrect"
+
+            next_interval = _flashcard_interval_for_index(interval_index)
+
+            progress.interval_index = interval_index
+            progress.next_review_at = now + next_interval
+            progress.correct_streak = correct_streak
+            progress.seen_count += 1
+            progress.last_outcome = last_outcome
+            progress.total_points = max(0, progress.total_points + max(points_awarded, 0))
+            progress.last_reviewed_at = now
+            progress.save(
+                update_fields=[
+                    "interval_index",
+                    "next_review_at",
+                    "correct_streak",
+                    "seen_count",
+                    "last_outcome",
+                    "total_points",
+                    "last_reviewed_at",
+                    "updated_at",
+                ]
+            )
+
+            ModuleGameFlashcardLog.objects.create(
+                progress=progress,
+                outcome=last_outcome,
+                streak_length=max(streak_length, correct_streak if outcome == "knew" else 0),
+                time_spent_ms=max(time_spent_ms, 0),
+                points_awarded=points_awarded,
+            )
+
+        remaining_due = ModuleGameFlashcardProgress.objects.filter(
+            profile=profile,
+            flashcard__game=module_game,
+            next_review_at__lte=timezone.now(),
+            flashcard__is_active=True,
+        ).count()
+
+        return JsonResponse(
+            {
+                "progress": {
+                    "interval_index": progress.interval_index,
+                    "next_review_at": progress.next_review_at.isoformat(),
+                    "correct_streak": progress.correct_streak,
+                    "seen_count": progress.seen_count,
+                    "total_points": progress.total_points,
+                    "last_outcome": progress.last_outcome,
+                },
+                "remaining_due": remaining_due,
+            }
+        )
 
 class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
     login_url = "login"
