@@ -1,7 +1,8 @@
 """Views powering the FOREIGN experience."""
 import json
 import random
-from datetime import timedelta
+from copy import deepcopy
+from datetime import datetime, time, timedelta
 
 from django.conf import settings
 from django.contrib import messages
@@ -13,10 +14,11 @@ from django.db.models import Prefetch
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import timezone, formats
 from django.views import View
 from django.views.generic import TemplateView
 
+from .constants import DEFAULT_LAUNCH_PAD_TASKS, NOTEBOOK_LM_APP_URL
 from .forms import (
     AccountForm,
     AvailabilityWindowForm,
@@ -35,6 +37,7 @@ from .models import (
     ModuleGameFlashcard,
     ModuleGameFlashcardLog,
     ModuleGameFlashcardProgress,
+    ModuleLaunchPadTask,
     ModuleAfterburnerActivity,
     ModuleFlightDeckActivity,
     ModuleLiveMeeting,
@@ -115,14 +118,7 @@ for idx, stage in enumerate(MODULE_STAGE_SEQUENCE, start=1):
 
 MODULE_STAGE_LOOKUP = {stage["key"]: stage for stage in MODULE_STAGE_SEQUENCE}
 
-PRE_SESSION_TASKS = [
-    "NotebookLM briefing: theme overview",
-    "Vocabulary pack with pronunciation clips",
-    "Speaking drill: record a 30-second practice",
-    "Micro-quiz to check comprehension",
-    "Cultural insight drop",
-    "Mission reflection prompt",
-]
+PRE_SESSION_TASKS = [task["title"] for task in DEFAULT_LAUNCH_PAD_TASKS]
 
 POST_SESSION_TASKS = [
     "NotebookLM game mission",
@@ -336,6 +332,35 @@ def _get_afterburner_card_configs(
     return configs
 
 
+def _get_launch_pad_task_configs(course: Course | None, module: CourseModule | None) -> list[dict[str, str]]:
+    """Return launch pad task configurations with module overrides."""
+
+    module_tasks = []
+    if module is not None:
+        activity = getattr(module, "launchpad_activity", None)
+        if activity:
+            module_tasks = list(
+                activity.tasks.filter(is_active=True).order_by("order", "id")
+            )
+        else:
+            module_tasks = list(
+                ModuleLaunchPadTask.objects.filter(module=module, is_active=True).order_by("order", "id")
+            )
+
+    if module_tasks:
+        return [
+            {
+                "title": task.title,
+                "description": task.description,
+                "link_label": task.link_label or "Open NotebookLM",
+                "link_url": task.link_url,
+            }
+            for task in module_tasks
+        ]
+
+    return [task.copy() for task in LAUNCH_PAD_DEFAULT_TASKS]
+
+
 def _get_flight_deck_activity_configs(module: CourseModule | None) -> list[dict[str, str]]:
     """Return ordered Flight Deck activity configs with module overrides."""
 
@@ -449,7 +474,7 @@ STAGE_EXTENSION_MAP = {
     },
 }
 
-NOTEBOOK_LM_APP_URL = "https://notebooklm.google.com/app"
+LAUNCH_PAD_DEFAULT_TASKS = deepcopy(DEFAULT_LAUNCH_PAD_TASKS)
 
 MEETING_ASSISTANT_URL = getattr(
     settings,
@@ -674,6 +699,8 @@ def _get_stage_unlocks(user, course, module, enrollment=None, can_view_course=Fa
     if profile is None:
         return unlocks
 
+    launch_configs = _get_launch_pad_task_configs(course, module)
+
     try:
         progress = ModuleStageProgress.objects.get(
             profile=profile,
@@ -684,9 +711,11 @@ def _get_stage_unlocks(user, course, module, enrollment=None, can_view_course=Fa
     except ModuleStageProgress.DoesNotExist:
         tasks = []
 
-    required = len(PRE_SESSION_TASKS)
+    required = len(launch_configs)
     if len(tasks) < required:
         tasks.extend([False] * (required - len(tasks)))
+    elif len(tasks) > required:
+        tasks = tasks[:required]
 
     stage_one_complete = required > 0 and all(bool(flag) for flag in tasks[:required])
     unlocks["flight-deck"] = stage_one_complete
@@ -782,7 +811,7 @@ def _is_module_unlocked(user, course, module, enrollment=None, can_view_course=F
 
 def _get_stage_required_tasks(stage_key: str, module: CourseModule) -> int:
     if stage_key == ModuleStageProgress.StageKey.LAUNCH_PAD:
-        return len(PRE_SESSION_TASKS)
+        return len(_get_launch_pad_task_configs(getattr(module, "course", None), module))
     if stage_key == ModuleStageProgress.StageKey.FLIGHT_DECK:
         return len(_get_flight_deck_activity_configs(module))
     if stage_key == ModuleStageProgress.StageKey.AFTERBURNER:
@@ -970,14 +999,6 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
         sessions_qs = module.sessions.all().order_by("order")
         sessions = list(sessions_qs)
 
-        pre_session_resources = [
-            {
-                "title": task,
-                "url": "#",
-            }
-            for task in PRE_SESSION_TASKS
-        ]
-
         post_session_games = POST_SESSION_TASKS[:3]
         post_session_loops = POST_SESSION_TASKS[3:]
 
@@ -995,7 +1016,33 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
         ]
 
         profile = getattr(user, "profile", None)
-        launch_tasks = []
+        meeting_signup = None
+        selected_meeting = None
+        can_cancel_meeting = False
+        if profile is not None:
+            meeting_signup = (
+                ModuleLiveMeetingSignup.objects.filter(
+                    profile=profile,
+                    module=module,
+                )
+                .select_related("meeting")
+                .first()
+            )
+            if meeting_signup and meeting_signup.meeting:
+                selected_meeting = meeting_signup.meeting
+
+        launch_configs = _get_launch_pad_task_configs(course, module)
+        launch_tasks = [
+            {
+                "index": idx,
+                "title": config.get("title", ""),
+                "description": config.get("description", ""),
+                "link_label": config.get("link_label", "Open NotebookLM"),
+                "link_url": config.get("link_url") or NOTEBOOK_LM_APP_URL,
+                "completed": False,
+            }
+            for idx, config in enumerate(launch_configs, start=1)
+        ]
         flight_deck_tasks = []
         meeting_activities = []
         afterburner_configs = _get_afterburner_card_configs(course, module)
@@ -1012,17 +1059,13 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                     "description": config["description"],
                     "completed": False,
                     "slot": config["slot"],
+                    "dashboard_url": None,
                 }
             )
 
-        default_game = (
-            ModuleGame.objects.filter(module=module, is_active=True).order_by("order").first()
-        )
         selected_game = None
         if game_config and game_config.get("activity"):
             selected_game = getattr(game_config["activity"], "game", None)
-        if selected_game is None:
-            selected_game = default_game
 
         afterburner_game_card = {
             "index": len(afterburner_cards) + 1,
@@ -1032,11 +1075,58 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             ),
             "completed": False,
             "slot": ModuleAfterburnerActivity.Slot.GAME,
-            "game_type": ModuleGame.GameType.LETTER_SEQUENCE,
+            "game_type": selected_game.game_type if selected_game else None,
             "word": "",
             "definition": "",
+            "dashboard_url": None,
         }
 
+        now = timezone.now()
+        course_start_date = course.start_date or now.date()
+        module_start_date = course_start_date + timedelta(days=max(0, (module.order - 1) * 7))
+        module_start_dt = datetime.combine(module_start_date, time.min)
+        if timezone.is_naive(module_start_dt):
+            module_start_dt = timezone.make_aware(module_start_dt, timezone.get_current_timezone())
+
+        slot_unlock_offsets = {
+            ModuleAfterburnerActivity.Slot.TALK_RECORD: 1,
+            ModuleAfterburnerActivity.Slot.READING: 3,
+            ModuleAfterburnerActivity.Slot.REAL_WORLD: 5,
+            ModuleAfterburnerActivity.Slot.GRAMMAR: 7,
+        }
+
+        for card in afterburner_cards:
+            offset_days = slot_unlock_offsets.get(card["slot"], 0)
+            unlock_at = module_start_dt + timedelta(days=offset_days)
+            local_unlock = timezone.localtime(unlock_at)
+            card["unlock_at"] = local_unlock
+            is_locked = now < unlock_at
+            card["is_locked"] = is_locked
+            card["lock_message"] = ""
+            if is_locked:
+                formatted = formats.date_format(local_unlock, "M j, g:i a")
+                card["lock_message"] = f"Unlocks on {formatted}"
+
+        game_unlock_at = None
+        game_lock_message = ""
+        game_locked = True
+        if selected_meeting:
+            meeting_end = selected_meeting.scheduled_for + timedelta(
+                minutes=selected_meeting.duration_minutes or 60
+            )
+            game_unlock_at = timezone.localtime(meeting_end)
+            game_locked = now < meeting_end
+            if game_locked:
+                formatted = formats.date_format(game_unlock_at, "M j, g:i a")
+                game_lock_message = f"Unlocks after your live mission on {formatted}"
+        else:
+            game_lock_message = "Schedule your live meeting to unlock this mission."
+
+        afterburner_game_card["unlock_at"] = game_unlock_at
+        afterburner_game_card["is_locked"] = game_locked
+        afterburner_game_card["lock_message"] = game_lock_message
+
+        game_props_for_stage = {}
         if selected_game:
             afterburner_game_card.update(
                 {
@@ -1063,10 +1153,34 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                         }
                     }
                 )
-        existing_signup = None
-        meeting_options = []
-        selected_meeting = None
-        can_cancel_meeting = False
+                game_props_for_stage = {
+                    "queueUrl": afterburner_game_card["flashcards_api"]["queue"],
+                    "logUrl": afterburner_game_card["flashcards_api"]["log"],
+                }
+            elif selected_game.game_type == ModuleGame.GameType.LETTER_SEQUENCE:
+                game_props_for_stage = {
+                    "word": (selected_game.word or "").upper(),
+                    "definition": selected_game.definition or "",
+                }
+        afterburner_game_card["game_props_json"] = json.dumps(game_props_for_stage)
+        for idx, card in enumerate(afterburner_cards, start=1):
+            card["index"] = idx
+            card["dashboard_url"] = reverse(
+                "course_module_afterburner_dashboard",
+                args=[course.slug, module.order, card["slot"]],
+            )
+
+        afterburner_game_card["index"] = len(afterburner_cards) + 1
+        afterburner_game_card["dashboard_url"] = reverse(
+            "course_module_afterburner_dashboard",
+            args=[course.slug, module.order, ModuleAfterburnerActivity.Slot.GAME],
+        )
+
+        if selected_meeting:
+            can_cancel_meeting = selected_meeting.scheduled_for - now >= timedelta(hours=48)
+
+        existing_signup = meeting_signup
+        meeting_options: list[ModuleLiveMeeting] = []
         if stage_key == ModuleStageProgress.StageKey.FLIGHT_DECK:
             meeting_activities = [
                 {
@@ -1088,20 +1202,16 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                     stage_key=ModuleStageProgress.StageKey.LAUNCH_PAD,
                 )
                 tasks_state = list(progress.completed_tasks or [])
-                required = len(PRE_SESSION_TASKS)
+                required = len(launch_tasks)
                 if len(tasks_state) < required:
                     tasks_state.extend([False] * (required - len(tasks_state)))
                 elif len(tasks_state) > required:
                     tasks_state = tasks_state[:required]
-                for idx, resource in enumerate(pre_session_resources, start=1):
-                    launch_tasks.append(
-                        {
-                            "index": idx,
-                            "title": resource["title"],
-                            "url": resource["url"],
-                            "completed": tasks_state[idx - 1],
-                        }
-                    )
+                if progress.completed_tasks != tasks_state:
+                    progress.completed_tasks = tasks_state
+                    progress.save(update_fields=["completed_tasks", "updated_at"])
+                for idx in range(1, required + 1):
+                    launch_tasks[idx - 1]["completed"] = bool(tasks_state[idx - 1])
             elif stage_key == ModuleStageProgress.StageKey.FLIGHT_DECK:
                 progress, _ = ModuleStageProgress.objects.get_or_create(
                     profile=profile,
@@ -1115,10 +1225,6 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                     tasks_state.extend([False] * (required - len(tasks_state)))
                 elif len(tasks_state) > required:
                     tasks_state = tasks_state[:required]
-                existing_signup = ModuleLiveMeetingSignup.objects.filter(
-                    profile=profile,
-                    module=module,
-                ).select_related("meeting").first()
                 scheduler_complete = bool(existing_signup)
                 meeting_options = list(
                     ModuleLiveMeeting.objects.filter(module=module).order_by("scheduled_for")
@@ -1198,7 +1304,6 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                 "stage": stage_config,
                 "stage_key": stage_key,
                 "stage_cards": stage_cards,
-                "pre_session_resources": pre_session_resources,
                 "post_session_games": post_session_games,
                 "post_session_loops": post_session_loops,
                 "afterburner_cards": afterburner_cards,
@@ -1209,6 +1314,129 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                 "meeting_activities": meeting_activities,
                 "selected_meeting": selected_meeting,
                 "can_view_course": can_view_course,
+            }
+        )
+        return context
+
+
+class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
+    template_name = "core/modules/afterburner_dashboard.html"
+    login_url = "login"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        slug = kwargs["slug"]
+        order = kwargs["order"]
+        slot = kwargs["slot"]
+
+        course = get_object_or_404(
+            Course.objects.prefetch_related(
+                Prefetch(
+                    "modules",
+                    queryset=CourseModule.objects.prefetch_related("sessions").order_by("order"),
+                )
+            ),
+            slug=slug,
+            is_published=True,
+        )
+        user = self.request.user
+        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        if not can_view_course:
+            messages.warning(self.request, "Finish your application to unlock weekly missions.")
+            return redirect("course_detail", slug=slug)
+
+        module = get_object_or_404(
+            CourseModule.objects.prefetch_related("sessions"),
+            course=course,
+            order=order,
+        )
+
+        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+            previous_week = max(1, module.order - 1)
+            messages.warning(
+                self.request,
+                f"Complete Week {previous_week} Launch Pad missions to unlock Week {module.order}.",
+            )
+            return redirect("course_module", slug=slug, order=previous_week)
+
+        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        if not stage_unlocks.get(ModuleStageProgress.StageKey.AFTERBURNER, False):
+            messages.warning(self.request, "Unlock Afterburner to view this dashboard.")
+            return redirect("course_module", slug=slug, order=order)
+
+        try:
+            slot_enum = ModuleAfterburnerActivity.Slot(slot)
+        except ValueError as exc:  # pragma: no cover - defensive
+            raise Http404("Unknown afterburner slot") from exc
+
+        activity = (
+            ModuleAfterburnerActivity.objects.filter(module=module, slot=slot_enum)
+            .select_related("game", "module")
+            .first()
+        )
+
+        slot_label = (
+            activity.get_slot_display() if activity else slot_enum.label if hasattr(slot_enum, 'label') else slot_enum
+        )
+
+        selected_game = None
+        if slot_enum == ModuleAfterburnerActivity.Slot.GAME:
+            if activity and activity.game:
+                selected_game = activity.game
+            else:
+                selected_game = (
+                    ModuleGame.objects.filter(module=module, is_active=True)
+                    .order_by("order")
+                    .first()
+                )
+
+        reading_chapters = []
+        grammar_points = []
+        if activity:
+            if slot_enum == ModuleAfterburnerActivity.Slot.READING:
+                reading_chapters = list(
+                    activity.reading_chapters.all().order_by("order", "id")
+                )
+            elif slot_enum == ModuleAfterburnerActivity.Slot.GRAMMAR:
+                grammar_points = list(
+                    activity.grammar_points.all().order_by("order", "id")
+                )
+
+        game_props = {}
+        if slot_enum == ModuleAfterburnerActivity.Slot.GAME and selected_game:
+            if selected_game.game_type == ModuleGame.GameType.LETTER_SEQUENCE:
+                game_props = {
+                    "word": (selected_game.word or "").upper(),
+                    "definition": selected_game.definition or "",
+                }
+            elif selected_game.game_type == ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
+                game_props = {
+                    "queueUrl": reverse(
+                        "course_module_flashcards_queue",
+                        args=[course.slug, module.order],
+                    ),
+                    "logUrl": reverse(
+                        "course_module_flashcards_log",
+                        args=[course.slug, module.order],
+                    ),
+                }
+
+        context.update(
+            {
+                "course": course,
+                "module": module,
+                "slot_enum": slot_enum,
+                "slot_label": slot_label,
+                "activity": activity,
+                "selected_game": selected_game,
+                "game_props_json": json.dumps(game_props),
+                "game_slot_value": ModuleAfterburnerActivity.Slot.GAME,
+                "talk_slot_value": ModuleAfterburnerActivity.Slot.TALK_RECORD,
+                "reading_slot_value": ModuleAfterburnerActivity.Slot.READING,
+                "grammar_slot_value": ModuleAfterburnerActivity.Slot.GRAMMAR,
+                "real_world_slot_value": ModuleAfterburnerActivity.Slot.REAL_WORLD,
+                "reading_chapters": reading_chapters,
+                "grammar_points": grammar_points,
             }
         )
         return context
@@ -1732,6 +1960,66 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
 
         if stage_key == ModuleStageProgress.StageKey.FLIGHT_DECK and index == 1:
             raise Http404
+
+        if stage_key == ModuleStageProgress.StageKey.AFTERBURNER:
+            now = timezone.now()
+            afterburner_configs = _get_afterburner_card_configs(course, module)
+            non_game_configs: list[dict[str, object]] = []
+            game_config: dict[str, object] | None = None
+            for config in afterburner_configs:
+                if config["slot"] == ModuleAfterburnerActivity.Slot.GAME:
+                    game_config = config
+                else:
+                    non_game_configs.append(config)
+
+            slot_unlock_offsets = {
+                ModuleAfterburnerActivity.Slot.TALK_RECORD: 1,
+                ModuleAfterburnerActivity.Slot.READING: 3,
+                ModuleAfterburnerActivity.Slot.REAL_WORLD: 5,
+                ModuleAfterburnerActivity.Slot.GRAMMAR: 7,
+            }
+
+            course_start_date = course.start_date or now.date()
+            module_start_date = course_start_date + timedelta(days=max(0, (module.order - 1) * 7))
+            module_start_dt = datetime.combine(module_start_date, time.min)
+            if timezone.is_naive(module_start_dt):
+                module_start_dt = timezone.make_aware(module_start_dt, timezone.get_current_timezone())
+
+            card_locked = False
+            lock_message = ""
+
+            if index <= len(non_game_configs):
+                slot = non_game_configs[index - 1]["slot"]
+                unlock_at = module_start_dt + timedelta(days=slot_unlock_offsets.get(slot, 0))
+                if now < unlock_at:
+                    card_locked = True
+                    unlock_local = timezone.localtime(unlock_at)
+                    lock_message = f"This mission unlocks on {formats.date_format(unlock_local, 'M j, g:i a')}"
+            else:
+                meeting_signup = (
+                    ModuleLiveMeetingSignup.objects.filter(profile=profile, module=module)
+                    .select_related("meeting")
+                    .first()
+                )
+                meeting = meeting_signup.meeting if meeting_signup else None
+                if meeting:
+                    meeting_end = meeting.scheduled_for + timedelta(minutes=meeting.duration_minutes or 60)
+                    if now < meeting_end:
+                        card_locked = True
+                        unlock_local = timezone.localtime(meeting_end)
+                        lock_message = (
+                            "Game unlocks after your live mission on "
+                            f"{formats.date_format(unlock_local, 'M j, g:i a')}"
+                        )
+                else:
+                    card_locked = True
+                    lock_message = "Schedule your live mission to unlock this game."
+
+            if card_locked:
+                if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                    return JsonResponse({"error": "locked", "message": lock_message}, status=403)
+                messages.info(request, lock_message or "This mission is not available yet.")
+                return redirect("course_module_stage", slug=slug, order=order, stage=stage_key)
 
         task_idx = index - 1
         tasks_state[task_idx] = not bool(tasks_state[task_idx])

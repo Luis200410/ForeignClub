@@ -1,0 +1,263 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Afterburner · {{ module.title }}{% endblock %}
+{% block content %}
+<section class="container-xl py-7">
+    <div class="row justify-content-center">
+        <div class="col-xl-8 col-lg-9">
+            <article class="module-card glass-panel p-5 p-lg-6 mb-5" data-animate="fade-up">
+                <p class="eyebrow mb-2">Stage 3 · Afterburner · {{ slot_label }}</p>
+                <h1 class="h4 fw-bold tracking-tight mb-2">
+                    {% if activity %}
+                        {{ activity.title }}
+                    {% elif slot_enum == game_slot_value and selected_game %}
+                        {{ selected_game.title|default:"Game Mission" }}
+                    {% else %}
+                        Afterburner Mission
+                    {% endif %}
+                </h1>
+                {% if activity and activity.description %}
+                    <p class="text-white-50 mb-4">{{ activity.description }}</p>
+                {% elif slot_enum == game_slot_value and selected_game and selected_game.description %}
+                    <p class="text-white-50 mb-4">{{ selected_game.description }}</p>
+                {% else %}
+                    <p class="text-white-50 mb-4">Dive into the activity dashboard to complete this retention mission.</p>
+                {% endif %}
+
+                {% if slot_enum == game_slot_value and selected_game %}
+                    <div class="vue-game"
+                         data-game-type="{{ selected_game.game_type }}"
+                         data-game-props='{{ game_props_json|default:'{}'|escapejs }}'
+                    ></div>
+                    <p class="text-white-50 small mt-3">Return to the Afterburner page to mark this mission complete.</p>
+                {% elif slot_enum == talk_slot_value %}
+                    <div class="recorder-panel js-recorder-card" data-activity="talk-record">
+                        <div class="recorder-controls">
+                            <button class="todo-check todo-check--ghost" type="button" data-recorder-action="start">Start Recording</button>
+                            <button class="todo-check todo-check--ghost" type="button" data-recorder-action="stop">Stop</button>
+                            <button class="todo-check todo-check--ghost" type="button" data-recorder-action="play">Play</button>
+                            <a class="todo-check todo-check--ghost js-recorder-download" href="#" download="afterburner-talk-recording.webm" hidden>Download</a>
+                        </div>
+                        <p class="recorder-status js-recorder-status text-white-50 small mb-2">Recorder idle.</p>
+                        <audio class="recorder-audio" controls hidden></audio>
+                        <p class="text-white-50 small mb-0">Practice your pronunciation and keep the best take for feedback.</p>
+                    </div>
+                {% elif slot_enum == reading_slot_value %}
+                    <div class="reading-chapters">
+                        {% if reading_chapters %}
+                            <ol class="reading-chapter-list">
+                                {% for chapter in reading_chapters %}
+                                    <li class="reading-chapter">
+                                        <h2 class="h6 fw-semibold mb-1">{{ chapter.title }}</h2>
+                                        {% if chapter.content %}
+                                            <p class="text-white-50 mb-0">{{ chapter.content|linebreaksbr }}</p>
+                                        {% else %}
+                                            <p class="text-white-50 mb-0">Dive into this section and summarize the key insight in your notebook.</p>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ol>
+                        {% else %}
+                            <div class="dashboard-placeholder">
+                                <p class="text-white-50 mb-0">Add chapters in the admin to guide learners through the reading mission.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% elif slot_enum == grammar_slot_value %}
+                    <div class="grammar-points">
+                        {% if grammar_points %}
+                            <ul class="grammar-point-list">
+                                {% for point in grammar_points %}
+                                    <li class="grammar-point">
+                                        <h2 class="h6 fw-semibold mb-1">{{ point.formula }}</h2>
+                                        {% if point.explanation %}
+                                            <p class="text-white-50 mb-0">{{ point.explanation|linebreaksbr }}</p>
+                                        {% else %}
+                                            <p class="text-white-50 mb-0">Explain this pattern in simple terms for learners.</p>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <div class="dashboard-placeholder">
+                                <p class="text-white-50 mb-0">Add grammar equations in the admin to spell out the structure you want learners to master.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% elif slot_enum == real_world_slot_value %}
+                    {% if activity and activity.description %}
+                        <p class="text-white-50 mb-0">{{ activity.description|linebreaksbr }}</p>
+                    {% else %}
+                        <div class="dashboard-placeholder">
+                            <p class="text-white-50 mb-0">Share the real-world scenario and action steps for this challenge from the admin panel.</p>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="dashboard-placeholder">
+                        <p class="text-white-50 mb-0">Custom content for this activity is coming soon. Use this dashboard space to embed videos, upload resources, or provide interactive instructions.</p>
+                    </div>
+                {% endif %}
+
+                <div class="mt-4">
+                    <a class="btn btn-outline-light" href="{% url 'course_module_stage' course.slug module.order 'afterburner' %}">Back to Afterburner</a>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+    {{ block.super }}
+    <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js" integrity="sha384-1mXDyDRZs90un0nLBKBPXn1HULICwhf66A1VpzwuNFuIBqmoeZaZX6mE6oPD58Ll" crossorigin="anonymous"></script>
+    <script src="{% static 'core/games/app.js' %}"></script>
+    {% if slot_enum == talk_slot_value %}
+        <script>
+            (function () {
+                const recorderCard = document.querySelector('.js-recorder-card');
+                if (!recorderCard || !navigator.mediaDevices) {
+                    return;
+                }
+
+                let mediaRecorder = null;
+                let mediaRecorderMimeType = '';
+                let activeStream = null;
+                let recordedChunks = [];
+                const statusEl = recorderCard.querySelector('.js-recorder-status');
+                const audioEl = recorderCard.querySelector('.recorder-audio');
+                const downloadEl = recorderCard.querySelector('.js-recorder-download');
+
+                const setStatus = function (text) {
+                    if (statusEl) {
+                        statusEl.textContent = text;
+                    }
+                };
+
+                const resetRecording = function () {
+                    recordedChunks = [];
+                    if (audioEl) {
+                        audioEl.src = '';
+                        audioEl.hidden = true;
+                    }
+                    if (downloadEl) {
+                        downloadEl.hidden = true;
+                        downloadEl.removeAttribute('href');
+                    }
+                };
+
+                const handleDataAvailable = function (event) {
+                    if (event.data && event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+
+                const pickMimeType = function () {
+                    const candidates = [
+                        'audio/webm;codecs=opus',
+                        'audio/webm',
+                        'audio/mp4',
+                        'audio/mp4;codecs=mp4a.40.2',
+                    ];
+                    for (let i = 0; i < candidates.length; i += 1) {
+                        if (window.MediaRecorder && MediaRecorder.isTypeSupported(candidates[i])) {
+                            return candidates[i];
+                        }
+                    }
+                    return '';
+                };
+
+                const startRecording = function () {
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        setStatus('Recording is not supported in this browser.');
+                        return;
+                    }
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        setStatus('Recording already in progress… hit stop to finish.');
+                        return;
+                    }
+
+                    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+                        activeStream = stream;
+                        mediaRecorderMimeType = pickMimeType();
+                        try {
+                            mediaRecorder = new MediaRecorder(stream, mediaRecorderMimeType ? { mimeType: mediaRecorderMimeType } : undefined);
+                        } catch (err) {
+                            setStatus('Recorder could not start. Please try again.');
+                            return;
+                        }
+                        recordedChunks = [];
+                        mediaRecorder.addEventListener('dataavailable', handleDataAvailable);
+                        mediaRecorder.addEventListener('stop', function () {
+                            if (activeStream) {
+                                activeStream.getTracks().forEach(function (track) {
+                                    track.stop();
+                                });
+                                activeStream = null;
+                            }
+                            if (recordedChunks.length === 0) {
+                                setStatus('Recording stopped. Nothing captured.');
+                                return;
+                            }
+                            const blob = new Blob(recordedChunks, { type: mediaRecorderMimeType || 'audio/webm' });
+                            const url = URL.createObjectURL(blob);
+                            if (audioEl) {
+                                audioEl.src = url;
+                                audioEl.hidden = false;
+                            }
+                            if (downloadEl) {
+                                downloadEl.href = url;
+                                downloadEl.hidden = false;
+                            }
+                            setStatus('Recording ready. Replay or download your take.');
+                        });
+                        mediaRecorder.start();
+                        setStatus('Recording… speak clearly and pause when ready.');
+                    }).catch(function () {
+                        setStatus('Microphone permissions are required to record.');
+                    });
+                };
+
+                const stopRecording = function () {
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                    } else {
+                        setStatus('No active recording to stop.');
+                    }
+                };
+
+                const playRecording = function () {
+                    if (audioEl && audioEl.src) {
+                        audioEl.play();
+                    } else {
+                        setStatus('Record first to unlock playback.');
+                    }
+                };
+
+                recorderCard.addEventListener('click', function (event) {
+                    const target = event.target.closest('[data-recorder-action]');
+                    if (!target) {
+                        return;
+                    }
+                    const action = target.getAttribute('data-recorder-action');
+                    if (action === 'start') {
+                        resetRecording();
+                        startRecording();
+                    } else if (action === 'stop') {
+                        stopRecording();
+                    } else if (action === 'play') {
+                        playRecording();
+                    }
+                });
+
+                window.addEventListener('beforeunload', function () {
+                    if (activeStream) {
+                        activeStream.getTracks().forEach(function (track) {
+                            track.stop();
+                        });
+                    }
+                });
+            })();
+        </script>
+    {% endif %}
+{% endblock %}

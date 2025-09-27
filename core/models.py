@@ -6,6 +6,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
+from .constants import DEFAULT_LAUNCH_PAD_TASKS
+
 
 class Profile(models.Model):
     """Supplementary profile information for each learner."""
@@ -609,6 +611,105 @@ class ModuleFlightDeckActivity(models.Model):
         super().save(*args, **kwargs)
 
 
+class ModuleLaunchPadActivity(models.Model):
+    """Container for launch pad tasks so admins can manage cards in sets."""
+
+    module = models.OneToOneField(
+        CourseModule,
+        on_delete=models.CASCADE,
+        related_name="launchpad_activity",
+    )
+    title = models.CharField(max_length=160, blank=True)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Stage 1 · Launch Pad set"
+        verbose_name_plural = "Stage 1 · Launch Pad sets"
+
+    def __str__(self) -> str:
+        return self.title or f"{self.module} · Launch Pad"
+
+    def ensure_default_tasks(self) -> None:
+        """Seed default tasks if none exist yet."""
+
+        if self.tasks.exists():
+            return
+
+        tasks = []
+        for idx, config in enumerate(DEFAULT_LAUNCH_PAD_TASKS, start=1):
+            tasks.append(
+                ModuleLaunchPadTask(
+                    activity=self,
+                    module=self.module,
+                    order=idx,
+                    title=config.get("title", ""),
+                    description=config.get("description", ""),
+                    link_label=(config.get("link_label") or "Open NotebookLM"),
+                    link_url=config.get("link_url", ""),
+                    is_active=True,
+                )
+            )
+        ModuleLaunchPadTask.objects.bulk_create(tasks)
+
+
+class ModuleLaunchPadTask(models.Model):
+    """Custom launch pad warmup tasks per module."""
+
+    activity = models.ForeignKey(
+        ModuleLaunchPadActivity,
+        on_delete=models.CASCADE,
+        related_name="tasks",
+        null=True,
+        blank=True,
+    )
+    module = models.ForeignKey(
+        CourseModule,
+        on_delete=models.CASCADE,
+        related_name="launchpad_tasks",
+        null=True,
+        blank=True,
+        editable=False,
+    )
+    order = models.PositiveSmallIntegerField(default=1)
+    title = models.CharField(max_length=160)
+    description = models.TextField(blank=True)
+    link_label = models.CharField(max_length=120, blank=True)
+    link_url = models.URLField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["module", "order", "id"]
+        verbose_name = "Stage 1 · Launch Pad task"
+        verbose_name_plural = "Stage 1 · Launch Pad tasks"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["module", "order"],
+                name="unique_launchpad_task_order_per_module",
+            ),
+            models.UniqueConstraint(
+                fields=["activity", "order"],
+                name="unique_launchpad_task_order_per_activity",
+                condition=models.Q(activity__isnull=False),
+            ),
+        ]
+
+    def __str__(self) -> str:
+        module = self.module or (self.activity.module if self.activity else None)
+        return f"{module} · Launch task {self.order}" if module else f"Launch task {self.order}"
+
+    def save(self, *args, **kwargs):
+        if self.activity and not self.module:
+            self.module = self.activity.module
+        elif self.activity and self.module != self.activity.module:
+            self.module = self.activity.module
+        super().save(*args, **kwargs)
+
+
 class ModuleAfterburnerActivity(models.Model):
     """Configurable cards for Afterburner (stage three) activities."""
 
@@ -655,6 +756,104 @@ class ModuleAfterburnerActivity(models.Model):
     def __str__(self) -> str:
         return f"{self.module} · {self.get_slot_display()}"
 
+
+class ModuleAfterburnerReadingChapter(models.Model):
+    """Structured reading chapters for the Afterburner reading slot."""
+
+    activity = models.ForeignKey(
+        ModuleAfterburnerActivity,
+        on_delete=models.CASCADE,
+        related_name="reading_chapters",
+    )
+    order = models.PositiveSmallIntegerField(default=1)
+    title = models.CharField(max_length=160)
+    content = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["activity", "order", "id"]
+        verbose_name = "Afterburner reading chapter"
+        verbose_name_plural = "Afterburner reading chapters"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["activity", "order"],
+                name="unique_reading_chapter_order_per_activity",
+            )
+        ]
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if not self.activity_id:
+            return
+        if self.activity.slot != ModuleAfterburnerActivity.Slot.READING:
+            raise ValidationError(
+                {"activity": "Reading chapters can only be added to the reading slot."}
+            )
+
+    def save(self, *args, **kwargs):
+        if self.order <= 0:
+            siblings = self.activity.reading_chapters.count() if self.activity_id else 0
+            self.order = siblings + 1
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.activity} · Chapter {self.order}: {self.title}"
+
+
+class ModuleAfterburnerGrammarPoint(models.Model):
+    """Formula-style grammar highlights for the Afterburner grammar slot."""
+
+    activity = models.ForeignKey(
+        ModuleAfterburnerActivity,
+        on_delete=models.CASCADE,
+        related_name="grammar_points",
+    )
+    order = models.PositiveSmallIntegerField(default=1)
+    formula = models.CharField(max_length=160)
+    explanation = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["activity", "order", "id"]
+        verbose_name = "Afterburner grammar pattern"
+        verbose_name_plural = "Afterburner grammar patterns"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["activity", "order"],
+                name="unique_grammar_point_order_per_activity",
+            )
+        ]
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if not self.activity_id:
+            return
+        if self.activity.slot != ModuleAfterburnerActivity.Slot.GRAMMAR:
+            raise ValidationError(
+                {"activity": "Grammar patterns can only be added to the grammar slot."}
+            )
+
+    def save(self, *args, **kwargs):
+        if self.order <= 0:
+            siblings = self.activity.grammar_points.count() if self.activity_id else 0
+            self.order = siblings + 1
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.activity} · Pattern {self.order}: {self.formula}"
+
+
+class ModuleAfterburnerStage(CourseModule):
+    """Proxy to expose a cohesive Stage 3 editor in the admin."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "Stage 3 · Afterburner editor"
+        verbose_name_plural = "Stage 3 · Afterburner editors"
 
 class ModuleLiveMeeting(models.Model):
     """Admin-configured live meeting option for a module."""

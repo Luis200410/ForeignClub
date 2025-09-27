@@ -1,0 +1,110 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_sections %}
+
+{% block content %}
+<h1>{% trans 'Site administration' %}</h1>
+
+{% if app_list %}
+    <div id="content-main">
+        {% admin_stage_models app_list 'ModuleLaunchPadActivity' as launch_models %}
+        {% if launch_models %}
+            <div class="app-stage module">
+                <table>
+                    <caption>Stage 1 · Launch Pad</caption>
+                    {% for model in launch_models %}
+                        <tr class="model-{{ model.object_name|lower }}">
+                            <th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
+                            {% if model.add_url %}
+                                <td><a href="{{ model.add_url }}" class="addlink">{% trans 'Add' %}</a></td>
+                            {% else %}
+                                <td>&nbsp;</td>
+                            {% endif %}
+                            {% if model.admin_url %}
+                                <td><a href="{{ model.admin_url }}" class="changelink">{% trans 'Change' %}</a></td>
+                            {% else %}
+                                <td>&nbsp;</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% endif %}
+
+        {% admin_stage_models app_list 'ModuleFlightDeckActivity' as flight_models %}
+        {% if flight_models %}
+            <div class="app-stage module">
+                <table>
+                    <caption>Stage 2 · Flight Deck</caption>
+                    {% for model in flight_models %}
+                        <tr class="model-{{ model.object_name|lower }}">
+                            <th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
+                            {% if model.add_url %}
+                                <td><a href="{{ model.add_url }}" class="addlink">{% trans 'Add' %}</a></td>
+                            {% else %}
+                                <td>&nbsp;</td>
+                            {% endif %}
+                            {% if model.admin_url %}
+                                <td><a href="{{ model.admin_url }}" class="changelink">{% trans 'Change' %}</a></td>
+                            {% else %}
+                                <td>&nbsp;</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% endif %}
+
+        {% admin_stage_models app_list 'ModuleAfterburnerStage' 'ModuleGame' 'ModuleGameFlashcard' 'ModuleGameFlashcardProgress' 'ModuleGameFlashcardLog' as afterburner_models %}
+        {% if afterburner_models %}
+            <div class="app-stage module">
+                <table>
+                    <caption>Stage 3 · Afterburner</caption>
+                    {% for model in afterburner_models %}
+                        <tr class="model-{{ model.object_name|lower }}">
+                            <th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
+                            {% if model.add_url %}
+                                <td><a href="{{ model.add_url }}" class="addlink">{% trans 'Add' %}</a></td>
+                            {% else %}
+                                <td>&nbsp;</td>
+                            {% endif %}
+                            {% if model.admin_url %}
+                                <td><a href="{{ model.admin_url }}" class="changelink">{% trans 'Change' %}</a></td>
+                            {% else %}
+                                <td>&nbsp;</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% endif %}
+
+        {% admin_filtered_app_list app_list 'ModuleLaunchPadActivity' 'ModuleFlightDeckActivity' 'ModuleAfterburnerStage' 'ModuleAfterburnerActivity' 'ModuleGame' 'ModuleGameFlashcard' 'ModuleGameFlashcardProgress' 'ModuleGameFlashcardLog' as remaining_apps %}
+        {% for app in remaining_apps %}
+            <div class="app-{{ app.app_label }} module">
+                <table>
+                    <caption>
+                        {% if app.app_url %}<a href="{{ app.app_url }}">{{ app.name }}</a>{% else %}{{ app.name }}{% endif %}
+                    </caption>
+                    {% for model in app.models %}
+                        <tr class="model-{{ model.object_name|lower }}">
+                            <th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
+                            {% if model.add_url %}
+                                <td><a href="{{ model.add_url }}" class="addlink">{% trans 'Add' %}</a></td>
+                            {% else %}
+                                <td>&nbsp;</td>
+                            {% endif %}
+                            {% if model.admin_url %}
+                                <td><a href="{{ model.admin_url }}" class="changelink">{% trans 'Change' %}</a></td>
+                            {% else %}
+                                <td>&nbsp;</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>{% trans "You don't have permission to view or edit anything." %}</p>
+{% endif %}
+{% endblock %}

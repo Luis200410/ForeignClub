@@ -1,0 +1,326 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        :root {
+            --afterburner-card-border: rgba(255, 255, 255, 0.16);
+            --afterburner-card-bg: rgba(15, 17, 28, 0.55);
+            --afterburner-highlight: rgba(52, 199, 89, 0.32);
+        }
+        .afterburner-stage-editor {
+            padding-bottom: 3.5rem;
+        }
+        .afterburner-stage-editor h1 {
+            margin-bottom: 2rem;
+        }
+        .afterburner-stage-editor .slot-card {
+            margin-bottom: 2.8rem;
+            padding: 1.9rem 2.2rem;
+            border-radius: 22px;
+            background: var(--afterburner-card-bg);
+            border: 1px solid var(--afterburner-card-border);
+            box-shadow: 0 24px 48px -26px rgba(12, 17, 28, 0.7);
+        }
+        .afterburner-stage-editor .slot-card h2 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            letter-spacing: 0.04em;
+        }
+        .afterburner-stage-editor .slot-card > p.lead {
+            margin-top: 0.25rem;
+            margin-bottom: 1.45rem;
+            color: rgba(255, 255, 255, 0.68);
+        }
+        .afterburner-stage-editor .form-row {
+            margin-bottom: 1.1rem;
+            display: grid;
+            grid-template-columns: 220px minmax(0, 1fr);
+            gap: 1.25rem;
+            align-items: start;
+        }
+        .afterburner-stage-editor .form-row .help {
+            margin-top: 0.4rem;
+        }
+        .afterburner-stage-editor .formset-block {
+            margin-top: 1.8rem;
+            padding-top: 1.45rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .afterburner-stage-editor .formset-forms {
+            display: grid;
+            gap: 1.2rem;
+        }
+        .afterburner-stage-editor .inline-form {
+            padding: 1.25rem 1.35rem;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px dashed rgba(255, 255, 255, 0.16);
+            position: relative;
+        }
+        .afterburner-stage-editor .inline-form.formset-form--deleted {
+            opacity: 0.35;
+        }
+        .afterburner-stage-editor .inline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+        .afterburner-stage-editor .inline-header h3 {
+            margin: 0;
+            font-size: 0.92rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .afterburner-stage-editor .inline-form .form-row {
+            grid-template-columns: 200px minmax(0, 1fr);
+        }
+        .afterburner-stage-editor .form-errors {
+            margin-bottom: 1rem;
+            background: rgba(255, 84, 84, 0.16);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+        }
+        .afterburner-stage-editor .add-form-btn,
+        .afterburner-stage-editor .remove-form-btn {
+            cursor: pointer;
+            font-weight: 600;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+        }
+        .afterburner-stage-editor .add-form-btn {
+            padding: 0.55rem 1.35rem;
+            background: rgba(52, 199, 89, 0.22);
+            border-color: rgba(52, 199, 89, 0.46);
+            color: #e8ffe9;
+        }
+        .afterburner-stage-editor .add-form-btn:hover {
+            transform: translateY(-1px);
+            background: rgba(52, 199, 89, 0.28);
+        }
+        .afterburner-stage-editor .remove-form-btn {
+            padding: 0.4rem 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.18);
+            color: rgba(255, 255, 255, 0.85);
+        }
+        .afterburner-stage-editor .remove-form-btn:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .afterburner-stage-editor .formset-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1.1rem;
+        }
+        @media (max-width: 780px) {
+            .afterburner-stage-editor .form-row,
+            .afterburner-stage-editor .inline-form .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    {{ media }}
+    <script src="{% static 'core/admin/afterburner_stage.js' %}"></script>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label %}">{{ app_label|capfirst }}</a>
+    &rsaquo; <a href="{% url 'admin:core_moduleafterburnerstage_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+    &rsaquo; {{ original }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content" class="afterburner-stage-editor">
+    <h1>{{ title }}</h1>
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% for entry in forms_data %}
+            <fieldset class="module aligned slot-card" data-slot="{{ entry.slot }}">
+                <h2>{{ entry.label }}</h2>
+
+                {% if entry.form.non_field_errors %}
+                    <div class="form-errors">
+                        {{ entry.form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                {% for hidden in entry.form.hidden_fields %}
+                    {{ hidden }}
+                {% endfor %}
+
+                {% for field in entry.form %}
+                    <div class="form-row field-{{ field.name }}">
+                        {{ field.label_tag }}
+                        <div class="field-box">
+                            {{ field }}
+                            {% if field.help_text %}
+                                <p class="help">{{ field.help_text }}</p>
+                            {% endif %}
+                            {{ field.errors }}
+                        </div>
+                    </div>
+                {% endfor %}
+
+                {% if entry.chapters_formset %}
+                    <div class="formset-block" data-formset-block data-formset-prefix="{{ entry.chapters_formset.prefix }}">
+                        <h3>{% trans "Chapters" %}</h3>
+                        {{ entry.chapters_formset.management_form }}
+                        {% for hidden in entry.chapters_formset.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                        {{ entry.chapters_formset.non_form_errors }}
+                        <div class="formset-forms" data-formset-container>
+                            {% for form in entry.chapters_formset.forms %}
+                                <div class="inline-form" data-formset-form>
+                                    <div class="inline-header">
+                                        <h3>{% trans "Chapter" %} {{ forloop.counter }}</h3>
+                                        <button type="button" class="remove-form-btn" data-formset-remove>&times; {% trans "Remove" %}</button>
+                                    </div>
+                                    {% if form.non_field_errors %}
+                                        <div class="form-errors">{{ form.non_field_errors }}</div>
+                                    {% endif %}
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                    {% for field in form.visible_fields %}
+                                        <div class="form-row field-{{ field.name }}">
+                                            {{ field.label_tag }}
+                                            <div class="field-box">
+                                                {{ field }}
+                                                {% if field.help_text %}
+                                                    <p class="help">{{ field.help_text }}</p>
+                                                {% endif %}
+                                                {{ field.errors }}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                    {% if form.can_delete %}
+                                        <div class="delete-checkbox">
+                                            {{ form.delete.label_tag }} {{ form.delete }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <template data-formset-template>
+                            <div class="inline-form" data-formset-form>
+                                <div class="inline-header">
+                                    <h3>{% trans "Chapter" %}</h3>
+                                    <button type="button" class="remove-form-btn" data-formset-remove>&times; {% trans "Remove" %}</button>
+                                </div>
+                                {% with form=entry.chapters_formset.empty_form %}
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden.as_widget }}
+                                    {% endfor %}
+                                    {% for field in form.visible_fields %}
+                                        <div class="form-row field-{{ field.name }}">
+                                            {{ field.label_tag }}
+                                            <div class="field-box">
+                                                {{ field.as_widget }}
+                                                {% if field.help_text %}
+                                                    <p class="help">{{ field.help_text }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% endwith %}
+                            </div>
+                        </template>
+                        <div class="formset-actions">
+                            <button type="button" class="add-form-btn" data-formset-add>+ {% trans "Add chapter" %}</button>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if entry.grammar_formset %}
+                    <div class="formset-block" data-formset-block data-formset-prefix="{{ entry.grammar_formset.prefix }}">
+                        <h3>{% trans "Grammar patterns" %}</h3>
+                        {{ entry.grammar_formset.management_form }}
+                        {% for hidden in entry.grammar_formset.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                        {{ entry.grammar_formset.non_form_errors }}
+                        <div class="formset-forms" data-formset-container>
+                            {% for form in entry.grammar_formset.forms %}
+                                <div class="inline-form" data-formset-form>
+                                    <div class="inline-header">
+                                        <h3>{% trans "Pattern" %} {{ forloop.counter }}</h3>
+                                        <button type="button" class="remove-form-btn" data-formset-remove>&times; {% trans "Remove" %}</button>
+                                    </div>
+                                    {% if form.non_field_errors %}
+                                        <div class="form-errors">{{ form.non_field_errors }}</div>
+                                    {% endif %}
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                    {% for field in form.visible_fields %}
+                                        <div class="form-row field-{{ field.name }}">
+                                            {{ field.label_tag }}
+                                            <div class="field-box">
+                                                {{ field }}
+                                                {% if field.help_text %}
+                                                    <p class="help">{{ field.help_text }}</p>
+                                                {% endif %}
+                                                {{ field.errors }}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                    {% if form.can_delete %}
+                                        <div class="delete-checkbox">
+                                            {{ form.delete.label_tag }} {{ form.delete }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <template data-formset-template>
+                            <div class="inline-form" data-formset-form>
+                                <div class="inline-header">
+                                    <h3>{% trans "Pattern" %}</h3>
+                                    <button type="button" class="remove-form-btn" data-formset-remove>&times; {% trans "Remove" %}</button>
+                                </div>
+                                {% with form=entry.grammar_formset.empty_form %}
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden.as_widget }}
+                                    {% endfor %}
+                                    {% for field in form.visible_fields %}
+                                        <div class="form-row field-{{ field.name }}">
+                                            {{ field.label_tag }}
+                                            <div class="field-box">
+                                                {{ field.as_widget }}
+                                                {% if field.help_text %}
+                                                    <p class="help">{{ field.help_text }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% endwith %}
+                            </div>
+                        </template>
+                        <div class="formset-actions">
+                            <button type="button" class="add-form-btn" data-formset-add>+ {% trans "Add pattern" %}</button>
+                        </div>
+                    </div>
+                {% endif %}
+            </fieldset>
+        {% endfor %}
+
+        <div class="submit-row">
+            <input type="submit" value="{% trans 'Save' %}" class="default" name="_save">
+        </div>
+    </form>
+</div>
+{% endblock %}

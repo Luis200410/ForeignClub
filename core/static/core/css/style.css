@@ -1903,6 +1903,26 @@ section {
     align-items: stretch;
 }
 
+.todo-card--launch {
+    position: relative;
+    padding-bottom: 3rem;
+}
+
+.todo-card--launch .todo-check {
+    position: absolute;
+    bottom: 1.1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 132px;
+    justify-content: center;
+}
+
+.todo-card--launch.todo-card--done .todo-check {
+    background: rgba(52, 199, 89, 0.32);
+    border-color: rgba(52, 199, 89, 0.48);
+    color: rgba(210, 255, 224, 0.92);
+}
+
 .todo-card--scheduler .form-control,
 .todo-card--scheduler textarea,
 .todo-card--scheduler input[type="datetime-local"],
@@ -2292,6 +2312,7 @@ section {
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(18px);
     transition: transform 0.3s var(--transition-base), border-color 0.3s var(--transition-base);
+    cursor: pointer;
 }
 
 .afterburner-techniques-grid {
@@ -2312,6 +2333,46 @@ section {
     flex: 1;
 }
 
+.afterburner-link {
+    color: rgba(255, 255, 255, 0.92);
+    text-decoration: none;
+}
+
+.afterburner-link:hover,
+.afterburner-link:focus {
+    color: rgba(255, 255, 255, 0.98);
+    text-decoration: underline;
+}
+
+.dashboard-placeholder {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 22px;
+    padding: 1.6rem 1.8rem;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.reading-chapter-list,
+.grammar-point-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1.4rem;
+}
+
+.reading-chapter,
+.grammar-point {
+    padding: 1.5rem;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.reading-chapter h2,
+.grammar-point h2 {
+    color: #fff;
+}
+
 .afterburner-card > .todo-check,
 .afterburner-game-card > .todo-check {
     margin-top: auto;
@@ -2324,6 +2385,34 @@ section {
 .afterburner-game-card:focus {
     transform: translateY(-6px);
     border-color: rgba(255, 255, 255, 0.28);
+}
+
+.afterburner-card--locked,
+.afterburner-card--locked:hover,
+.afterburner-card--locked:focus,
+.afterburner-game-card.afterburner-card--locked,
+.afterburner-game-card.afterburner-card--locked:hover,
+.afterburner-game-card.afterburner-card--locked:focus {
+    cursor: default;
+    transform: none;
+    border-color: rgba(255, 255, 255, 0.14);
+    opacity: 0.78;
+}
+
+.afterburner-card--locked .todo-check,
+.afterburner-game-card.afterburner-card--locked .todo-check {
+    opacity: 0.75;
+    pointer-events: none;
+}
+
+.afterburner-lock {
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.45rem 0.75rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    width: fit-content;
 }
 
 .afterburner-card--done {
