@@ -67,7 +67,42 @@
         updateFormOrder();
     };
 
+    const setupGameTypeScopes = function () {
+        const slotCard = document.querySelector('[data-slot="game"]');
+        if (!slotCard) {
+            return;
+        }
+
+        const select = slotCard.querySelector('select[id$="-game_type"]');
+        if (!select) {
+            return;
+        }
+
+        const scopedNodes = slotCard.querySelectorAll('[data-game-type-scope]');
+        if (!scopedNodes.length) {
+            return;
+        }
+
+        const applyScope = function () {
+            const current = select.value;
+            scopedNodes.forEach(function (node) {
+                const scopes = (node.getAttribute('data-game-type-scope') || '')
+                    .split(/\s+/)
+                    .filter(Boolean);
+                if (!scopes.length || scopes.includes(current)) {
+                    node.classList.remove('is-hidden');
+                } else {
+                    node.classList.add('is-hidden');
+                }
+            });
+        };
+
+        select.addEventListener('change', applyScope);
+        applyScope();
+    };
+
     domReady(function () {
         document.querySelectorAll('[data-formset-block]').forEach(buildFormsetHandler);
+        setupGameTypeScopes();
     });
 })();

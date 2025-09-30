@@ -423,7 +423,6 @@ class ModuleGame(models.Model):
     """Configurable learning games attached to a module's stage."""
 
     class GameType(models.TextChoices):
-        LETTER_SEQUENCE = "letter-sequence", "Letter Sequence"
         ADAPTIVE_FLASHCARDS = "adaptive-flashcards", "Adaptive Flashcards"
 
     module = models.ForeignKey(
@@ -436,10 +435,8 @@ class ModuleGame(models.Model):
     game_type = models.CharField(
         max_length=32,
         choices=GameType.choices,
-        default=GameType.LETTER_SEQUENCE,
+        default=GameType.ADAPTIVE_FLASHCARDS,
     )
-    word = models.CharField(max_length=64, blank=True)
-    definition = models.TextField(blank=True)
     order = models.PositiveSmallIntegerField(default=1)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

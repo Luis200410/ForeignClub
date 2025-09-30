@@ -139,73 +139,16 @@ class ModuleLiveMeetingAdmin(admin.ModelAdmin):
     ordering = ("module", "scheduled_for")
 
 
-class ModuleGameAdminForm(forms.ModelForm):
-    class Meta:
-        model = models.ModuleGame
-        fields = "__all__"
-
-    class Media:
-        js = ("core/admin/module_game.js",)
-
-    def clean(self):
-        cleaned = super().clean()
-        game_type = cleaned.get("game_type")
-        word = (cleaned.get("word") or "").strip()
-        definition = (cleaned.get("definition") or "").strip()
-
-        if game_type == models.ModuleGame.GameType.LETTER_SEQUENCE:
-            if not word:
-                self.add_error("word", "Provide a target word for the letter sequence game.")
-            cleaned["word"] = word
-            cleaned["definition"] = definition
-        else:
-            cleaned["word"] = ""
-            cleaned["definition"] = ""
-
-        if game_type == models.ModuleGame.GameType.ADAPTIVE_FLASHCARDS and cleaned.get("word"):
-            cleaned["word"] = ""
-        return cleaned
-
-
 @admin.register(models.ModuleGame)
 class ModuleGameAdmin(admin.ModelAdmin):
-    form = ModuleGameAdminForm
     list_display = ("module", "order", "game_type", "title", "is_active")
     list_filter = ("game_type", "is_active", "module__course")
     search_fields = ("title", "module__title", "module__course__title")
     autocomplete_fields = ("module",)
     ordering = ("module", "order")
-    inlines = []
-    fieldsets = (
-        ("Assignment", {"fields": ("module", "order", "game_type", "is_active")}),
-        ("Presentation", {"fields": ("title", "description")}),
-        (
-            "Letter sequence settings",
-            {
-                "fields": ("word", "definition"),
-                "classes": ("module-game-letter",),
-            },
-        ),
-    )
 
-
-class ModuleGameFlashcardInline(admin.TabularInline):
-    model = models.ModuleGameFlashcard
-    extra = 1
-    fields = ("order", "word", "image_url", "audio_url", "is_active")
-    ordering = ("order",)
-
-
-ModuleGameAdmin.inlines = [ModuleGameFlashcardInline]
-
-
-def _module_game_get_inline_instances(self, request, obj=None):
-    if not obj or obj.game_type != models.ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
-        return []
-    return [inline(self, request) for inline in self.inlines]
-
-
-ModuleGameAdmin.get_inline_instances = _module_game_get_inline_instances
+    def get_model_perms(self, request):
+        return {}
 
 
 @admin.register(models.ModuleGameFlashcard)
@@ -215,6 +158,9 @@ class ModuleGameFlashcardAdmin(admin.ModelAdmin):
     search_fields = ("word", "game__module__title", "game__title")
     autocomplete_fields = ("game",)
     ordering = ("game", "order")
+
+    def get_model_perms(self, request):
+        return {}
 
 
 @admin.register(models.ModuleGameFlashcardProgress)
@@ -232,6 +178,9 @@ class ModuleGameFlashcardProgressAdmin(admin.ModelAdmin):
     search_fields = ("profile__display_name", "flashcard__word")
     autocomplete_fields = ("profile", "flashcard")
     ordering = ("-next_review_at",)
+
+    def get_model_perms(self, request):
+        return {}
 
 
 @admin.register(models.ModuleGameFlashcardLog)
@@ -251,6 +200,9 @@ class ModuleGameFlashcardLogAdmin(admin.ModelAdmin):
     )
     autocomplete_fields = ("progress",)
     ordering = ("-recorded_at",)
+
+    def get_model_perms(self, request):
+        return {}
 
 
 class ModuleFlightDeckActivityAdminForm(forms.ModelForm):
@@ -405,6 +357,50 @@ GrammarPointFormSet = inlineformset_factory(
 )
 
 
+
+FlashcardFormSet = inlineformset_factory(
+    models.ModuleGame,
+    models.ModuleGameFlashcard,
+    fields=("order", "word", "image_url", "audio_url", "is_active"),
+    extra=2,
+    can_delete=True,
+    widgets={
+        "order": forms.NumberInput(attrs={"class": "vIntegerField", "min": 1}),
+        "word": forms.TextInput(attrs={"class": "vTextField"}),
+        "image_url": forms.URLInput(attrs={"class": "vTextField"}),
+        "audio_url": forms.URLInput(attrs={"class": "vTextField"}),
+    },
+)
+
+
+class ModuleGameForm(forms.ModelForm):
+    class Meta:
+        model = models.ModuleGame
+        fields = ("title", "description", "game_type", "is_active")
+
+    def __init__(self, *args, module=None, **kwargs):
+        self._module = module or kwargs.get("instance", None).module if kwargs.get("instance") else module
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields["game_type"].disabled = True
+        if len(self.fields["game_type"].choices) == 1:
+            self.fields["game_type"].help_text = "Only adaptive flashcards are available right now."
+        else:
+            self.fields["game_type"].help_text = "Pick which game engine this configuration should use."
+
+    def clean(self):
+        cleaned = super().clean()
+        return cleaned
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self._module is not None:
+            instance.module = self._module
+        if commit:
+            instance.save()
+        return instance
+
+
 @admin.register(models.ModuleAfterburnerStage)
 class ModuleAfterburnerStageAdmin(admin.ModelAdmin):
     change_form_template = "admin/core/moduleafterburnerstage/change_form.html"
@@ -461,6 +457,11 @@ class ModuleAfterburnerStageAdmin(admin.ModelAdmin):
 
             chapters_formset = None
             grammar_formset = None
+            game_form = None
+            flashcard_formset = None
+            game_progress = []
+            game_logs = []
+            game_instance = None
 
             if slot_value == slot_enum.READING:
                 chapters_formset = ReadingChapterFormSet(
@@ -474,6 +475,44 @@ class ModuleAfterburnerStageAdmin(admin.ModelAdmin):
                     instance=activity,
                     prefix=f"grammar_{slot_value}",
                 )
+            elif slot_value == slot_enum.GAME:
+                defaults = {
+                    "title": activity.title or f"{module.title} Vocabulary Deck",
+                    "description": activity.description or "Adaptive flashcards to anchor this week’s vocabulary.",
+                    "game_type": models.ModuleGame.GameType.ADAPTIVE_FLASHCARDS,
+                }
+                game_instance, _created = models.ModuleGame.objects.get_or_create(
+                    module=module,
+                    defaults=defaults,
+                )
+                if activity.game_id != game_instance.id:
+                    activity.game = game_instance
+                    activity.save(update_fields=["game", "updated_at"])
+                game_form = ModuleGameForm(
+                    post_data,
+                    instance=game_instance,
+                    prefix="game",
+                    module=module,
+                )
+                flashcard_formset = FlashcardFormSet(
+                    post_data,
+                    instance=game_instance,
+                    prefix="flashcards",
+                )
+                game_progress = list(
+                    models.ModuleGameFlashcardProgress.objects.filter(
+                        flashcard__game=game_instance
+                    )
+                    .select_related("profile", "flashcard")
+                    .order_by("-updated_at")[:20]
+                )
+                game_logs = list(
+                    models.ModuleGameFlashcardLog.objects.filter(
+                        progress__flashcard__game=game_instance
+                    )
+                    .select_related("progress__profile", "progress__flashcard")
+                    .order_by("-recorded_at")[:20]
+                )
 
             slot_entries.append(
                 {
@@ -483,6 +522,11 @@ class ModuleAfterburnerStageAdmin(admin.ModelAdmin):
                     "form": form,
                     "chapters_formset": chapters_formset,
                     "grammar_formset": grammar_formset,
+                    "game_form": game_form,
+                    "flashcard_formset": flashcard_formset,
+                    "game_progress": game_progress,
+                    "game_logs": game_logs,
+                    "game_instance": game_instance,
                 }
             )
 
@@ -494,16 +538,32 @@ class ModuleAfterburnerStageAdmin(admin.ModelAdmin):
                     forms_valid = entry["chapters_formset"].is_valid() and forms_valid
                 if entry["grammar_formset"] is not None:
                     forms_valid = entry["grammar_formset"].is_valid() and forms_valid
+                if entry.get("game_form") is not None:
+                    forms_valid = entry["game_form"].is_valid() and forms_valid
+                if entry.get("flashcard_formset") is not None:
+                    entry["flashcard_formset"].instance = entry["game_instance"]
+                    forms_valid = entry["flashcard_formset"].is_valid() and forms_valid
 
             if forms_valid:
                 for entry in slot_entries:
                     activity_instance = entry["form"].save()
+                    entry["activity"] = activity_instance
                     if entry["chapters_formset"] is not None:
                         entry["chapters_formset"].instance = activity_instance
                         entry["chapters_formset"].save()
                     if entry["grammar_formset"] is not None:
                         entry["grammar_formset"].instance = activity_instance
                         entry["grammar_formset"].save()
+                    if entry.get("game_form") is not None:
+                        game_instance = entry["game_form"].save()
+                        entry["game_instance"] = game_instance
+                        if activity_instance.game_id != game_instance.id:
+                            activity_instance.game = game_instance
+                            activity_instance.save(update_fields=["game", "updated_at"])
+                        flashcard_formset = entry.get("flashcard_formset")
+                        if flashcard_formset is not None:
+                            flashcard_formset.instance = game_instance
+                            flashcard_formset.save()
 
                 messages.success(
                     request,
@@ -520,6 +580,10 @@ class ModuleAfterburnerStageAdmin(admin.ModelAdmin):
                 media = media + entry["chapters_formset"].media
             if entry["grammar_formset"] is not None:
                 media = media + entry["grammar_formset"].media
+            if entry.get("game_form") is not None:
+                media = media + entry["game_form"].media
+            if entry.get("flashcard_formset") is not None:
+                media = media + entry["flashcard_formset"].media
 
         context = {
             **self.admin_site.each_context(request),

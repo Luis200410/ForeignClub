@@ -111,6 +111,7 @@
 {% block extra_scripts %}
     {{ block.super }}
     <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js" integrity="sha384-1mXDyDRZs90un0nLBKBPXn1HULICwhf66A1VpzwuNFuIBqmoeZaZX6mE6oPD58Ll" crossorigin="anonymous"></script>
+    <script src="{% static 'core/games/components/vocabulary-cards.js' %}"></script>
     <script src="{% static 'core/games/app.js' %}"></script>
     {% if slot_enum == talk_slot_value %}
         <script>

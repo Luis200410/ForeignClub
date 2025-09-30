@@ -1,3 +1,4 @@
+
 {% extends "admin/base_site.html" %}
 {% load i18n static %}
 
@@ -41,7 +42,7 @@
             align-items: start;
         }
         .afterburner-stage-editor .form-row .help {
-            margin-top: 0.4rem;
+            margin-top: 0.35rem;
         }
         .afterburner-stage-editor .formset-block {
             margin-top: 1.8rem;
@@ -117,6 +118,40 @@
             justify-content: flex-end;
             margin-top: 1.1rem;
         }
+        .afterburner-stage-editor .is-hidden {
+            display: none !important;
+        }
+        .afterburner-scoreboard {
+            margin-top: 1.8rem;
+        }
+        .afterburner-scoreboard h3 {
+            margin-top: 1.2rem;
+        }
+        .afterburner-scoreboard h3:first-of-type {
+            margin-top: 0;
+        }
+        .afterburner-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+        .afterburner-table th,
+        .afterburner-table td {
+            padding: 0.55rem 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .afterburner-table th {
+            text-transform: uppercase;
+            font-size: 0.74rem;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.58);
+        }
+        .afterburner-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .afterburner-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
         @media (max-width: 780px) {
             .afterburner-stage-editor .form-row,
             .afterburner-stage-editor .inline-form .form-row {
@@ -161,17 +196,19 @@
                     {{ hidden }}
                 {% endfor %}
 
-                {% for field in entry.form %}
-                    <div class="form-row field-{{ field.name }}">
-                        {{ field.label_tag }}
-                        <div class="field-box">
-                            {{ field }}
-                            {% if field.help_text %}
-                                <p class="help">{{ field.help_text }}</p>
-                            {% endif %}
-                            {{ field.errors }}
+                {% for field in entry.form.visible_fields %}
+                    {% with scope=field.field.widget.attrs.data_game_type_scope %}
+                        <div class="form-row field-{{ field.name }}{% if scope %} game-field{% endif %}"{% if scope %} data-game-type-scope="{{ scope }}"{% endif %}>
+                            {{ field.label_tag }}
+                            <div class="field-box">
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <p class="help">{{ field.help_text }}</p>
+                                {% endif %}
+                                {{ field.errors }}
+                            </div>
                         </div>
-                    </div>
+                    {% endwith %}
                 {% endfor %}
 
                 {% if entry.chapters_formset %}
@@ -313,6 +350,158 @@
                         <div class="formset-actions">
                             <button type="button" class="add-form-btn" data-formset-add>+ {% trans "Add pattern" %}</button>
                         </div>
+                    </div>
+                {% endif %}
+
+                {% if entry.game_form %}
+                    <div class="formset-block">
+                        <h3>{% trans "Game configuration" %}</h3>
+                        {% for hidden in entry.game_form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                        {% for field in entry.game_form.visible_fields %}
+                            <div class="form-row field-{{ field.name }}">
+                                {{ field.label_tag }}
+                                <div class="field-box">
+                                    {{ field }}
+                                    {% if field.help_text %}
+                                        <p class="help">{{ field.help_text }}</p>
+                                    {% endif %}
+                                    {{ field.errors }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if entry.flashcard_formset %}
+                    <div class="formset-block" data-formset-block data-formset-prefix="{{ entry.flashcard_formset.prefix }}" data-game-type-scope="adaptive-flashcards">
+                        <h3>{% trans "Flashcards" %}</h3>
+                        {{ entry.flashcard_formset.management_form }}
+                        {% for hidden in entry.flashcard_formset.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                        {{ entry.flashcard_formset.non_form_errors }}
+                        <div class="formset-forms" data-formset-container>
+                            {% for form in entry.flashcard_formset.forms %}
+                                <div class="inline-form" data-formset-form>
+                                    <div class="inline-header">
+                                        <h3>{% trans "Card" %} {{ forloop.counter }}</h3>
+                                        <button type="button" class="remove-form-btn" data-formset-remove>&times; {% trans "Remove" %}</button>
+                                    </div>
+                                    {% if form.non_field_errors %}
+                                        <div class="form-errors">{{ form.non_field_errors }}</div>
+                                    {% endif %}
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                    {% for field in form.visible_fields %}
+                                        <div class="form-row field-{{ field.name }}">
+                                            {{ field.label_tag }}
+                                            <div class="field-box">
+                                                {{ field }}
+                                                {% if field.help_text %}
+                                                    <p class="help">{{ field.help_text }}</p>
+                                                {% endif %}
+                                                {{ field.errors }}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                    {% if form.can_delete %}
+                                        <div class="delete-checkbox">
+                                            {{ form.delete.label_tag }} {{ form.delete }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <template data-formset-template>
+                            <div class="inline-form" data-formset-form>
+                                <div class="inline-header">
+                                    <h3>{% trans "Card" %}</h3>
+                                    <button type="button" class="remove-form-btn" data-formset-remove>&times; {% trans "Remove" %}</button>
+                                </div>
+                                {% with form=entry.flashcard_formset.empty_form %}
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden.as_widget }}
+                                    {% endfor %}
+                                    {% for field in form.visible_fields %}
+                                        <div class="form-row field-{{ field.name }}">
+                                            {{ field.label_tag }}
+                                            <div class="field-box">
+                                                {{ field.as_widget }}
+                                                {% if field.help_text %}
+                                                    <p class="help">{{ field.help_text }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% endwith %}
+                            </div>
+                        </template>
+                        <div class="formset-actions">
+                            <button type="button" class="add-form-btn" data-formset-add>+ {% trans "Add card" %}</button>
+                        </div>
+                    </div>
+
+                    <div class="afterburner-scoreboard" data-game-type-scope="adaptive-flashcards">
+                        {% if entry.game_progress %}
+                            <h3>{% trans "Recent learner progress" %}</h3>
+                            <table class="afterburner-table">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "Learner" %}</th>
+                                        <th>{% trans "Word" %}</th>
+                                        <th>{% trans "Streak" %}</th>
+                                        <th>{% trans "Next review" %}</th>
+                                        <th>{% trans "Total points" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in entry.game_progress %}
+                                        <tr>
+                                            <td>{{ row.profile.display_name }}</td>
+                                            <td>{{ row.flashcard.word }}</td>
+                                            <td>{{ row.correct_streak }}</td>
+                                            <td>{{ row.next_review_at|date:"M j, g:i a" }}</td>
+                                            <td>{{ row.total_points }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p class="help">{% trans "No learner reviews recorded yet." %}</p>
+                        {% endif %}
+
+                        {% if entry.game_logs %}
+                            <h3>{% trans "Latest sessions" %}</h3>
+                            <table class="afterburner-table">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "When" %}</th>
+                                        <th>{% trans "Learner" %}</th>
+                                        <th>{% trans "Word" %}</th>
+                                        <th>{% trans "Outcome" %}</th>
+                                        <th>{% trans "Points" %}</th>
+                                        <th>{% trans "Streak" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in entry.game_logs %}
+                                        <tr>
+                                            <td>{{ row.recorded_at|date:"M j, g:i a" }}</td>
+                                            <td>{{ row.progress.profile.display_name }}</td>
+                                            <td>{{ row.progress.flashcard.word }}</td>
+                                            <td>{{ row.outcome|title }}</td>
+                                            <td>{{ row.points_awarded }}</td>
+                                            <td>{{ row.streak_length }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p class="help">{% trans "No game sessions logged yet." %}</p>
+                        {% endif %}
                     </div>
                 {% endif %}
             </fieldset>

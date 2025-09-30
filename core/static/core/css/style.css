@@ -2444,61 +2444,6 @@ section {
     color: var(--muted);
 }
 
-.letter-sequence-game {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.letter-sequence__bank,
-.letter-sequence__answer {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.45rem;
-}
-
-.letter-sequence__answer {
-    min-height: 44px;
-    align-items: center;
-    padding: 0.55rem 0.75rem;
-    border: 1px dashed rgba(255, 255, 255, 0.18);
-    border-radius: 12px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-}
-
-.letter-sequence__controls {
-    display: flex;
-    gap: 0.6rem;
-}
-
-.letter-tile {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.24);
-    background: rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.88);
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: transform 0.2s var(--transition-base), border-color 0.2s var(--transition-base), background 0.2s var(--transition-base);
-}
-
-.letter-tile:hover,
-.letter-tile:focus {
-    transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.36);
-}
-
-.letter-tile--used {
-    opacity: 0.35;
-    pointer-events: none;
-}
 
 .post-grid {
     display: grid;

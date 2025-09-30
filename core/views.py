@@ -295,11 +295,18 @@ def _get_afterburner_card_configs(
             for activity in module.afterburner_activities.filter(is_active=True)
         }
 
-    configs: list[dict[str, str]] = []
+    configs: list[dict[str, str | object]] = []
     for slot in AFTERBURNER_SLOT_SEQUENCE:
         activity = module_activities.get(slot)
         fallback_card = fallback_level_map.get(slot, {})
         if slot == ModuleAfterburnerActivity.Slot.GAME:
+            game_instance = getattr(activity, "game", None)
+            if game_instance is None and module is not None:
+                game_instance = (
+                    ModuleGame.objects.filter(module=module, is_active=True)
+                    .order_by("order", "id")
+                    .first()
+                )
             configs.append(
                 {
                     "slot": slot,
@@ -310,6 +317,7 @@ def _get_afterburner_card_configs(
                         else AFTERBURNER_GAME["description"]
                     ),
                     "activity": activity,
+                    "game": game_instance,
                 }
             )
             continue
@@ -1064,8 +1072,11 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             )
 
         selected_game = None
-        if game_config and game_config.get("activity"):
-            selected_game = getattr(game_config["activity"], "game", None)
+        if game_config:
+            if game_config.get("activity"):
+                selected_game = getattr(game_config["activity"], "game", None)
+            if selected_game is None:
+                selected_game = game_config.get("game")
 
         afterburner_game_card = {
             "index": len(afterburner_cards) + 1,
@@ -1079,6 +1090,9 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             "word": "",
             "definition": "",
             "dashboard_url": None,
+            "unlock_at": None,
+            "is_locked": False,
+            "lock_message": "",
         }
 
         now = timezone.now()
@@ -1087,6 +1101,18 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
         module_start_dt = datetime.combine(module_start_date, time.min)
         if timezone.is_naive(module_start_dt):
             module_start_dt = timezone.make_aware(module_start_dt, timezone.get_current_timezone())
+
+        meeting_end_dt = None
+        if selected_meeting:
+            meeting_end_dt = selected_meeting.scheduled_for + timedelta(
+                minutes=selected_meeting.duration_minutes or 60
+            )
+            if timezone.is_naive(meeting_end_dt):
+                meeting_end_dt = timezone.make_aware(
+                    meeting_end_dt, timezone.get_current_timezone()
+                )
+
+        unlock_reference_dt = meeting_end_dt or module_start_dt
 
         slot_unlock_offsets = {
             ModuleAfterburnerActivity.Slot.TALK_RECORD: 1,
@@ -1097,34 +1123,21 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
 
         for card in afterburner_cards:
             offset_days = slot_unlock_offsets.get(card["slot"], 0)
-            unlock_at = module_start_dt + timedelta(days=offset_days)
-            local_unlock = timezone.localtime(unlock_at)
-            card["unlock_at"] = local_unlock
+            if meeting_end_dt is None:
+                card["unlock_at"] = None
+                card["is_locked"] = True
+                card["lock_message"] = "Schedule your live mission to unlock this mission."
+                continue
+
+            unlock_at = unlock_reference_dt + timedelta(days=offset_days)
+            card["unlock_at"] = timezone.localtime(unlock_at)
             is_locked = now < unlock_at
             card["is_locked"] = is_locked
-            card["lock_message"] = ""
             if is_locked:
-                formatted = formats.date_format(local_unlock, "M j, g:i a")
+                formatted = formats.date_format(card["unlock_at"], "M j, g:i a")
                 card["lock_message"] = f"Unlocks on {formatted}"
-
-        game_unlock_at = None
-        game_lock_message = ""
-        game_locked = True
-        if selected_meeting:
-            meeting_end = selected_meeting.scheduled_for + timedelta(
-                minutes=selected_meeting.duration_minutes or 60
-            )
-            game_unlock_at = timezone.localtime(meeting_end)
-            game_locked = now < meeting_end
-            if game_locked:
-                formatted = formats.date_format(game_unlock_at, "M j, g:i a")
-                game_lock_message = f"Unlocks after your live mission on {formatted}"
-        else:
-            game_lock_message = "Schedule your live meeting to unlock this mission."
-
-        afterburner_game_card["unlock_at"] = game_unlock_at
-        afterburner_game_card["is_locked"] = game_locked
-        afterburner_game_card["lock_message"] = game_lock_message
+            else:
+                card["lock_message"] = ""
 
         game_props_for_stage = {}
         if selected_game:
@@ -1134,8 +1147,6 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                     "description": selected_game.description
                     or afterburner_game_card["description"],
                     "game_type": selected_game.game_type,
-                    "word": (selected_game.word or "").strip(),
-                    "definition": (selected_game.definition or "").strip(),
                 }
             )
             if selected_game.game_type == ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
@@ -1156,11 +1167,6 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                 game_props_for_stage = {
                     "queueUrl": afterburner_game_card["flashcards_api"]["queue"],
                     "logUrl": afterburner_game_card["flashcards_api"]["log"],
-                }
-            elif selected_game.game_type == ModuleGame.GameType.LETTER_SEQUENCE:
-                game_props_for_stage = {
-                    "word": (selected_game.word or "").upper(),
-                    "definition": selected_game.definition or "",
                 }
         afterburner_game_card["game_props_json"] = json.dumps(game_props_for_stage)
         for idx, card in enumerate(afterburner_cards, start=1):
@@ -1404,12 +1410,7 @@ class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
 
         game_props = {}
         if slot_enum == ModuleAfterburnerActivity.Slot.GAME and selected_game:
-            if selected_game.game_type == ModuleGame.GameType.LETTER_SEQUENCE:
-                game_props = {
-                    "word": (selected_game.word or "").upper(),
-                    "definition": selected_game.definition or "",
-                }
-            elif selected_game.game_type == ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
+            if selected_game.game_type == ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
                 game_props = {
                     "queueUrl": reverse(
                         "course_module_flashcards_queue",
@@ -1690,9 +1691,21 @@ class ModuleGameFlashcardQueueView(PlacementRequiredMixin, View):
         if not stage_unlocks.get(ModuleStageProgress.StageKey.AFTERBURNER, False):
             return JsonResponse({"error": "afterburner_locked"}, status=403)
 
-        module_game = (
-            ModuleGame.objects.filter(module=module, is_active=True).order_by("order").first()
+        game_activity = (
+            module.afterburner_activities.filter(
+                slot=ModuleAfterburnerActivity.Slot.GAME,
+                is_active=True,
+            )
+            .select_related("game")
+            .first()
         )
+        module_game = getattr(game_activity, "game", None)
+        if module_game is None:
+            module_game = (
+                ModuleGame.objects.filter(module=module, is_active=True)
+                .order_by("order", "id")
+                .first()
+            )
         if (
             module_game is None
             or module_game.game_type != ModuleGame.GameType.ADAPTIVE_FLASHCARDS
@@ -1788,9 +1801,21 @@ class ModuleGameFlashcardLogView(PlacementRequiredMixin, View):
         if not stage_unlocks.get(ModuleStageProgress.StageKey.AFTERBURNER, False):
             return JsonResponse({"error": "afterburner_locked"}, status=403)
 
-        module_game = (
-            ModuleGame.objects.filter(module=module, is_active=True).order_by("order").first()
+        game_activity = (
+            module.afterburner_activities.filter(
+                slot=ModuleAfterburnerActivity.Slot.GAME,
+                is_active=True,
+            )
+            .select_related("game")
+            .first()
         )
+        module_game = getattr(game_activity, "game", None)
+        if module_game is None:
+            module_game = (
+                ModuleGame.objects.filter(module=module, is_active=True)
+                .order_by("order", "id")
+                .first()
+            )
         if (
             module_game is None
             or module_game.game_type != ModuleGame.GameType.ADAPTIVE_FLASHCARDS
@@ -1979,41 +2004,39 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
                 ModuleAfterburnerActivity.Slot.GRAMMAR: 7,
             }
 
-            course_start_date = course.start_date or now.date()
-            module_start_date = course_start_date + timedelta(days=max(0, (module.order - 1) * 7))
-            module_start_dt = datetime.combine(module_start_date, time.min)
-            if timezone.is_naive(module_start_dt):
-                module_start_dt = timezone.make_aware(module_start_dt, timezone.get_current_timezone())
+            meeting_signup = (
+                ModuleLiveMeetingSignup.objects.filter(profile=profile, module=module)
+                .select_related("meeting")
+                .first()
+            )
+            meeting = meeting_signup.meeting if meeting_signup else None
+            meeting_end = None
+            if meeting:
+                meeting_end = meeting.scheduled_for + timedelta(
+                    minutes=meeting.duration_minutes or 60
+                )
+                if timezone.is_naive(meeting_end):
+                    meeting_end = timezone.make_aware(
+                        meeting_end, timezone.get_current_timezone()
+                    )
 
             card_locked = False
             lock_message = ""
 
             if index <= len(non_game_configs):
                 slot = non_game_configs[index - 1]["slot"]
-                unlock_at = module_start_dt + timedelta(days=slot_unlock_offsets.get(slot, 0))
-                if now < unlock_at:
+                if meeting_end is None:
                     card_locked = True
-                    unlock_local = timezone.localtime(unlock_at)
-                    lock_message = f"This mission unlocks on {formats.date_format(unlock_local, 'M j, g:i a')}"
-            else:
-                meeting_signup = (
-                    ModuleLiveMeetingSignup.objects.filter(profile=profile, module=module)
-                    .select_related("meeting")
-                    .first()
-                )
-                meeting = meeting_signup.meeting if meeting_signup else None
-                if meeting:
-                    meeting_end = meeting.scheduled_for + timedelta(minutes=meeting.duration_minutes or 60)
-                    if now < meeting_end:
-                        card_locked = True
-                        unlock_local = timezone.localtime(meeting_end)
-                        lock_message = (
-                            "Game unlocks after your live mission on "
-                            f"{formats.date_format(unlock_local, 'M j, g:i a')}"
-                        )
+                    lock_message = "Schedule your live mission to unlock this mission."
                 else:
-                    card_locked = True
-                    lock_message = "Schedule your live mission to unlock this game."
+                    unlock_at = meeting_end + timedelta(days=slot_unlock_offsets.get(slot, 0))
+                    if now < unlock_at:
+                        card_locked = True
+                        unlock_local = timezone.localtime(unlock_at)
+                        lock_message = f"This mission unlocks on {formats.date_format(unlock_local, 'M j, g:i a')}"
+            else:
+                card_locked = False
+                lock_message = ""
 
             if card_locked:
                 if request.headers.get("x-requested-with") == "XMLHttpRequest":

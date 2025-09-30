@@ -294,13 +294,7 @@
                                     {% if afterburner_game_card.is_locked and afterburner_game_card.lock_message %}
                                         <p class="afterburner-lock text-white-50 small mb-2">{{ afterburner_game_card.lock_message }}</p>
                                     {% endif %}
-                                    {% if afterburner_game_card.game_type == 'letter-sequence' %}
-                                        <div
-                                            class="vue-game"
-                                            data-game-type="letter-sequence"
-                                            data-game-props="{{ afterburner_game_card.game_props_json|default:'{}'|escapejs }}"
-                                        ></div>
-                                    {% elif afterburner_game_card.game_type == 'adaptive-flashcards' %}
+                                    {% if afterburner_game_card.game_type == 'adaptive-flashcards' or afterburner_game_card.game_type == 'vocabulary-cards' %}
                                         <div
                                             class="vue-game"
                                             data-game-type="adaptive-flashcards"
@@ -938,6 +932,7 @@
         })();
     </script>
     <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js" integrity="sha384-1mXDyDRZs90un0nLBKBPXn1HULICwhf66A1VpzwuNFuIBqmoeZaZX6mE6oPD58Ll" crossorigin="anonymous"></script>
+    <script src="{% static 'core/games/components/vocabulary-cards.js' %}"></script>
     <script src="{% static 'core/games/app.js' %}"></script>
     {% if stage_key == 'flight-deck' %}
         <script>
