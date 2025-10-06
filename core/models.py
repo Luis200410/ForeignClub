@@ -463,8 +463,7 @@ class ModuleGameFlashcard(models.Model):
     )
     order = models.PositiveSmallIntegerField(default=1)
     word = models.CharField(max_length=80)
-    image_url = models.URLField(blank=True)
-    audio_url = models.URLField(blank=True)
+    meaning = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -733,6 +732,7 @@ class ModuleAfterburnerActivity(models.Model):
         on_delete=models.SET_NULL,
         related_name="afterburner_activity",
     )
+    goal = models.CharField(max_length=160, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -842,6 +842,52 @@ class ModuleAfterburnerGrammarPoint(models.Model):
 
     def __str__(self) -> str:
         return f"{self.activity} · Pattern {self.order}: {self.formula}"
+
+
+class ModuleAfterburnerRealWorldStep(models.Model):
+    """Step-by-step guidance for the Afterburner real world challenge."""
+
+    activity = models.ForeignKey(
+        ModuleAfterburnerActivity,
+        on_delete=models.CASCADE,
+        related_name="real_world_steps",
+    )
+    order = models.PositiveSmallIntegerField(default=1)
+    title = models.CharField(max_length=160, blank=True)
+    instruction = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["activity", "order", "id"]
+        verbose_name = "Afterburner real-world instruction"
+        verbose_name_plural = "Afterburner real-world instructions"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["activity", "order"],
+                name="unique_real_world_step_order_per_activity",
+            )
+        ]
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if not self.activity_id:
+            return
+        if self.activity.slot != ModuleAfterburnerActivity.Slot.REAL_WORLD:
+            raise ValidationError(
+                {"activity": "Real-world steps can only be added to the real world challenge."}
+            )
+
+    def save(self, *args, **kwargs):
+        if self.order <= 0:
+            siblings = self.activity.real_world_steps.count() if self.activity_id else 0
+            self.order = siblings + 1
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        suffix = f": {self.title}" if self.title else ""
+        return f"{self.activity} · Step {self.order}{suffix}"
 
 
 class ModuleAfterburnerStage(CourseModule):

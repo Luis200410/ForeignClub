@@ -22,11 +22,15 @@
                 return;
             }
             let props = {};
-            if (mountEl.dataset.gameProps) {
-                try {
-                    props = JSON.parse(mountEl.dataset.gameProps);
-                } catch (error) {
-                    console.warn('Unable to parse game props for', type, error);
+            const propsId = mountEl.dataset.gamePropsId;
+            if (propsId) {
+                const scriptEl = document.getElementById(propsId);
+                if (scriptEl) {
+                    try {
+                        props = JSON.parse(scriptEl.textContent || '{}');
+                    } catch (error) {
+                        console.warn('Unable to parse game props for', type, error);
+                    }
                 }
             }
             props.bridgeEl = mountEl;

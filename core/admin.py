@@ -282,6 +282,14 @@ class ModuleAfterburnerGrammarPointInline(admin.StackedInline):
     classes = ("afterburner-inline", "afterburner-inline-grammar")
 
 
+class ModuleAfterburnerRealWorldStepInline(admin.StackedInline):
+    model = models.ModuleAfterburnerRealWorldStep
+    extra = 1
+    fields = ("order", "title", "instruction")
+    ordering = ("order", "id")
+    classes = ("afterburner-inline", "afterburner-inline-realworld")
+
+
 class AfterburnerActivityForm(forms.ModelForm):
     SLOT_LABEL_OVERRIDES = {
         models.ModuleAfterburnerActivity.Slot.TALK_RECORD: _("Talk-Record Challenge"),
@@ -293,8 +301,9 @@ class AfterburnerActivityForm(forms.ModelForm):
 
     class Meta:
         model = models.ModuleAfterburnerActivity
-        fields = ("title", "description", "game", "is_active")
+        fields = ("title", "goal", "description", "game", "is_active")
         widgets = {
+            "goal": forms.TextInput(attrs={"class": "vTextField"}),
             "description": forms.Textarea(attrs={"rows": 3}),
         }
 
@@ -310,6 +319,14 @@ class AfterburnerActivityForm(forms.ModelForm):
                 "label": slot_label
             }
             self.fields["description"].label = _("Learner instructions")
+
+        goal_field = self.fields.get("goal")
+        if goal_field:
+            goal_field.label = _("Mission goal")
+            if self.slot == models.ModuleAfterburnerActivity.Slot.REAL_WORLD:
+                goal_field.help_text = _("Define the real-world outcome learners should achieve.")
+            else:
+                goal_field.help_text = _("Optional mission goal copied to the learner view.")
 
         if self.slot != models.ModuleAfterburnerActivity.Slot.GAME:
             self.fields.pop("game", None)
@@ -337,7 +354,7 @@ ReadingChapterFormSet = inlineformset_factory(
     models.ModuleAfterburnerActivity,
     models.ModuleAfterburnerReadingChapter,
     fields=("order", "title", "content"),
-    extra=2,
+    extra=0,
     can_delete=True,
     widgets={
         "content": forms.Textarea(attrs={"rows": 3}),
@@ -349,26 +366,36 @@ GrammarPointFormSet = inlineformset_factory(
     models.ModuleAfterburnerActivity,
     models.ModuleAfterburnerGrammarPoint,
     fields=("order", "formula", "explanation"),
-    extra=2,
+    extra=0,
     can_delete=True,
     widgets={
         "explanation": forms.Textarea(attrs={"rows": 3}),
     },
 )
 
+RealWorldStepFormSet = inlineformset_factory(
+    models.ModuleAfterburnerActivity,
+    models.ModuleAfterburnerRealWorldStep,
+    fields=("order", "title", "instruction"),
+    extra=0,
+    can_delete=True,
+    widgets={
+        "title": forms.TextInput(attrs={"class": "vTextField"}),
+        "instruction": forms.Textarea(attrs={"rows": 3}),
+    },
+)
 
 
 FlashcardFormSet = inlineformset_factory(
     models.ModuleGame,
     models.ModuleGameFlashcard,
-    fields=("order", "word", "image_url", "audio_url", "is_active"),
-    extra=2,
+    fields=("order", "word", "meaning", "is_active"),
+    extra=0,
     can_delete=True,
     widgets={
         "order": forms.NumberInput(attrs={"class": "vIntegerField", "min": 1}),
         "word": forms.TextInput(attrs={"class": "vTextField"}),
-        "image_url": forms.URLInput(attrs={"class": "vTextField"}),
-        "audio_url": forms.URLInput(attrs={"class": "vTextField"}),
+        "meaning": forms.Textarea(attrs={"rows": 3}),
     },
 )
 
@@ -457,6 +484,7 @@ class ModuleAfterburnerStageAdmin(admin.ModelAdmin):
 
             chapters_formset = None
             grammar_formset = None
+            realworld_formset = None
             game_form = None
             flashcard_formset = None
             game_progress = []
@@ -474,6 +502,12 @@ class ModuleAfterburnerStageAdmin(admin.ModelAdmin):
                     post_data,
                     instance=activity,
                     prefix=f"grammar_{slot_value}",
+                )
+            elif slot_value == slot_enum.REAL_WORLD:
+                realworld_formset = RealWorldStepFormSet(
+                    post_data,
+                    instance=activity,
+                    prefix=f"realworld_{slot_value}",
                 )
             elif slot_value == slot_enum.GAME:
                 defaults = {
@@ -522,6 +556,7 @@ class ModuleAfterburnerStageAdmin(admin.ModelAdmin):
                     "form": form,
                     "chapters_formset": chapters_formset,
                     "grammar_formset": grammar_formset,
+                    "realworld_formset": realworld_formset,
                     "game_form": game_form,
                     "flashcard_formset": flashcard_formset,
                     "game_progress": game_progress,
@@ -538,6 +573,8 @@ class ModuleAfterburnerStageAdmin(admin.ModelAdmin):
                     forms_valid = entry["chapters_formset"].is_valid() and forms_valid
                 if entry["grammar_formset"] is not None:
                     forms_valid = entry["grammar_formset"].is_valid() and forms_valid
+                if entry.get("realworld_formset") is not None:
+                    forms_valid = entry["realworld_formset"].is_valid() and forms_valid
                 if entry.get("game_form") is not None:
                     forms_valid = entry["game_form"].is_valid() and forms_valid
                 if entry.get("flashcard_formset") is not None:
@@ -554,6 +591,9 @@ class ModuleAfterburnerStageAdmin(admin.ModelAdmin):
                     if entry["grammar_formset"] is not None:
                         entry["grammar_formset"].instance = activity_instance
                         entry["grammar_formset"].save()
+                    if entry.get("realworld_formset") is not None:
+                        entry["realworld_formset"].instance = activity_instance
+                        entry["realworld_formset"].save()
                     if entry.get("game_form") is not None:
                         game_instance = entry["game_form"].save()
                         entry["game_instance"] = game_instance
@@ -580,6 +620,8 @@ class ModuleAfterburnerStageAdmin(admin.ModelAdmin):
                 media = media + entry["chapters_formset"].media
             if entry["grammar_formset"] is not None:
                 media = media + entry["grammar_formset"].media
+            if entry.get("realworld_formset") is not None:
+                media = media + entry["realworld_formset"].media
             if entry.get("game_form") is not None:
                 media = media + entry["game_form"].media
             if entry.get("flashcard_formset") is not None:
@@ -691,7 +733,7 @@ class ModuleAfterburnerActivityAdmin(admin.ModelAdmin):
     ordering = ("module", "slot")
     fieldsets = (
         ("Assignment", {"fields": ("module", "slot", "is_active")}),
-        ("Content", {"fields": ("title", "description")}),
+        ("Content", {"fields": ("title", "goal", "description")}),
         (
             "Game configuration",
             {
@@ -700,7 +742,11 @@ class ModuleAfterburnerActivityAdmin(admin.ModelAdmin):
             },
         ),
     )
-    inlines = (ModuleAfterburnerReadingChapterInline, ModuleAfterburnerGrammarPointInline)
+    inlines = (
+        ModuleAfterburnerReadingChapterInline,
+        ModuleAfterburnerGrammarPointInline,
+        ModuleAfterburnerRealWorldStepInline,
+    )
 
     def get_inline_instances(self, request, obj=None):  # pragma: no cover - admin hook
         instances = super().get_inline_instances(request, obj)
@@ -713,6 +759,8 @@ class ModuleAfterburnerActivityAdmin(admin.ModelAdmin):
             if inline_model is models.ModuleAfterburnerReadingChapter and obj.slot != models.ModuleAfterburnerActivity.Slot.READING:
                 continue
             if inline_model is models.ModuleAfterburnerGrammarPoint and obj.slot != models.ModuleAfterburnerActivity.Slot.GRAMMAR:
+                continue
+            if inline_model is models.ModuleAfterburnerRealWorldStep and obj.slot != models.ModuleAfterburnerActivity.Slot.REAL_WORLD:
                 continue
             filtered.append(inline)
         return filtered

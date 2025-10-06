@@ -4,7 +4,31 @@
         return;
     }
 
-    const { reactive, ref, computed, onMounted } = window.Vue;
+    const { reactive, ref, onMounted } = window.Vue;
+
+    const normaliseCards = (cards) => {
+        if (!Array.isArray(cards)) {
+            return [];
+        }
+        const seen = new Set();
+        return cards
+            .map((card) => {
+                const id = card && card.id ? Number(card.id) : null;
+                const word = card && card.word ? String(card.word).trim() : '';
+                const meaning = card && card.meaning ? String(card.meaning).trim() : '';
+                return { id, word, meaning };
+            })
+            .filter((card) => {
+                if (!card.id || !card.word) {
+                    return false;
+                }
+                if (seen.has(card.id)) {
+                    return false;
+                }
+                seen.add(card.id);
+                return true;
+            });
+    };
 
     const getCsrfToken = function () {
         const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
@@ -30,6 +54,10 @@
             logUrl: { type: String, default: '' },
             bridgeEl: { type: Object, required: true },
             title: { type: String, default: '' },
+            initialCards: {
+                type: Array,
+                default: () => [],
+            },
         },
         setup(props) {
             const state = reactive({
@@ -44,23 +72,22 @@
                 reviewed: 0,
                 replayVisible: false,
                 celebration: false,
+                canReviewAll: false,
             });
 
             const cardStartTime = ref(Date.now());
-            const audioRef = ref(null);
+            const initialDeck = ref(normaliseCards(props.initialCards));
+
+            const hasInitialDeck = () => initialDeck.value.length > 0;
+
+            const refreshReviewButton = () => {
+                state.canReviewAll = hasInitialDeck();
+            };
+
+            refreshReviewButton();
 
             const emitSubmitState = (canSubmit, completedLabel) => {
                 emitState(props.bridgeEl, { canSubmit, completedLabel });
-            };
-
-            const stopAudio = () => {
-                if (audioRef.value) {
-                    try {
-                        audioRef.value.pause();
-                    } catch (error) {
-                        console.warn('Unable to pause audio clip', error);
-                    }
-                }
             };
 
             const setStatus = (text) => {
@@ -79,7 +106,7 @@
                 cardStartTime.value = Date.now();
                 state.celebration = false;
                 state.replayVisible = false;
-                setStatus('Tap to flip the card.');
+                setStatus('Tap the card to see the meaning.');
                 emitSubmitState(false);
             };
 
@@ -93,11 +120,11 @@
                     state.replayVisible = false;
                     setStatus('Daily review done. Tap “Mark Done” to lock it in.');
                 }
+                refreshReviewButton();
                 emitSubmitState(true);
             };
 
             const advanceQueue = () => {
-                stopAudio();
                 if (state.cards.length) {
                     const next = state.cards.shift();
                     setCurrentCard(next);
@@ -177,23 +204,6 @@
                 setStatus('Did you know this word?');
             };
 
-            const playAudio = () => {
-                const card = state.currentCard;
-                if (!card || !card.audio_url) {
-                    return;
-                }
-                try {
-                    stopAudio();
-                    audioRef.value = new Audio(card.audio_url);
-                    audioRef.value.play().catch((error) => {
-                        console.warn('Unable to play audio', error);
-                        setStatus('Audio unavailable. Practice aloud anyway.');
-                    });
-                } catch (error) {
-                    console.warn('Audio initialisation failed', error);
-                }
-            };
-
             const replayMissed = () => {
                 if (!state.missed.length) {
                     return;
@@ -206,9 +216,38 @@
                 emitSubmitState(false);
             };
 
+            const startFullReview = (auto = false) => {
+                const deck = initialDeck.value;
+                if (!deck.length) {
+                    refreshReviewButton();
+                    return false;
+                }
+                const cards = deck.map((entry) => ({
+                    id: entry.id,
+                    word: entry.word,
+                    meaning: entry.meaning,
+                }));
+                resetScoreboard();
+                state.cards = cards.slice(1);
+                state.missed = [];
+                state.celebration = false;
+                state.replayVisible = false;
+                refreshReviewButton();
+                setCurrentCard(cards[0]);
+                if (auto) {
+                    setStatus('Review these cards to stay sharp between live missions.');
+                } else {
+                    setStatus('Full-deck review activated. Let’s go.');
+                }
+                return true;
+            };
+
             const fetchQueue = () => {
                 if (!props.queueUrl) {
                     state.loading = false;
+                    if (startFullReview(true)) {
+                        return;
+                    }
                     state.statusText = 'No review queue configured.';
                     emitSubmitState(false);
                     return;
@@ -228,21 +267,35 @@
                         return response.json();
                     })
                     .then((data) => {
-                        state.cards = Array.isArray(data.cards) ? data.cards.slice() : [];
-                        state.missed = [];
-                        resetScoreboard();
-                        state.loading = false;
-                        if (!state.cards.length) {
-                            setStatus('Nothing due right now. Tap “Mark Done” to keep momentum.');
-                            emitSubmitState(true);
-                            state.celebration = true;
+                        const queueCards = Array.isArray(data.cards) ? data.cards.slice() : [];
+                        if (queueCards.length) {
+                            state.cards = queueCards;
+                            state.missed = [];
+                            resetScoreboard();
+                            state.loading = false;
+                            state.usingFallback = false;
+                            setCurrentCard(state.cards.shift());
+                            refreshReviewButton();
                             return;
                         }
-                        setCurrentCard(state.cards.shift());
+                        state.cards = [];
+                        state.missed = [];
+                        state.loading = false;
+                        if (startFullReview(true)) {
+                            return;
+                        }
+                        resetScoreboard();
+                        setStatus('Nothing due right now. Tap “Mark Done” to keep momentum.');
+                        emitSubmitState(true);
+                        state.celebration = true;
+                        refreshReviewButton();
                     })
                     .catch((error) => {
                         console.error('Unable to load flashcards:', error);
                         state.loading = false;
+                        if (startFullReview(true)) {
+                            return;
+                        }
                         setStatus('Unable to load cards. Refresh the page to try again.');
                         emitSubmitState(false);
                     });
@@ -256,9 +309,9 @@
             return {
                 state,
                 revealCard,
-                playAudio,
                 handleOutcome,
                 replayMissed,
+                startFullReview,
             };
         },
         template: `
@@ -266,19 +319,13 @@
                 <div class="flashcard-stage" v-if="state.currentCard || state.loading">
                     <div class="flashcard-card" :class="{ 'is-flipped': state.isFlipped }" @click="revealCard">
                         <div class="flashcard-face flashcard-face--front">
-                            <div class="flashcard-media">
-                                <template v-if="state.currentCard && state.currentCard.image_url">
-                                    <img class="flashcard-image" :src="state.currentCard.image_url" alt="Flashcard prompt" />
-                                </template>
-                                <template v-else>
-                                    <div class="flashcard-placeholder">Tap to flip</div>
-                                </template>
-                            </div>
+                            <div class="flashcard-word">{{ state.currentCard ? state.currentCard.word.toUpperCase() : '' }}</div>
+                            <p class="flashcard-subtitle">Tap to reveal the meaning</p>
                         </div>
                         <div class="flashcard-face flashcard-face--back">
                             <div class="flashcard-word">{{ state.currentCard ? state.currentCard.word.toUpperCase() : '' }}</div>
-                            <button class="todo-check todo-check--ghost" type="button" @click.stop="playAudio" :disabled="!(state.currentCard && state.currentCard.audio_url)">Play audio</button>
-                            <p class="text-white-50 small mb-0 flashcard-pronounce-hint">Listen and repeat aloud three times.</p>
+                            <p class="flashcard-meaning">{{ state.currentCard && state.currentCard.meaning ? state.currentCard.meaning : 'Add the definition in the admin to display it here.' }}</p>
+                            <p class="text-white-50 small mb-0 flashcard-pronounce-hint">Say it aloud three times. Use it in a sentence.</p>
                         </div>
                     </div>
                 </div>
@@ -287,6 +334,7 @@
                     <p class="h6 mb-1">All done for now!</p>
                     <p class="text-white-50 small mb-3">{{ state.statusText }}</p>
                     <button class="todo-check" type="button" @click="replayMissed" v-if="state.replayVisible">Replay missed cards</button>
+                    <button class="todo-check todo-check--ghost" type="button" @click="startFullReview(false)" v-if="state.canReviewAll">Review all cards</button>
                 </div>
                 <div class="flashcard-scoreboard">
                     <div class="flashcard-score">{{ state.points }} pts</div>

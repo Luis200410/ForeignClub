@@ -353,6 +353,77 @@
                     </div>
                 {% endif %}
 
+                {% if entry.realworld_formset %}
+                    <div class="formset-block" data-formset-block data-formset-prefix="{{ entry.realworld_formset.prefix }}">
+                        <h3>{% trans "Step-by-step instructions" %}</h3>
+                        {{ entry.realworld_formset.management_form }}
+                        {% for hidden in entry.realworld_formset.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                        {{ entry.realworld_formset.non_form_errors }}
+                        <div class="formset-forms" data-formset-container>
+                            {% for form in entry.realworld_formset.forms %}
+                                <div class="inline-form" data-formset-form>
+                                    <div class="inline-header">
+                                        <h3>{% trans "Step" %} {{ forloop.counter }}</h3>
+                                        <button type="button" class="remove-form-btn" data-formset-remove>&times; {% trans "Remove" %}</button>
+                                    </div>
+                                    {% if form.non_field_errors %}
+                                        <div class="form-errors">{{ form.non_field_errors }}</div>
+                                    {% endif %}
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                    {% for field in form.visible_fields %}
+                                        <div class="form-row field-{{ field.name }}">
+                                            {{ field.label_tag }}
+                                            <div class="field-box">
+                                                {{ field }}
+                                                {% if field.help_text %}
+                                                    <p class="help">{{ field.help_text }}</p>
+                                                {% endif %}
+                                                {{ field.errors }}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                    {% if form.can_delete %}
+                                        <div class="delete-checkbox">
+                                            {{ form.delete.label_tag }} {{ form.delete }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <template data-formset-template>
+                            <div class="inline-form" data-formset-form>
+                                <div class="inline-header">
+                                    <h3>{% trans "Step" %}</h3>
+                                    <button type="button" class="remove-form-btn" data-formset-remove>&times; {% trans "Remove" %}</button>
+                                </div>
+                                {% with form=entry.realworld_formset.empty_form %}
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden.as_widget }}
+                                    {% endfor %}
+                                    {% for field in form.visible_fields %}
+                                        <div class="form-row field-{{ field.name }}">
+                                            {{ field.label_tag }}
+                                            <div class="field-box">
+                                                {{ field.as_widget }}
+                                                {% if field.help_text %}
+                                                    <p class="help">{{ field.help_text }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% endwith %}
+                            </div>
+                        </template>
+                        <div class="formset-actions">
+                            <button type="button" class="add-form-btn" data-formset-add>+ {% trans "Add step" %}</button>
+                        </div>
+                    </div>
+                {% endif %}
+
                 {% if entry.game_form %}
                     <div class="formset-block">
                         <h3>{% trans "Game configuration" %}</h3>

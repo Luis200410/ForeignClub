@@ -300,13 +300,7 @@ def _get_afterburner_card_configs(
         activity = module_activities.get(slot)
         fallback_card = fallback_level_map.get(slot, {})
         if slot == ModuleAfterburnerActivity.Slot.GAME:
-            game_instance = getattr(activity, "game", None)
-            if game_instance is None and module is not None:
-                game_instance = (
-                    ModuleGame.objects.filter(module=module, is_active=True)
-                    .order_by("order", "id")
-                    .first()
-                )
+            game_instance = getattr(activity, "game", None) or _resolve_adaptive_game(module)
             configs.append(
                 {
                     "slot": slot,
@@ -318,6 +312,7 @@ def _get_afterburner_card_configs(
                     ),
                     "activity": activity,
                     "game": game_instance,
+                    "goal": getattr(activity, "goal", "") if activity else "",
                 }
             )
             continue
@@ -334,10 +329,68 @@ def _get_afterburner_card_configs(
                     else fallback_card.get("description", "")
                 ),
                 "activity": activity,
+                "goal": getattr(activity, "goal", "") if activity else "",
             }
         )
 
     return configs
+
+
+def _resolve_adaptive_game(module: CourseModule | None) -> ModuleGame | None:
+    if module is None:
+        return None
+
+    activity_game = (
+        ModuleAfterburnerActivity.objects.filter(
+            module=module,
+            slot=ModuleAfterburnerActivity.Slot.GAME,
+        )
+        .select_related("game")
+        .first()
+    )
+    if activity_game and activity_game.game:
+        game = activity_game.game
+        if game.is_active and game.game_type == ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
+            return game
+
+    return (
+        ModuleGame.objects.filter(
+            module=module,
+            game_type=ModuleGame.GameType.ADAPTIVE_FLASHCARDS,
+            is_active=True,
+        )
+        .order_by("order", "id")
+        .first()
+    )
+
+
+def _resolve_profile(
+    user,
+    *,
+    allow_admin_create: bool = False,
+):
+    """Return the user's profile, auto-creating one for admins when needed."""
+
+    profile = getattr(user, "profile", None)
+    if profile is not None or not getattr(user, "is_authenticated", False):
+        return profile
+
+    if allow_admin_create and getattr(user, "is_superuser", False):
+        display_name = (
+            user.get_full_name()
+            or user.get_username()
+            or "Mission Control"
+        )
+        profile, _ = Profile.objects.get_or_create(
+            user=user,
+            defaults={
+                "display_name": display_name,
+                "timezone": timezone.get_current_timezone_name(),
+            },
+        )
+        return profile
+
+    return profile
 
 
 def _get_launch_pad_task_configs(course: Course | None, module: CourseModule | None) -> list[dict[str, str]]:
@@ -904,6 +957,7 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
         )
 
         user = self.request.user
+        user_is_admin = user.is_superuser
         enrollment, can_view_course = _get_enrollment_and_access(user, course)
 
         if not can_view_course:
@@ -914,7 +968,9 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
             course=course,
             order=order,
         )
-        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+        if not user_is_admin and not _is_module_unlocked(
+            user, course, module, enrollment, can_view_course
+        ):
             previous_week = max(1, module.order - 1)
             messages.warning(
                 self.request,
@@ -928,6 +984,8 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
         next_order = order + 1 if order < total_modules else None
 
         stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        if user_is_admin:
+            stage_unlocks = {stage["key"]: True for stage in MODULE_STAGE_SEQUENCE}
 
         stage_cards = [
             {
@@ -982,6 +1040,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             is_published=True,
         )
         user = self.request.user
+        user_is_admin = user.is_superuser
         enrollment, can_view_course = _get_enrollment_and_access(user, course)
         if not can_view_course:
             messages.warning(self.request, "Finish your application to unlock weekly missions.")
@@ -991,7 +1050,9 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             course=course,
             order=order,
         )
-        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+        if not user_is_admin and not _is_module_unlocked(
+            user, course, module, enrollment, can_view_course
+        ):
             previous_week = max(1, module.order - 1)
             messages.warning(
                 self.request,
@@ -999,8 +1060,12 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             )
             return redirect("course_module", slug=slug, order=previous_week)
         stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        if user_is_admin:
+            stage_unlocks = {stage["key"]: True for stage in MODULE_STAGE_SEQUENCE}
 
-        if stage_key != "launch-pad" and not stage_unlocks.get(stage_key, False):
+        if not user_is_admin and stage_key != "launch-pad" and not stage_unlocks.get(
+            stage_key, False
+        ):
             messages.warning(self.request, "Complete the previous stage to unlock this mission.")
             return redirect("course_module", slug=slug, order=order)
 
@@ -1023,7 +1088,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             for stage in MODULE_STAGE_SEQUENCE
         ]
 
-        profile = getattr(user, "profile", None)
+        profile = _resolve_profile(user, allow_admin_create=user_is_admin)
         meeting_signup = None
         selected_meeting = None
         can_cancel_meeting = False
@@ -1068,6 +1133,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                     "completed": False,
                     "slot": config["slot"],
                     "dashboard_url": None,
+                    "goal": config.get("goal", ""),
                 }
             )
 
@@ -1076,7 +1142,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             if game_config.get("activity"):
                 selected_game = getattr(game_config["activity"], "game", None)
             if selected_game is None:
-                selected_game = game_config.get("game")
+                selected_game = game_config.get("game") or _resolve_adaptive_game(module)
 
         afterburner_game_card = {
             "index": len(afterburner_cards) + 1,
@@ -1086,23 +1152,22 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             ),
             "completed": False,
             "slot": ModuleAfterburnerActivity.Slot.GAME,
-            "game_type": selected_game.game_type if selected_game else None,
+            "game_type": selected_game.game_type if selected_game else ModuleGame.GameType.ADAPTIVE_FLASHCARDS,
             "word": "",
             "definition": "",
             "dashboard_url": None,
             "unlock_at": None,
             "is_locked": False,
             "lock_message": "",
+            "goal": (game_config or {}).get("goal", ""),
         }
 
         now = timezone.now()
-        course_start_date = course.start_date or now.date()
-        module_start_date = course_start_date + timedelta(days=max(0, (module.order - 1) * 7))
-        module_start_dt = datetime.combine(module_start_date, time.min)
-        if timezone.is_naive(module_start_dt):
-            module_start_dt = timezone.make_aware(module_start_dt, timezone.get_current_timezone())
 
         meeting_end_dt = None
+        meeting_end_local = None
+        meeting_unlock_date = None
+        meeting_tz = timezone.get_current_timezone()
         if selected_meeting:
             meeting_end_dt = selected_meeting.scheduled_for + timedelta(
                 minutes=selected_meeting.duration_minutes or 60
@@ -1111,8 +1176,9 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                 meeting_end_dt = timezone.make_aware(
                     meeting_end_dt, timezone.get_current_timezone()
                 )
-
-        unlock_reference_dt = meeting_end_dt or module_start_dt
+            meeting_end_local = timezone.localtime(meeting_end_dt)
+            meeting_unlock_date = meeting_end_local.date()
+            meeting_tz = meeting_end_local.tzinfo or timezone.get_current_timezone()
 
         slot_unlock_offsets = {
             ModuleAfterburnerActivity.Slot.TALK_RECORD: 1,
@@ -1123,15 +1189,21 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
 
         for card in afterburner_cards:
             offset_days = slot_unlock_offsets.get(card["slot"], 0)
-            if meeting_end_dt is None:
+            if meeting_unlock_date is None:
                 card["unlock_at"] = None
-                card["is_locked"] = True
-                card["lock_message"] = "Schedule your live mission to unlock this mission."
+                if user_is_admin:
+                    card["is_locked"] = False
+                    card["lock_message"] = ""
+                else:
+                    card["is_locked"] = True
+                    card["lock_message"] = "Schedule your live mission to unlock this mission."
                 continue
 
-            unlock_at = unlock_reference_dt + timedelta(days=offset_days)
+            unlock_date = meeting_unlock_date + timedelta(days=offset_days)
+            unlock_naive = datetime.combine(unlock_date, time.min)
+            unlock_at = timezone.make_aware(unlock_naive, meeting_tz)
             card["unlock_at"] = timezone.localtime(unlock_at)
-            is_locked = now < unlock_at
+            is_locked = (now < unlock_at) and not user_is_admin
             card["is_locked"] = is_locked
             if is_locked:
                 formatted = formats.date_format(card["unlock_at"], "M j, g:i a")
@@ -1140,6 +1212,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                 card["lock_message"] = ""
 
         game_props_for_stage = {}
+        initial_flashcards: list[dict[str, str]] = []
         if selected_game:
             afterburner_game_card.update(
                 {
@@ -1164,10 +1237,20 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                         }
                     }
                 )
+                initial_flashcards = [
+                    {
+                        "id": card.id,
+                        "word": card.word,
+                        "meaning": card.meaning,
+                    }
+                    for card in selected_game.flashcards.filter(is_active=True).order_by("order", "id")
+                ]
                 game_props_for_stage = {
                     "queueUrl": afterburner_game_card["flashcards_api"]["queue"],
                     "logUrl": afterburner_game_card["flashcards_api"]["log"],
                 }
+                if initial_flashcards:
+                    game_props_for_stage["initialCards"] = initial_flashcards
         afterburner_game_card["game_props_json"] = json.dumps(game_props_for_stage)
         for idx, card in enumerate(afterburner_cards, start=1):
             card["index"] = idx
@@ -1398,6 +1481,8 @@ class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
 
         reading_chapters = []
         grammar_points = []
+        real_world_steps = []
+        real_world_goal = ""
         if activity:
             if slot_enum == ModuleAfterburnerActivity.Slot.READING:
                 reading_chapters = list(
@@ -1407,10 +1492,24 @@ class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
                 grammar_points = list(
                     activity.grammar_points.all().order_by("order", "id")
                 )
+            elif slot_enum == ModuleAfterburnerActivity.Slot.REAL_WORLD:
+                real_world_steps = list(
+                    activity.real_world_steps.all().order_by("order", "id")
+                )
+                real_world_goal = activity.goal or ""
 
         game_props = {}
+        initial_flashcards: list[dict[str, str]] = []
         if slot_enum == ModuleAfterburnerActivity.Slot.GAME and selected_game:
             if selected_game.game_type == ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
+                initial_flashcards = [
+                    {
+                        "id": card.id,
+                        "word": card.word,
+                        "meaning": card.meaning,
+                    }
+                    for card in selected_game.flashcards.filter(is_active=True).order_by("order", "id")
+                ]
                 game_props = {
                     "queueUrl": reverse(
                         "course_module_flashcards_queue",
@@ -1421,6 +1520,8 @@ class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
                         args=[course.slug, module.order],
                     ),
                 }
+                if initial_flashcards:
+                    game_props["initialCards"] = initial_flashcards
 
         context.update(
             {
@@ -1436,6 +1537,8 @@ class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
                 "reading_slot_value": ModuleAfterburnerActivity.Slot.READING,
                 "grammar_slot_value": ModuleAfterburnerActivity.Slot.GRAMMAR,
                 "real_world_slot_value": ModuleAfterburnerActivity.Slot.REAL_WORLD,
+                "real_world_steps": real_world_steps,
+                "real_world_goal": real_world_goal,
                 "reading_chapters": reading_chapters,
                 "grammar_points": grammar_points,
             }
@@ -1458,6 +1561,7 @@ class ModuleMeetingSignupView(PlacementRequiredMixin, View):
             is_published=True,
         )
         user = request.user
+        user_is_admin = user.is_superuser
         enrollment, can_view_course = _get_enrollment_and_access(user, course)
         if not can_view_course:
             messages.warning(request, "Finish your application to unlock weekly missions.")
@@ -1477,7 +1581,7 @@ class ModuleMeetingSignupView(PlacementRequiredMixin, View):
             )
             return redirect("course_module", slug=slug, order=previous_week)
 
-        profile = getattr(user, "profile", None)
+        profile = _resolve_profile(user, allow_admin_create=user_is_admin)
         if profile is None:
             messages.error(request, "Complete your profile to track progress.")
             return redirect("course_module_stage", slug=slug, order=order, stage=ModuleStageProgress.StageKey.FLIGHT_DECK)
@@ -1560,6 +1664,7 @@ class ModuleMeetingCancelView(PlacementRequiredMixin, View):
             is_published=True,
         )
         user = request.user
+        user_is_admin = user.is_superuser
         enrollment, can_view_course = _get_enrollment_and_access(user, course)
         if not can_view_course:
             messages.warning(request, "Finish your application to unlock weekly missions.")
@@ -1684,11 +1789,15 @@ class ModuleGameFlashcardQueueView(PlacementRequiredMixin, View):
             order=order,
         )
 
-        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+        if not user.is_superuser and not _is_module_unlocked(
+            user, course, module, enrollment, can_view_course
+        ):
             return JsonResponse({"error": "module_locked"}, status=403)
 
         stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
-        if not stage_unlocks.get(ModuleStageProgress.StageKey.AFTERBURNER, False):
+        if not user.is_superuser and not stage_unlocks.get(
+            ModuleStageProgress.StageKey.AFTERBURNER, False
+        ):
             return JsonResponse({"error": "afterburner_locked"}, status=403)
 
         game_activity = (
@@ -1700,19 +1809,12 @@ class ModuleGameFlashcardQueueView(PlacementRequiredMixin, View):
             .first()
         )
         module_game = getattr(game_activity, "game", None)
-        if module_game is None:
-            module_game = (
-                ModuleGame.objects.filter(module=module, is_active=True)
-                .order_by("order", "id")
-                .first()
-            )
-        if (
-            module_game is None
-            or module_game.game_type != ModuleGame.GameType.ADAPTIVE_FLASHCARDS
-        ):
+        if module_game is None or module_game.game_type != ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
+            module_game = _resolve_adaptive_game(module)
+        if not module_game:
             return JsonResponse({"cards": [], "meta": {"total_due": 0}}, status=200)
 
-        profile = getattr(user, "profile", None)
+        profile = _resolve_profile(user, allow_admin_create=True)
         if profile is None:
             return JsonResponse({"error": "profile_missing"}, status=403)
 
@@ -1731,8 +1833,7 @@ class ModuleGameFlashcardQueueView(PlacementRequiredMixin, View):
             {
                 "id": progress.flashcard_id,
                 "word": progress.flashcard.word,
-                "image_url": progress.flashcard.image_url,
-                "audio_url": progress.flashcard.audio_url,
+                "meaning": progress.flashcard.meaning,
                 "interval_index": progress.interval_index,
                 "correct_streak": progress.correct_streak,
                 "seen_count": progress.seen_count,
@@ -1794,11 +1895,15 @@ class ModuleGameFlashcardLogView(PlacementRequiredMixin, View):
             order=order,
         )
 
-        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+        if not user.is_superuser and not _is_module_unlocked(
+            user, course, module, enrollment, can_view_course
+        ):
             return JsonResponse({"error": "module_locked"}, status=403)
 
         stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
-        if not stage_unlocks.get(ModuleStageProgress.StageKey.AFTERBURNER, False):
+        if not user.is_superuser and not stage_unlocks.get(
+            ModuleStageProgress.StageKey.AFTERBURNER, False
+        ):
             return JsonResponse({"error": "afterburner_locked"}, status=403)
 
         game_activity = (
@@ -1810,19 +1915,12 @@ class ModuleGameFlashcardLogView(PlacementRequiredMixin, View):
             .first()
         )
         module_game = getattr(game_activity, "game", None)
-        if module_game is None:
-            module_game = (
-                ModuleGame.objects.filter(module=module, is_active=True)
-                .order_by("order", "id")
-                .first()
-            )
-        if (
-            module_game is None
-            or module_game.game_type != ModuleGame.GameType.ADAPTIVE_FLASHCARDS
-        ):
+        if module_game is None or module_game.game_type != ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
+            module_game = _resolve_adaptive_game(module)
+        if not module_game:
             return JsonResponse({"error": "game_unavailable"}, status=400)
 
-        profile = getattr(user, "profile", None)
+        profile = _resolve_profile(user, allow_admin_create=True)
         if profile is None:
             return JsonResponse({"error": "profile_missing"}, status=403)
 
@@ -1933,6 +2031,7 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
             is_published=True,
         )
         user = request.user
+        user_is_admin = user.is_superuser
         enrollment, can_view_course = _get_enrollment_and_access(user, course)
         if not can_view_course:
             messages.warning(request, "Finish your application to unlock weekly missions.")
@@ -1943,7 +2042,9 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
             course=course,
             order=order,
         )
-        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+        if not user_is_admin and not _is_module_unlocked(
+            user, course, module, enrollment, can_view_course
+        ):
             previous_week = max(1, module.order - 1)
             if request.headers.get("x-requested-with") == "XMLHttpRequest":
                 return JsonResponse(
@@ -1962,7 +2063,7 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
             )
             return redirect("course_module", slug=slug, order=previous_week)
 
-        profile = getattr(user, "profile", None)
+        profile = _resolve_profile(user, allow_admin_create=user_is_admin)
         if profile is None:
             messages.error(request, "Complete your profile to track progress.")
             return redirect("course_module_stage", slug=slug, order=order, stage=stage_key)
@@ -2011,6 +2112,8 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
             )
             meeting = meeting_signup.meeting if meeting_signup else None
             meeting_end = None
+            meeting_unlock_date = None
+            meeting_tz = timezone.get_current_timezone()
             if meeting:
                 meeting_end = meeting.scheduled_for + timedelta(
                     minutes=meeting.duration_minutes or 60
@@ -2019,18 +2122,26 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
                     meeting_end = timezone.make_aware(
                         meeting_end, timezone.get_current_timezone()
                     )
+                meeting_end_local = timezone.localtime(meeting_end)
+                meeting_unlock_date = meeting_end_local.date()
+                meeting_tz = meeting_end_local.tzinfo or timezone.get_current_timezone()
 
             card_locked = False
             lock_message = ""
 
             if index <= len(non_game_configs):
                 slot = non_game_configs[index - 1]["slot"]
-                if meeting_end is None:
-                    card_locked = True
-                    lock_message = "Schedule your live mission to unlock this mission."
+                if meeting_unlock_date is None:
+                    card_locked = not user_is_admin
+                    if not user_is_admin:
+                        lock_message = "Schedule your live mission to unlock this mission."
                 else:
-                    unlock_at = meeting_end + timedelta(days=slot_unlock_offsets.get(slot, 0))
-                    if now < unlock_at:
+                    unlock_date = meeting_unlock_date + timedelta(
+                        days=slot_unlock_offsets.get(slot, 0)
+                    )
+                    unlock_naive = datetime.combine(unlock_date, time.min)
+                    unlock_at = timezone.make_aware(unlock_naive, meeting_tz)
+                    if not user_is_admin and now < unlock_at:
                         card_locked = True
                         unlock_local = timezone.localtime(unlock_at)
                         lock_message = f"This mission unlocks on {formats.date_format(unlock_local, 'M j, g:i a')}"
@@ -2050,6 +2161,8 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
         progress.save(update_fields=["completed_tasks", "updated_at"])
 
         stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        if user_is_admin:
+            stage_unlocks = {stage["key"]: True for stage in MODULE_STAGE_SEQUENCE}
 
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse(
