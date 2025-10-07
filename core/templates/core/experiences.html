@@ -4,8 +4,8 @@
 <section class="container-xl py-7">
     <div class="page-intro" data-animate="fade-up">
         <p class="eyebrow mb-2">Programs & Courses</p>
-        <h1 class="display-4 fw-bold tracking-tight mb-3">Navigate the FOREIGN experience map.</h1>
-        <p class="text-white-50 lead mb-0">Select the level that resonates and drop into the missions built for you. Each program houses live cohorts, cinematic challenges, and rapid feedback rituals.</p>
+        <h1 class="display-4 fw-bold tracking-tight mb-3">Choose the mission path that fits your ambition.</h1>
+        <p class="text-white-50 lead mb-0">Each level blends live cohorts, cinematic challenges, and rapid feedback loops so you can anchor your progress to visible wins—not vague promises.</p>
     </div>
 </section>
 
@@ -20,7 +20,7 @@
                 <p class="h5 tracking-tight mb-2">{{ level.headline }}</p>
                 <p class="text-white-50 mb-4">{{ level.tagline }}</p>
                 <div class="program-card__cta">
-                    <a class="btn btn-light w-100" href="{% url 'program_detail' level.code %}">View level detail</a>
+                    <a class="btn btn-light w-100" href="{% url 'program_detail' level.code %}">Unlock this mission path</a>
                 </div>
             </article>
         {% endfor %}
@@ -33,7 +33,7 @@
             <div>
                 <p class="eyebrow mb-2">Courses</p>
                 <h2 class="h4 tracking-tight mb-2">Mission portfolio by intensity</h2>
-                <p class="text-white-50 mb-0">Each course blends live labs, story-driven missions, and precision coaching to hit your targets faster.</p>
+                <p class="text-white-50 mb-0">Every course merges elite coaching, story-driven missions, and measurable checkpoints so you feel the upgrade in real meetings.</p>
             </div>
             <a class="btn btn-outline-light btn-lg px-5" href="{% url 'course_list' %}">Full course directory</a>
         </div>

@@ -547,6 +547,8 @@ class ModuleMeetingActivity(models.Model):
     )
     title = models.CharField(max_length=160)
     description = models.TextField(blank=True)
+    grammar_formula = models.CharField(max_length=160, blank=True)
+    example = models.TextField(blank=True)
     order = models.PositiveSmallIntegerField(default=1)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -560,6 +562,67 @@ class ModuleMeetingActivity(models.Model):
 
     def __str__(self) -> str:
         return f"{self.module} · {self.title}"
+
+    def save(self, *args, **kwargs):
+        if not self.module_id:
+            super().save(*args, **kwargs)
+            return
+
+        if self.order <= 0:
+            sibling_count = (
+                ModuleMeetingActivity.objects.filter(module=self.module)
+                .exclude(pk=self.pk)
+                .count()
+            )
+            self.order = sibling_count + 1
+        else:
+            conflict_exists = (
+                ModuleMeetingActivity.objects.filter(
+                    module=self.module,
+                    order=self.order,
+                )
+                .exclude(pk=self.pk)
+                .exists()
+            )
+            if conflict_exists:
+                max_order = (
+                    ModuleMeetingActivity.objects.filter(module=self.module)
+                    .exclude(pk=self.pk)
+                    .aggregate(models.Max("order"))
+                    .get("order__max")
+                    or 0
+                )
+                self.order = max_order + 1
+
+        super().save(*args, **kwargs)
+
+
+class ModuleMeetingActivityInstruction(models.Model):
+    """Step-by-step guidance attached to a meeting activity slide."""
+
+    activity = models.ForeignKey(
+        ModuleMeetingActivity,
+        on_delete=models.CASCADE,
+        related_name="instructions",
+    )
+    order = models.PositiveSmallIntegerField(default=1)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["activity", "order", "id"]
+        verbose_name = "Module meeting instruction"
+        verbose_name_plural = "Module meeting instructions"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["activity", "order"],
+                name="unique_meeting_instruction_order_per_activity",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.activity} · Step {self.order}"
 
 
 class ModuleFlightDeckActivity(models.Model):
@@ -961,6 +1024,92 @@ class ModuleLiveMeetingSignup(models.Model):
 
     def __str__(self) -> str:
         return f"{self.profile.display_name} · {self.module} · {self.meeting.scheduled_for:%Y-%m-%d %H:%M}"
+
+
+class ModuleMeetingPairing(models.Model):
+    """Recorded pairing between learners for a given meeting activity."""
+
+    module = models.ForeignKey(
+        CourseModule,
+        on_delete=models.CASCADE,
+        related_name="meeting_pairings",
+        editable=False,
+    )
+    meeting = models.ForeignKey(
+        ModuleLiveMeeting,
+        on_delete=models.CASCADE,
+        related_name="pairings",
+    )
+    activity = models.ForeignKey(
+        ModuleMeetingActivity,
+        on_delete=models.CASCADE,
+        related_name="pairings",
+    )
+    profile_primary = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        related_name="meeting_pairings_as_primary",
+    )
+    profile_partner = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        related_name="meeting_pairings_as_partner",
+        null=True,
+        blank=True,
+    )
+    paired_with_assistant = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["meeting", "activity", "profile_primary"]
+        verbose_name = "Module meeting pairing"
+        verbose_name_plural = "Module meeting pairings"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["meeting", "activity", "profile_primary"],
+                name="unique_primary_per_activity_pairing",
+            ),
+            models.CheckConstraint(
+                check=(
+                    models.Q(paired_with_assistant=True, profile_partner__isnull=True)
+                    | models.Q(paired_with_assistant=False, profile_partner__isnull=False)
+                ),
+                name="meeting_pair_partner_presence",
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.meeting_id and (not self.module_id or self.module_id != self.meeting.module_id):
+            self.module = self.meeting.module
+
+        if self.profile_partner_id == self.profile_primary_id:
+            raise ValueError("Cannot pair a learner with themselves.")
+
+        if self.profile_partner_id and self.profile_partner_id < self.profile_primary_id:
+            self.profile_primary_id, self.profile_partner_id = (
+                self.profile_partner_id,
+                self.profile_primary_id,
+            )
+
+        super().save(*args, **kwargs)
+
+    def partner_for(self, profile: Profile | None) -> Profile | None:
+        if profile is None or not self.profile_partner_id or self.paired_with_assistant:
+            return None
+        if profile.id == self.profile_primary_id:
+            return self.profile_partner
+        if profile.id == self.profile_partner_id:
+            return self.profile_primary
+        return None
+
+    def __str__(self) -> str:
+        if self.profile_partner_id:
+            return (
+                f"{self.activity} · {self.profile_primary.display_name} + {self.profile_partner.display_name}"
+            )
+        if self.paired_with_assistant:
+            return f"{self.activity} · {self.profile_primary.display_name} + Assistant"
+        return f"{self.activity} · {self.profile_primary.display_name}"
 
 
 class CourseEnrollment(models.Model):

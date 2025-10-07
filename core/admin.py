@@ -4,8 +4,10 @@ from __future__ import annotations
 from django import forms
 from django.contrib import admin, messages
 from django.forms import Media, inlineformset_factory
-from django.shortcuts import redirect
+from django.db.models import Max
+from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
+from django.urls import path, reverse
 from django.utils.translation import gettext_lazy as _
 
 from . import models
@@ -289,6 +291,57 @@ class ModuleAfterburnerRealWorldStepInline(admin.StackedInline):
     ordering = ("order", "id")
     classes = ("afterburner-inline", "afterburner-inline-realworld")
 
+
+class ModuleMeetingInstructionInline(admin.StackedInline):
+    model = models.ModuleMeetingActivityInstruction
+    extra = 1
+    fields = ("order", "text")
+    ordering = ("order", "id")
+    classes = ("collapse",)
+
+
+class MeetingActivityForm(forms.ModelForm):
+    instructions_raw = forms.CharField(
+        label=_("Instructions"),
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 3}),
+        help_text=_("Enter one instruction per line; they will display in the learner carousel."),
+    )
+
+    class Meta:
+        model = models.ModuleMeetingActivity
+        fields = ("order", "title", "description", "grammar_formula", "example", "is_active")
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 3}),
+            "example": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        instructions = []
+        if self.instance.pk:
+            instructions = [
+                instruction.text.strip()
+                for instruction in self.instance.instructions.all().order_by("order", "id")
+            ]
+        self.initial["instructions_raw"] = "\n".join(instructions)
+        self.fields["instructions_raw"].label = _("Instructions")
+        self.fields["instructions_raw"].help_text = _("Enter each instruction on a new line.")
+
+    def clean_order(self):
+        value = self.cleaned_data.get("order")
+        if not value or value <= 0:
+            return 0
+        return value
+
+
+MeetingActivityFormSet = inlineformset_factory(
+    models.CourseModule,
+    models.ModuleMeetingActivity,
+    form=MeetingActivityForm,
+    extra=0,
+    can_delete=True,
+)
 
 class AfterburnerActivityForm(forms.ModelForm):
     SLOT_LABEL_OVERRIDES = {
@@ -781,6 +834,171 @@ class ModuleLaunchPadActivityInline(admin.StackedInline):
     show_change_link = True
 
 
+@admin.register(models.ModuleMeetingActivity)
+class ModuleMeetingActivityAdmin(admin.ModelAdmin):
+    module_selection_template = "admin/core/modulemeetingactivity/module_selection.html"
+    list_display = ("module", "order", "title", "is_active", "updated_at")
+    list_filter = ("module__course", "is_active")
+    search_fields = ("title", "module__title", "module__course__title")
+    ordering = ("module", "order")
+    autocomplete_fields = ("module",)
+    fieldsets = (
+        ("Assignment", {"fields": ("module", "order", "is_active")}),
+        (
+            "Slide content",
+            {"fields": ("title", "description", "grammar_formula", "example")},
+        ),
+    )
+    inlines = (ModuleMeetingInstructionInline,)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                "module/<int:module_id>/manage/",
+                self.admin_site.admin_view(self.manage_module_view),
+                name="core_modulemeetingactivity_manage_module",
+            )
+        ]
+        return custom + urls
+
+    def changelist_view(self, request, extra_context=None):
+        return self._render_module_selector(
+            request,
+            extra_context=extra_context,
+            title=_("Select a module to manage slides"),
+        )
+
+    def _render_module_selector(self, request, extra_context=None, title=None):
+        modules = (
+            models.CourseModule.objects.select_related("course")
+            .order_by("course__title", "order")
+        )
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "modules": modules,
+            "title": title or _("Select a module to manage meeting activities"),
+        }
+        if extra_context:
+            context.update(extra_context)
+        return TemplateResponse(
+            request,
+            self.module_selection_template,
+            context,
+        )
+
+    def add_view(self, request, form_url="", extra_context=None):
+        module_id = request.GET.get("module")
+        if module_id and str(module_id).isdigit():
+            module = get_object_or_404(models.CourseModule, pk=module_id)
+            return self._render_module_manager(request, module, extra_context)
+        return self._render_module_selector(
+            request,
+            extra_context=extra_context,
+            title=_("Select a module to create meeting activities"),
+        )
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        obj = self.get_object(request, object_id)
+        if obj is None:
+            messages.error(request, _("Meeting slide not found."))
+            return self._render_module_selector(request, extra_context)
+        return self._render_module_manager(request, obj.module, extra_context)
+
+    def manage_module_view(self, request, module_id):
+        module = get_object_or_404(models.CourseModule, pk=module_id)
+        return self._render_module_manager(request, module)
+
+    def _render_module_manager(self, request, module, extra_context=None):
+        formset = MeetingActivityFormSet(request.POST or None, instance=module, prefix="activities")
+
+        if request.method == "POST":
+            if formset.is_valid():
+                formset.save(commit=False)
+                prepared_entries: list[tuple[models.ModuleMeetingActivity, list[str]]] = []
+
+                for form in formset.forms:
+                    if not hasattr(form, "cleaned_data"):
+                        continue
+                    if form.cleaned_data.get("DELETE"):
+                        if form.instance.pk:
+                            form.instance.delete()
+                        continue
+                    if not form.has_changed():
+                        continue
+
+                    activity = form.save(commit=False)
+                    activity.module = module
+                    if activity.order <= 0:
+                        max_order = (
+                            models.ModuleMeetingActivity.objects.filter(module=module)
+                            .exclude(pk=activity.pk)
+                            .aggregate(Max("order"))
+                            .get("order__max")
+                            or 0
+                        )
+                        activity.order = max_order + 1
+                    activity.save()
+                    form.save_m2m()
+
+                    instructions_raw = form.cleaned_data.get("instructions_raw", "")
+                    lines = [line.strip() for line in instructions_raw.splitlines() if line.strip()]
+                    prepared_entries.append((activity, lines))
+
+                for obj in formset.deleted_objects:
+                    obj.delete()
+
+                for activity, lines in prepared_entries:
+                    models.ModuleMeetingActivityInstruction.objects.filter(activity=activity).delete()
+                    if lines:
+                        models.ModuleMeetingActivityInstruction.objects.bulk_create(
+                            [
+                                models.ModuleMeetingActivityInstruction(
+                                    activity=activity,
+                                    order=index + 1,
+                                    text=line,
+                                )
+                                for index, line in enumerate(lines)
+                            ]
+                        )
+
+                formset.save_m2m()
+
+                messages.success(
+                    request,
+                    _("Meeting activities for %(module)s have been updated.")
+                    % {"module": module.title},
+                )
+                return redirect(request.path)
+            else:
+                messages.error(request, _("Please correct the highlighted errors."))
+
+        available_modules = (
+            models.CourseModule.objects.select_related("course")
+            .order_by("course__title", "order")
+        )
+
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "module_obj": module,
+            "activity_formset": formset,
+            "activity_empty_form": formset.empty_form,
+            "module_selection_url": reverse("admin:core_modulemeetingactivity_changelist"),
+            "title": _("Meeting activities for %(module)s") % {"module": module.title},
+            "module_selection_modules": available_modules,
+            "current_path": request.path,
+        }
+        if extra_context:
+            context.update(extra_context)
+
+        return TemplateResponse(
+            request,
+            "admin/core/modulemeetingactivity/manage_module.html",
+            context,
+        )
+
 @admin.register(models.CourseModule)
 class CourseModuleAdmin(admin.ModelAdmin):
     list_display = ("course", "order", "title", "focus_keyword")
@@ -797,6 +1015,51 @@ class ModuleLiveMeetingSignupAdmin(admin.ModelAdmin):
     search_fields = ("profile__display_name", "module__title", "meeting__title")
     autocomplete_fields = ("profile", "module", "meeting")
     ordering = ("-created_at",)
+
+
+@admin.register(models.ModuleMeetingPairing)
+class ModuleMeetingPairingAdmin(admin.ModelAdmin):
+    list_display = (
+        "meeting",
+        "activity",
+        "primary_display",
+        "partner_display",
+        "paired_with_assistant",
+        "created_at",
+    )
+    list_filter = ("meeting__module__course", "activity__module")
+    search_fields = (
+        "meeting__title",
+        "activity__title",
+        "profile_primary__display_name",
+        "profile_partner__display_name",
+    )
+    raw_id_fields = ("meeting", "activity", "profile_primary", "profile_partner")
+    ordering = ("-created_at",)
+
+    def get_readonly_fields(self, request, obj=None):  # pragma: no cover - admin hook
+        return [field.name for field in self.model._meta.fields]
+
+    def has_add_permission(self, request):  # pragma: no cover - admin hook
+        return False
+
+    def has_change_permission(self, request, obj=None):  # pragma: no cover
+        return False
+
+    def has_delete_permission(self, request, obj=None):  # pragma: no cover
+        return False
+
+    def primary_display(self, obj):  # pragma: no cover - admin display helper
+        return obj.profile_primary.display_name
+
+    primary_display.short_description = "Primary"
+
+    def partner_display(self, obj):  # pragma: no cover - admin display helper
+        if obj.paired_with_assistant or not obj.profile_partner_id:
+            return "Assistant"
+        return obj.profile_partner.display_name
+
+    partner_display.short_description = "Partner"
 
 admin.site.site_header = "FOREIGN Command Center"
 admin.site.site_title = "FOREIGN Admin"

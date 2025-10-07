@@ -1,6 +1,7 @@
 """Views powering the FOREIGN experience."""
 import json
 import random
+from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, time, timedelta
 
@@ -43,6 +44,7 @@ from .models import (
     ModuleLiveMeeting,
     ModuleLiveMeetingSignup,
     ModuleMeetingActivity,
+    ModuleMeetingPairing,
     ModuleStageProgress,
     Profile,
     SkillAssessment,
@@ -391,6 +393,138 @@ def _resolve_profile(
         return profile
 
     return profile
+
+
+def _pair_key(primary_id: int, partner_id: int | None) -> tuple[int, int] | None:
+    if primary_id is None or partner_id is None:
+        return None
+    return (primary_id, partner_id) if primary_id <= partner_id else (partner_id, primary_id)
+
+
+def _assign_meeting_pairs(
+    participant_ids: list[int],
+    avoided_pairs: set[tuple[int, int]],
+) -> tuple[list[tuple[int, int | None]], set[tuple[int, int]]]:
+    remaining = list(sorted(participant_ids))
+    assignments: list[tuple[int, int | None]] = []
+    used_this_round: set[tuple[int, int]] = set()
+
+    while len(remaining) > 1:
+        primary_id = remaining.pop(0)
+        candidate_index = None
+        for idx, candidate in enumerate(remaining):
+            key = _pair_key(primary_id, candidate)
+            if key and key not in avoided_pairs and key not in used_this_round:
+                candidate_index = idx
+                break
+
+        if candidate_index is None:
+            assignments.append((primary_id, None))
+            continue
+
+        partner_id = remaining.pop(candidate_index)
+        normalized = _pair_key(primary_id, partner_id)
+        if normalized:
+            used_this_round.add(normalized)
+            assignments.append(normalized)
+        else:
+            assignments.append((primary_id, partner_id))
+
+    if remaining:
+        assignments.append((remaining.pop(), None))
+
+    return assignments, used_this_round
+
+
+def _build_pair_map(
+    meeting: ModuleLiveMeeting,
+) -> dict[int, dict[int, ModuleMeetingPairing]]:
+    lookup: dict[int, dict[int, ModuleMeetingPairing]] = defaultdict(dict)
+    pairings = (
+        ModuleMeetingPairing.objects.filter(meeting=meeting)
+        .select_related("activity", "profile_primary", "profile_partner")
+        .all()
+    )
+    for pairing in pairings:
+        lookup[pairing.activity_id][pairing.profile_primary_id] = pairing
+        if pairing.profile_partner_id:
+            lookup[pairing.activity_id][pairing.profile_partner_id] = pairing
+    return lookup
+
+
+def _ensure_meeting_pairings(
+    module: CourseModule,
+    meeting: ModuleLiveMeeting,
+) -> dict[int, dict[int, ModuleMeetingPairing]]:
+    participants = list(
+        ModuleLiveMeetingSignup.objects.filter(meeting=meeting)
+        .select_related("profile")
+        .order_by("profile__display_name")
+    )
+    if not participants:
+        ModuleMeetingPairing.objects.filter(meeting=meeting).delete()
+        return {}
+
+    participant_ids = [signup.profile_id for signup in participants if signup.profile_id]
+    if not participant_ids:
+        return {}
+
+    historical_pairs = {
+        key
+        for key in (
+            _pair_key(primary_id, partner_id)
+            for primary_id, partner_id in ModuleMeetingPairing.objects.filter(module=module)
+            .exclude(meeting=meeting)
+            .values_list("profile_primary_id", "profile_partner_id")
+        )
+        if key
+    }
+
+    ModuleMeetingPairing.objects.filter(meeting=meeting).delete()
+
+    activities = list(module.meeting_activities.filter(is_active=True).order_by("order"))
+    if not activities:
+        return {}
+
+    avoided_pairs = set(historical_pairs)
+    pairings_to_create: list[ModuleMeetingPairing] = []
+
+    for activity in activities:
+        assignments, used_this_round = _assign_meeting_pairs(participant_ids, avoided_pairs)
+        for primary_id, partner_id in assignments:
+            if partner_id is None:
+                pairings_to_create.append(
+                    ModuleMeetingPairing(
+                        module=module,
+                        meeting=meeting,
+                        activity=activity,
+                        profile_primary_id=primary_id,
+                        paired_with_assistant=True,
+                    )
+                )
+                continue
+
+            ordered_pair = _pair_key(primary_id, partner_id)
+            if ordered_pair is None:
+                continue
+            avoided_pairs.add(ordered_pair)
+            pairings_to_create.append(
+                ModuleMeetingPairing(
+                    module=module,
+                    meeting=meeting,
+                    activity=activity,
+                    profile_primary_id=ordered_pair[0],
+                    profile_partner_id=ordered_pair[1],
+                    paired_with_assistant=False,
+                )
+            )
+
+        avoided_pairs.update(used_this_round)
+
+    if pairings_to_create:
+        ModuleMeetingPairing.objects.bulk_create(pairings_to_create)
+
+    return _build_pair_map(meeting)
 
 
 def _get_launch_pad_task_configs(course: Course | None, module: CourseModule | None) -> list[dict[str, str]]:
@@ -1117,7 +1251,13 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             for idx, config in enumerate(launch_configs, start=1)
         ]
         flight_deck_tasks = []
-        meeting_activities = []
+        meeting_activities_qs = (
+            module.meeting_activities.filter(is_active=True)
+            .prefetch_related("instructions")
+            .order_by("order")
+        )
+        meeting_board: list[dict[str, object]] = []
+        meeting_guides: list[dict[str, object]] = []
         afterburner_configs = _get_afterburner_card_configs(course, module)
         afterburner_cards: list[dict[str, object]] = []
         game_config: dict[str, object] | None = None
@@ -1270,19 +1410,64 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
 
         existing_signup = meeting_signup
         meeting_options: list[ModuleLiveMeeting] = []
+        show_meeting_carousel = False
         if stage_key == ModuleStageProgress.StageKey.FLIGHT_DECK:
-            meeting_activities = [
+            meeting_board = [
                 {
                     "index": idx,
                     "title": activity.title,
                     "description": activity.description,
                 }
-                for idx, activity in enumerate(
-                    module.meeting_activities.filter(is_active=True).order_by("order"),
-                    start=1,
-                )
+                for idx, activity in enumerate(meeting_activities_qs, start=1)
             ]
 
+            pairings_map: dict[int, dict[int, ModuleMeetingPairing]] = {}
+            if (
+                selected_meeting
+                and course.fluency_level
+                in {
+                    Profile.FluencyLevel.BEGINNER,
+                    Profile.FluencyLevel.ELEMENTARY,
+                }
+            ):
+                pairings_map = _ensure_meeting_pairings(module, selected_meeting)
+                show_meeting_carousel = True
+
+            for idx, activity in enumerate(meeting_activities_qs, start=1):
+                instructions = [
+                    instruction.text
+                    for instruction in activity.instructions.all().order_by("order", "id")
+                ]
+
+                partner_payload: dict[str, object] | None = None
+                if profile and pairings_map:
+                    activity_pairs = pairings_map.get(activity.id, {})
+                    pairing = activity_pairs.get(profile.id)
+                    if pairing:
+                        partner_profile = pairing.partner_for(profile)
+                        if pairing.paired_with_assistant or not partner_profile:
+                            partner_payload = {
+                                "label": "Mission Assistant",
+                                "is_assistant": True,
+                            }
+                        else:
+                            partner_payload = {
+                                "label": partner_profile.display_name,
+                                "is_assistant": False,
+                            }
+
+                meeting_guides.append(
+                    {
+                        "index": idx,
+                        "title": activity.title,
+                        "summary": activity.description,
+                        "grammar_formula": activity.grammar_formula,
+                        "example": activity.example,
+                        "instructions": instructions,
+                        "partner": partner_payload,
+                    }
+                )
+        
         if profile:
             if stage_key == ModuleStageProgress.StageKey.LAUNCH_PAD:
                 progress, _ = ModuleStageProgress.objects.get_or_create(
@@ -1400,7 +1585,9 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                 "stage_unlocks": stage_unlocks,
                 "launch_pad_tasks": launch_tasks,
                 "flight_deck_tasks": flight_deck_tasks,
-                "meeting_activities": meeting_activities,
+                "meeting_board": meeting_board,
+                "meeting_guides": meeting_guides,
+                "show_meeting_carousel": show_meeting_carousel,
                 "selected_meeting": selected_meeting,
                 "can_view_course": can_view_course,
             }

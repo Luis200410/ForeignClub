@@ -217,7 +217,73 @@
                         {% else %}
                             <p class="text-white-50 small mb-0">Live studio checklist will be announced shortly.</p>
                         {% endif %}
-                        {% if meeting_activities %}
+                        {% if show_meeting_carousel %}
+                            <div class="meeting-carousel" data-meeting-slider data-animate="fade-up" data-animate-delay="0.12s">
+                                <div class="meeting-carousel__rail">
+                                    <button type="button" class="meeting-carousel__arrow" data-slider-prev aria-label="Previous activity" disabled>
+                                        <span aria-hidden="true">&#8592;</span>
+                                    </button>
+                                    <div class="meeting-carousel__viewport">
+                                        <div class="meeting-carousel__track" data-slider-track>
+                                            {% for activity in meeting_guides %}
+                                                <section class="meeting-carousel__slide" data-slider-slide>
+                                                    <header class="meeting-carousel__header">
+                                                        <span class="meeting-carousel__step">0{{ activity.index }}</span>
+                                                        <div>
+                                                            <p class="eyebrow mb-1">Live mission flow</p>
+                                                            <h3 class="h5 tracking-tight mb-1">{{ activity.title }}</h3>
+                                                        </div>
+                                                    </header>
+                                                    {% if activity.summary %}
+                                                        <p class="text-white-50 small mb-3">{{ activity.summary }}</p>
+                                                    {% endif %}
+                                                    {% if activity.instructions %}
+                                                        <ol class="meeting-carousel__instructions">
+                                                            {% for instruction in activity.instructions %}
+                                                                <li>{{ instruction }}</li>
+                                                            {% endfor %}
+                                                        </ol>
+                                                    {% endif %}
+                                                    {% if activity.grammar_formula %}
+                                                        <div class="meeting-carousel__grammar">
+                                                            <span class="meeting-carousel__label">Grammar snapshot</span>
+                                                            <p class="meeting-carousel__formula">{{ activity.grammar_formula }}</p>
+                                                        </div>
+                                                    {% endif %}
+                                                    {% if activity.example %}
+                                                        <div class="meeting-carousel__example">
+                                                            <span class="meeting-carousel__label">Try it like this</span>
+                                                            <p class="mb-0">{{ activity.example }}</p>
+                                                        </div>
+                                                    {% endif %}
+                                                    {% if activity.partner %}
+                                                        <div class="meeting-carousel__partner">
+                                                            <span class="meeting-carousel__label">Your partner</span>
+                                                            <p class="mb-0">{{ activity.partner.label }}</p>
+                                                        </div>
+                                                    {% endif %}
+                                                </section>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <button type="button" class="meeting-carousel__arrow" data-slider-next aria-label="Next activity">
+                                        <span aria-hidden="true">&#8594;</span>
+                                    </button>
+                                </div>
+                                <div class="meeting-carousel__footer">
+                                    <div class="meeting-carousel__progress">
+                                        <span class="meeting-carousel__index" data-slider-index>1</span>
+                                        <span class="meeting-carousel__separator">/</span>
+                                        <span class="meeting-carousel__total">{{ meeting_guides|length }}</span>
+                                    </div>
+                                    <div class="meeting-carousel__dots" data-slider-dots>
+                                        {% for activity in meeting_guides %}
+                                            <button type="button" class="meeting-carousel__dot{% if forloop.first %} is-active{% endif %}" data-slider-dot="{{ forloop.counter0 }}" aria-label="Go to activity {{ forloop.counter }}"></button>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% elif meeting_board %}
                             <div class="meeting-activity-board" data-animate="fade-up" data-animate-delay="0.12s">
                                 <div class="meeting-activity-board__header">
                                     <p class="eyebrow mb-1">Inside the studio</p>
@@ -225,7 +291,7 @@
                                     <p class="text-white-50 small mb-0">Mentors will guide you through these flows once the session begins.</p>
                                 </div>
                                 <div class="meeting-activity-board__list">
-                                    {% for activity in meeting_activities %}
+                                    {% for activity in meeting_board %}
                                         <div class="meeting-activity-item" data-activity-order="{{ activity.index }}">
                                             <span class="meeting-activity-item__step">0{{ activity.index }}</span>
                                             <div class="meeting-activity-item__content">
@@ -552,6 +618,76 @@
                         });
                 });
             });
+
+            const meetingSlider = document.querySelector('[data-meeting-slider]');
+            if (meetingSlider) {
+                const track = meetingSlider.querySelector('[data-slider-track]');
+                const slides = Array.prototype.slice.call(meetingSlider.querySelectorAll('[data-slider-slide]'));
+                if (track && slides.length) {
+                    const prevBtn = meetingSlider.querySelector('[data-slider-prev]');
+                    const nextBtn = meetingSlider.querySelector('[data-slider-next]');
+                    const indexEl = meetingSlider.querySelector('[data-slider-index]');
+                    const dots = meetingSlider.querySelectorAll('[data-slider-dot]');
+                    const totalSlides = slides.length;
+
+                    track.style.width = (totalSlides * 100) + '%';
+                    slides.forEach(function (slide) {
+                        slide.style.width = (100 / totalSlides) + '%';
+                    });
+
+                    let currentSlide = 0;
+
+                    const updateMeetingSlider = function () {
+                        track.style.transform = 'translateX(-' + (currentSlide * 100) + '%)';
+                        if (indexEl) {
+                            indexEl.textContent = String(currentSlide + 1);
+                        }
+                        if (prevBtn) {
+                            prevBtn.disabled = currentSlide === 0;
+                        }
+                        if (nextBtn) {
+                            nextBtn.disabled = currentSlide === totalSlides - 1;
+                        }
+                        Array.prototype.forEach.call(dots, function (dot, idx) {
+                            dot.classList.toggle('is-active', idx === currentSlide);
+                        });
+                    };
+
+                    const goToMeetingSlide = function (index) {
+                        if (index < 0 || index >= totalSlides) {
+                            return;
+                        }
+                        currentSlide = index;
+                        updateMeetingSlider();
+                    };
+
+                    if (prevBtn) {
+                        prevBtn.addEventListener('click', function () {
+                            goToMeetingSlide(currentSlide - 1);
+                        });
+                    }
+                    if (nextBtn) {
+                        nextBtn.addEventListener('click', function () {
+                            goToMeetingSlide(currentSlide + 1);
+                        });
+                    }
+                    Array.prototype.forEach.call(dots, function (dot, idx) {
+                        dot.addEventListener('click', function () {
+                            goToMeetingSlide(idx);
+                        });
+                    });
+
+                    window.addEventListener('resize', function () {
+                        track.style.transition = 'none';
+                        window.requestAnimationFrame(function () {
+                            track.style.transition = '';
+                            updateMeetingSlider();
+                        });
+                    });
+
+                    updateMeetingSlider();
+                }
+            }
 
             const schedulerCard = document.querySelector('.todo-card--scheduler');
             const meetingSummary = schedulerCard ? schedulerCard.querySelector('[data-meeting-summary]') : null;

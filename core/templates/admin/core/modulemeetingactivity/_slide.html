@@ -1,0 +1,56 @@
+{% load i18n %}
+<div class="inline-group meeting-slide-group" data-slide data-existing="{{ form.instance.pk|yesno:'true,false' }}">
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+    <fieldset class="module aligned meeting-slide-content">
+        <h2>{% trans 'Slide content' %}</h2>
+        {{ form.non_field_errors }}
+        <div class="form-row field-order">
+            {{ form.order.errors }}
+            {{ form.order.label_tag }}
+            {{ form.order }}
+        </div>
+        <div class="form-row field-title">
+            {{ form.title.errors }}
+            {{ form.title.label_tag }}
+            {{ form.title }}
+        </div>
+        <div class="form-row field-description">
+            {{ form.description.errors }}
+            {{ form.description.label_tag }}
+            {{ form.description }}
+        </div>
+        <div class="form-row field-grammar_formula">
+            {{ form.grammar_formula.errors }}
+            {{ form.grammar_formula.label_tag }}
+            {{ form.grammar_formula }}
+        </div>
+        <div class="form-row field-example">
+            {{ form.example.errors }}
+            {{ form.example.label_tag }}
+            {{ form.example }}
+        </div>
+        <div class="form-row field-is_active">
+            {{ form.is_active.errors }}
+            {{ form.is_active.label_tag }}
+            {{ form.is_active }}
+        </div>
+        {% if can_delete %}
+            <div class="form-row field-delete visuallyhidden" data-delete-row>
+                {{ form.DELETE }}
+                {{ form.DELETE.label_tag }}
+            </div>
+        {% endif %}
+    </fieldset>
+    <fieldset class="module aligned collapse meeting-slide-instructions">
+        <h2>{% trans 'Module meeting instructions' %}</h2>
+        <div class="form-row field-instructions_raw">
+            {{ form.instructions_raw.errors }}
+            {{ form.instructions_raw.label_tag }}
+            {{ form.instructions_raw }}
+            {% if form.instructions_raw.help_text %}<p class="help">{{ form.instructions_raw.help_text }}</p>{% endif %}
+        </div>
+    </fieldset>
+    <div class="meeting-slide-toolbar">
+        <button type="button" class="button deletelink meeting-remove-slide" data-remove-slide data-remove-label="{% trans 'Remove slide' %}" data-undo-label="{% trans 'Undo remove' %}">{% trans 'Remove slide' %}</button>
+    </div>
+</div>

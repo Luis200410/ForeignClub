@@ -1904,17 +1904,21 @@ section {
 }
 
 .todo-card--launch {
-    position: relative;
-    padding-bottom: 3rem;
+    flex-direction: column;
+    align-items: stretch;
 }
 
 .todo-card--launch .todo-check {
-    position: absolute;
-    bottom: 1.1rem;
-    left: 50%;
-    transform: translateX(-50%);
+    position: static;
+    transform: none;
     min-width: 132px;
     justify-content: center;
+    margin-top: auto;
+    align-self: flex-start;
+}
+
+.todo-card--launch .todo-card__body {
+    width: 100%;
 }
 
 .todo-card--launch.todo-card--done .todo-check {
@@ -2054,6 +2058,165 @@ section {
 
 .meeting-activity-item__content h4 {
     font-weight: 600;
+}
+
+.meeting-carousel {
+    margin-top: 2.2rem;
+    padding: 2.3rem 2.5rem;
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: linear-gradient(140deg, rgba(78, 205, 196, 0.16), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(18px);
+    display: grid;
+    gap: 1.5rem;
+}
+
+.meeting-carousel__rail {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: stretch;
+    gap: 1.5rem;
+}
+
+.meeting-carousel__viewport {
+    overflow: hidden;
+    border-radius: 20px;
+}
+
+.meeting-carousel__track {
+    display: flex;
+    transition: transform 0.45s var(--transition-base);
+    will-change: transform;
+}
+
+.meeting-carousel__slide {
+    padding: 2rem 2.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+    background: rgba(14, 17, 26, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    min-height: 100%;
+}
+
+.meeting-carousel__header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.meeting-carousel__step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 0.82rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(210, 220, 255, 0.76);
+    flex-shrink: 0;
+}
+
+.meeting-carousel__instructions {
+    margin: 0;
+    padding-left: 1.3rem;
+    display: grid;
+    gap: 0.55rem;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+}
+
+.meeting-carousel__label {
+    display: inline-block;
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    margin-bottom: 0.35rem;
+}
+
+.meeting-carousel__grammar,
+.meeting-carousel__example,
+.meeting-carousel__partner {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 18px;
+    padding: 1.1rem 1.3rem;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.meeting-carousel__formula {
+    font-family: var(--font-mono, 'SFMono-Regular', Menlo, monospace);
+    font-size: 0.95rem;
+    color: rgba(199, 255, 229, 0.9);
+}
+
+.meeting-carousel__partner .meeting-carousel__label {
+    color: rgba(138, 180, 255, 0.82);
+}
+
+.meeting-carousel__arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.82);
+    transition: background 0.3s var(--transition-base), border-color 0.3s var(--transition-base);
+}
+
+.meeting-carousel__arrow:hover:not(:disabled),
+.meeting-carousel__arrow:focus-visible:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.38);
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 1);
+}
+
+.meeting-carousel__arrow:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.meeting-carousel__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.meeting-carousel__progress {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.meeting-carousel__dots {
+    display: inline-flex;
+    gap: 0.5rem;
+}
+
+.meeting-carousel__dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    border: none;
+    background: rgba(255, 255, 255, 0.18);
+    transition: background 0.3s var(--transition-base), transform 0.3s var(--transition-base);
+}
+
+.meeting-carousel__dot.is-active {
+    background: rgba(120, 220, 255, 0.88);
+    transform: scale(1.05);
 }
 
 .adaptive-flashcard-game {
@@ -2250,6 +2413,23 @@ section {
     }
 
     .reading-slide {
+        padding: 1.6rem;
+    }
+
+    .meeting-carousel {
+        padding: 1.7rem 1.5rem;
+    }
+
+    .meeting-carousel__rail {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .meeting-carousel__arrow {
+        display: none;
+    }
+
+    .meeting-carousel__slide {
         padding: 1.6rem;
     }
 }

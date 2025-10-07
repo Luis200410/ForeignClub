@@ -1,0 +1,351 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    › <a href="{% url 'admin:core_modulemeetingactivity_changelist' %}">{% trans 'Module meeting activities' %}</a>
+    › {{ module_obj }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1 class="module-title">{% blocktrans with module=module_obj %}Meeting activities · {{ module }}{% endblocktrans %}</h1>
+    <p class="back-link"><a href="{{ module_selection_url }}" class="historylink">{% trans "Back to module list" %}</a></p>
+    {% if module_selection_modules %}
+    <div class="module-switcher">
+        <label for="module-switcher" class="module-switcher__label">{% trans "Jump to week" %}</label>
+        <select id="module-switcher" class="module-switcher__select" data-module-switcher data-current-url="{{ current_path }}">
+            {% for module in module_selection_modules %}
+                <option value="{% url 'admin:core_modulemeetingactivity_manage_module' module.pk %}"{% if module.pk == module_obj.pk %} selected{% endif %}>
+                    {{ module.course.title }} · {% blocktrans with order=module.order %}Week {{ order }}{% endblocktrans %} · {{ module.title }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endif %}
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {{ activity_formset.media }}
+        <p class="help">{% trans 'Use the blank cards at the end to add new slides. Save to load more empty cards if you need extras.' %}</p>
+        {{ activity_formset.management_form }}
+        {% if activity_formset.non_form_errors %}
+            <div class="errornote">
+                {{ activity_formset.non_form_errors }}
+            </div>
+        {% endif %}
+        <div id="meeting-slide-container" data-formset-prefix="activities" data-slide-label="{% trans 'Slide' %}" data-new-label="{% trans 'New' %}">
+            {% for form in activity_formset.forms %}
+                {% include "admin/core/modulemeetingactivity/_slide.html" with form=form forloop=forloop can_delete=activity_formset.can_delete blank_label=_("New") slide_label=_("Slide") %}
+            {% empty %}
+                <p class="help">{% trans 'No meeting activities yet. Add the first card using the blank form below.' %}</p>
+            {% endfor %}
+        </div>
+        <template id="meeting-slide-template">
+            {% include "admin/core/modulemeetingactivity/_slide.html" with form=activity_empty_form forloop=None can_delete=activity_formset.can_delete blank_label=_('New') slide_label=_('Slide') %}
+        </template>
+        <div class="meeting-slide-actions">
+            <button type="button" class="button addlink" data-add-slide>{% trans 'Add slide' %}</button>
+        </div>
+        <div class="submit-row">
+            <input type="submit" value="{% trans 'Save' %}" class="default" name="_save">
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extrahead %}{{ block.super }}
+<style>
+.meeting-slide-group {
+    margin-bottom: 1.5rem;
+    border: 1px solid #dadada;
+    border-radius: 6px;
+    background: #ffffff;
+}
+.meeting-slide-group fieldset {
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+.meeting-slide-content > h2,
+.meeting-slide-instructions > h2 {
+    margin: 0;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: #2f6d8f;
+    color: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+.meeting-slide-instructions {
+    border-top: 1px solid #dadada;
+}
+.meeting-slide-content .form-row,
+.meeting-slide-instructions .form-row {
+    padding: 0.9rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+.meeting-slide-content .form-row:last-of-type {
+    border-bottom: none;
+}
+.meeting-slide-instructions .form-row {
+    display: grid;
+    gap: 0.4rem;
+}
+.meeting-slide-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.85rem;
+    border-top: 1px solid #dadada;
+    background: #f6f6f6;
+}
+.meeting-slide-toolbar .button {
+    margin-left: 0.5rem;
+}
+.meeting-slide-group [data-delete-row] {
+    display: none;
+}
+.meeting-slide-group.is-removed {
+    opacity: 0.45;
+}
+.meeting-slide-actions {
+    margin: 1.25rem 0;
+}
+.meeting-slide-actions .button {
+    margin-right: 0.5rem;
+}
+.module-switcher {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+.module-switcher__label {
+    font-weight: 600;
+}
+.module-switcher__select {
+    min-width: 18rem;
+}
+.visuallyhidden {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+    .back-link { margin-bottom: 1rem; }
+    .back-link .historylink { margin-left: 0; }
+</style>
+{% endblock %}
+
+{% block extrajs %}{{ block.super }}
+
+
+<script>
+(function(){
+    const moduleSwitcher = document.querySelector('[data-module-switcher]');
+    if (moduleSwitcher) {
+        moduleSwitcher.addEventListener('change', function(event) {
+            const target = event.currentTarget.value;
+            const current = event.currentTarget.dataset.currentUrl || '';
+            if (target && target !== current) {
+                window.location.href = target;
+            }
+        });
+    }
+
+    const container = document.getElementById('meeting-slide-container');
+    if (!container) { return; }
+
+    const prefix = container.dataset.formsetPrefix || 'activities';
+    const totalInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
+    const templateEl = document.getElementById('meeting-slide-template');
+    const addButton = document.querySelector('[data-add-slide]');
+    const slideLabel = container.dataset.slideLabel || 'Slide';
+    const newLabel = container.dataset.newLabel || 'New';
+    const placeholderPattern = /__prefix__/g;
+    const namePattern = new RegExp('^' + prefix + '-\\d+-');
+    const idPattern = new RegExp('^id_' + prefix + '-\\d+-');
+    const templateMarkup = templateEl ? (templateEl.innerHTML || '').trim() : '';
+
+    const getSlides = function() {
+        return Array.prototype.slice.call(container.querySelectorAll('[data-slide]'));
+    };
+
+    const refreshTotal = function() {
+        if (totalInput) {
+            totalInput.value = String(getSlides().length);
+        }
+    };
+
+    const updateHeadings = function() {
+        getSlides().forEach(function(slide, index) {
+            const heading = slide.querySelector('.inline-heading');
+            if (!heading) { return; }
+            const titleInput = slide.querySelector('[name$="-title"]');
+            const rawTitle = titleInput && titleInput.value ? titleInput.value.trim() : '';
+            const suffix = rawTitle ? ' · ' + rawTitle : (newLabel ? ' · ' + newLabel : '');
+            heading.textContent = slideLabel + ' ' + (index + 1) + suffix;
+        });
+    };
+
+    const updateRemoveButton = function(slide) {
+        const removeButton = slide.querySelector('[data-remove-slide]');
+        const deleteInput = slide.querySelector('input[type="checkbox"][name$="-DELETE"]');
+        const deleteRow = slide.querySelector('[data-delete-row]');
+        const removeLabel = removeButton ? (removeButton.dataset.removeLabel || 'Remove slide') : 'Remove slide';
+        const undoLabel = removeButton ? (removeButton.dataset.undoLabel || removeLabel) : removeLabel;
+        const isExisting = slide.dataset.existing === 'true';
+        const shouldShowDelete = Boolean(isExisting && deleteInput);
+
+        if (shouldShowDelete && deleteInput && deleteInput.checked) {
+            slide.dataset.removed = 'true';
+            slide.classList.add('is-removed');
+            if (removeButton) {
+                removeButton.textContent = undoLabel;
+            }
+            if (deleteRow) {
+                deleteRow.style.display = '';
+            }
+        } else {
+            slide.dataset.removed = 'false';
+            slide.classList.remove('is-removed');
+            if (removeButton) {
+                removeButton.textContent = removeLabel;
+            }
+            if (deleteRow) {
+                deleteRow.style.display = 'none';
+            }
+        }
+    };
+
+    const renumberSlides = function() {
+        const slides = getSlides();
+        slides.forEach(function(slide, index) {
+            slide.querySelectorAll('[name]').forEach(function(field) {
+                if (field.name && namePattern.test(field.name)) {
+                    field.name = field.name.replace(namePattern, prefix + '-' + index + '-');
+                }
+            });
+            slide.querySelectorAll('[id]').forEach(function(field) {
+                if (field.id && idPattern.test(field.id)) {
+                    field.id = field.id.replace(idPattern, 'id_' + prefix + '-' + index + '-');
+                }
+            });
+            slide.querySelectorAll('label[for]').forEach(function(label) {
+                if (label.htmlFor && idPattern.test(label.htmlFor)) {
+                    label.htmlFor = label.htmlFor.replace(idPattern, 'id_' + prefix + '-' + index + '-');
+                }
+            });
+            updateRemoveButton(slide);
+        });
+        refreshTotal();
+        updateHeadings();
+    };
+
+    const removeNewSlide = function(slide) {
+        if (!slide) { return; }
+        if (slide.parentNode) {
+            slide.parentNode.removeChild(slide);
+        }
+        renumberSlides();
+    };
+
+    const bindSlide = function(slide) {
+        const deleteInput = slide.querySelector('input[type="checkbox"][name$="-DELETE"]');
+        const removeButton = slide.querySelector('[data-remove-slide]');
+
+        if (!slide.dataset.existing) {
+            slide.dataset.existing = deleteInput ? 'true' : 'false';
+        }
+
+        if (removeButton) {
+            removeButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                const isExisting = slide.dataset.existing === 'true';
+                if (isExisting && deleteInput) {
+                    deleteInput.checked = !deleteInput.checked;
+                    updateRemoveButton(slide);
+                } else {
+                    removeNewSlide(slide);
+                }
+            });
+        }
+
+        updateRemoveButton(slide);
+    };
+
+    const populatePlaceholders = function(element, index) {
+        if (!element) { return; }
+        element.querySelectorAll('[name]').forEach(function(field) {
+            if (field.name && field.name.indexOf('__prefix__') !== -1) {
+                field.name = field.name.replace(placeholderPattern, index);
+            }
+        });
+        element.querySelectorAll('[id]').forEach(function(field) {
+            if (field.id && field.id.indexOf('__prefix__') !== -1) {
+                field.id = field.id.replace(placeholderPattern, index);
+            }
+        });
+        element.querySelectorAll('label[for]').forEach(function(label) {
+            if (label.htmlFor && label.htmlFor.indexOf('__prefix__') !== -1) {
+                label.htmlFor = label.htmlFor.replace(placeholderPattern, index);
+            }
+        });
+    };
+
+    const cloneSlideFromTemplate = function(index) {
+        if (!templateEl) { return null; }
+        let slide = null;
+        if ('content' in templateEl) {
+            const fragment = templateEl.content.cloneNode(true);
+            slide = fragment.firstElementChild;
+        } else if (templateMarkup) {
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = templateMarkup;
+            slide = wrapper.firstElementChild;
+        }
+        if (!slide) { return null; }
+        populatePlaceholders(slide, index);
+        return slide;
+    };
+
+    const addSlide = function() {
+        const newIndex = getSlides().length;
+        const slide = cloneSlideFromTemplate(newIndex);
+        if (!slide) { return; }
+        slide.dataset.existing = 'false';
+        slide.dataset.removed = 'false';
+        container.appendChild(slide);
+        bindSlide(slide);
+        renumberSlides();
+        const focusTarget = slide.querySelector('input, textarea, select');
+        if (focusTarget) {
+            focusTarget.focus();
+        }
+    };
+
+    getSlides().forEach(function(slide) {
+        bindSlide(slide);
+    });
+    renumberSlides();
+
+    if (addButton) {
+        addButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            addSlide();
+        });
+    }
+
+    container.addEventListener('input', function(event) {
+        if (event.target && typeof event.target.name === 'string' && event.target.name.endsWith('-title')) {
+            updateHeadings();
+        }
+    });
+})();
+</script>
+
+
+{% endblock %}

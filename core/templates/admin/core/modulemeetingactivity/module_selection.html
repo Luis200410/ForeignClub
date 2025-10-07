@@ -1,0 +1,71 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    › {% trans 'Module meeting activities' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main" class="module-selection">
+    <h1>{{ title }}</h1>
+    <p class="help">{% trans "Select the week you want to configure. Each link opens the slide manager for that specific module." %}</p>
+    <div class="module-selection__grid">
+        {% for module in modules %}
+            <a class="module-selection__item" href="{% url 'admin:core_modulemeetingactivity_add' %}?module={{ module.pk }}">
+                <span class="module-selection__course">{{ module.course.title }}</span>
+                <span class="module-selection__week">{% blocktrans with order=module.order %}Week {{ order }}{% endblocktrans %}</span>
+                <span class="module-selection__title">{{ module.title }}</span>
+            </a>
+        {% empty %}
+            <p>{% trans "No modules available yet." %}</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extrahead %}{{ block.super }}
+<style>
+.module-selection__grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    margin-top: 1.5rem;
+}
+.module-selection__item {
+    display: block;
+    padding: 1rem 1.1rem;
+    background: #ffffff;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.module-selection__item:hover,
+.module-selection__item:focus {
+    border-color: #2f6d8f;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.module-selection__course {
+    display: block;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #4c4c4c;
+}
+.module-selection__week {
+    display: block;
+    margin-top: 0.35rem;
+    font-weight: 600;
+    color: #1f4560;
+}
+.module-selection__title {
+    display: block;
+    margin-top: 0.2rem;
+    color: #343434;
+}
+</style>
+{% endblock %}
