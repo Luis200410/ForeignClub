@@ -2743,7 +2743,7 @@ class PromiseView(TemplateView):
                 ],
                 "modalities": [
                     {
-                        "name": "Neighbourhood Circles",
+                        "name": "Neighborhood Circles",
                         "mode": "In-person",
                         "description": "Weekly gatherings hosted in community spaces. Expect shared meals, storytelling, and practical English.",
                         "touchpoints": "Warm-up circle · paired practice · community reflection",
