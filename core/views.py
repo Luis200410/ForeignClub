@@ -55,39 +55,69 @@ from .models import (
 PROGRAM_LEVELS = [
     {
         "code": Profile.FluencyLevel.BEGINNER,
-        "title": "A1 · Awakening",
-        "headline": "Build instincts for everyday survival conversations.",
-        "tagline": "Intentional micro-missions to spark your English reflexes.",
+        "title": "Level 1 · Gather",
+        "headline": "Start speaking comfortably with the people beside you.",
+        "tagline": "Tiny conversation loops that turn neighbours into practice partners.",
+        "details": [
+            "Introduce yourself stories guided by community coaches",
+            "Everyday phrases broken into listen · repeat · try steps",
+            "Weekly check-ins that celebrate the first wins together",
+        ],
     },
     {
         "code": Profile.FluencyLevel.ELEMENTARY,
-        "title": "A2 · Momentum",
-        "headline": "Navigate daily life with clarity and confidence.",
-        "tagline": "Roleplay-powered labs designed to automate essential phrases.",
+        "title": "Level 2 · Build",
+        "headline": "Use English to handle daily life without overthinking.",
+        "tagline": "Role-play nights focused on home, work, and city errands.",
+        "details": [
+            "Scenario circles for shopping, transport, and appointments",
+            "Community mentors answering cultural questions in real time",
+            "Vocabulary cards you can screenshot and use the same day",
+        ],
     },
     {
         "code": Profile.FluencyLevel.INTERMEDIATE,
-        "title": "B1 · Expression",
-        "headline": "Think in English during fast-paced conversations.",
-        "tagline": "High-tempo exchanges and adaptive story games to unlock spontaneity.",
+        "title": "Level 3 · Share",
+        "headline": "Explain your ideas clearly at work and in community spaces.",
+        "tagline": "Project nights turn presentations into simple story arcs.",
+        "details": [
+            "Presentation circles with peer notes and applause moments",
+            "Simplified grammar refreshers before each practice",
+            "Co-created vocabulary banks for meetings and collaboration",
+        ],
     },
     {
         "code": Profile.FluencyLevel.UPPER_INTERMEDIATE,
-        "title": "B2 · Influence",
-        "headline": "Lead conversations, presentations, and collaborations.",
-        "tagline": "Strategic labs that sharpen persuasion and nuance.",
+        "title": "Level 4 · Lead",
+        "headline": "Guide conversations, facilitate meetings, and support others.",
+        "tagline": "Leadership labs focused on facilitation, feedback, and coaching skills.",
+        "details": [
+            "Facilitation labs with rotating roles and shared agendas",
+            "Feedback clinics that model encouraging, useful language",
+            "Community mentoring sessions for newer speakers",
+        ],
     },
     {
         "code": Profile.FluencyLevel.ADVANCED,
-        "title": "C1 · Command",
-        "headline": "Operate like a native in high-stakes environments.",
-        "tagline": "Executive simulations, rapid feedback, and precision coaching.",
+        "title": "Level 5 · Amplify",
+        "headline": "Host events, teach others, and build cultural bridges.",
+        "tagline": "Showcase sessions and storytelling residencies with community impact.",
+        "details": [
+            "Weekly community showcase with panels and Q&A",
+            "Story studio to design talks, podcasts, or workshops",
+            "Collaboration labs with local organisations and schools",
+        ],
     },
     {
         "code": Profile.FluencyLevel.PROFICIENT,
-        "title": "C2 · Legacy",
-        "headline": "Shape culture, mentor others, and craft impact.",
-        "tagline": "Mastery studios focused on performance, storytelling, and nuance.",
+        "title": "Level 6 · Legacy",
+        "headline": "Grow the movement by mentoring new cohorts and sharing knowledge.",
+        "tagline": "Mastery studios that document methods, resources, and collective wins.",
+        "details": [
+            "Mentor training for hosting neighbour circles",
+            "Resource-building sprints for schools and workplaces",
+            "Community archive projects capturing shared stories",
+        ],
     },
 ]
 
@@ -97,21 +127,21 @@ PROGRAM_LOOKUP = {level["code"]: level for level in PROGRAM_LEVELS}
 MODULE_STAGE_SEQUENCE = [
     {
         "key": "launch-pad",
-        "label": "Launch Pad",
-        "tagline": "NotebookLM Prep",
-        "summary": "Prime your instincts with curated NotebookLM missions before we go live.",
+        "label": "Warm-Up Circle",
+        "tagline": "Arrive & Connect",
+        "summary": "Open with greetings, check-ins, and one simple phrase we’ll reuse all session long.",
     },
     {
         "key": "flight-deck",
-        "label": "Flight Deck",
-        "tagline": "Live Studio",
-        "summary": "Choose the live labs you will join and lock your Friday agenda.",
+        "label": "Practice Room",
+        "tagline": "Try It Together",
+        "summary": "Pair up, rotate, and repeat short conversations that mirror everyday life.",
     },
     {
         "key": "afterburner",
-        "label": "Afterburner",
-        "tagline": "Retention Lab",
-        "summary": "Play, review, and loop spaced repetition to secure retention.",
+        "label": "Everyday Replay",
+        "tagline": "Use It Today",
+        "summary": "Document key phrases, record a quick reflection, and set a simple real-world action.",
     },
 ]
 
@@ -641,31 +671,31 @@ def _flashcard_interval_for_index(index: int) -> timedelta:
 
 STAGE_EXTENSION_MAP = {
     "launch-pad": {
-        "description": "Launch Pad lays the groundwork. Learners align goals, unlock NotebookLM mission packs, and rehearse core patterns before stepping into the live arena.",
+        "description": "Warm-Up Circle opens the room. We reconnect, share wins, and learn one clear phrase that anchors the session.",
         "highlights": [
-            "Calibration interview + mission blueprint",
-            "NotebookLM mission decks & pronunciation drills",
-            "AI warmups that surface vocabulary and rhythm gaps",
+            "Community check-in prompts that spark conversation instantly",
+            "Pronunciation and rhythm cues demonstrated by peers and coaches",
+            "Visual cards everyone can screenshot and reuse later",
         ],
-        "promise": "We prime every learner with personalized mission data so the live arena never feels like guesswork.",
+        "promise": "You always know what we’re focusing on and how it connects to everyday life.",
     },
     "flight-deck": {
-        "description": "Flight Deck is the weekly live studio. Squads choose their labs, mentors orchestrate cinematic missions, and momentum compounds in real time.",
+        "description": "Practice Room is where we experiment. Partners rotate, prompts shift, and you get real-time feedback without pressure.",
         "highlights": [
-            "Curated live labs with ambitious peers",
-            "Mentor-led playbooks that adapt mid-session",
-            "Adaptive AI rehearsal woven between live exchanges",
+            "Paired conversations with live coaching moments",
+            "Group reflections capturing what felt easy or tough",
+            "Simple grammar and vocabulary nudges woven into dialogue",
         ],
-        "promise": "Every lab feels like stepping into the scenario you actually need—because it is designed around your targets.",
+        "promise": "Speaking becomes natural because it happens with friends, not in isolation.",
     },
     "afterburner": {
-        "description": "Afterburner locks in the gains. Game missions, spaced repetition, and evidence reviews encode new instincts and set up the next launch.",
+        "description": "Everyday Replay turns practice into action. We capture clips, outline one real-world step, and celebrate together.",
         "highlights": [
-            "Arcade-style retention missions",
-            "Spaced repetition loops across the week",
-            "Coach retros and evidence reels to measure the jump",
+            "Short recordings you can replay or share with family",
+            "Community accountability threads for real-world wins",
+            "Mini challenges that keep the lesson alive between sessions",
         ],
-        "promise": "We close every loop with proof—so confidence stays high and every next mission feels inevitable.",
+        "promise": "You leave with a clear next action and people who will cheer when you use it.",
     },
 }
 
@@ -737,9 +767,9 @@ def landing(request):
         {
             "stage_details": PROGRAM_STAGE_DETAILS,
             "landing_metrics": [
-                {"value": "12 weeks", "label": "To rewire instinct with our weekly loop"},
-                {"value": "3 stages", "label": "Launch Pad · Flight Deck · Afterburner"},
-                {"value": "90%", "label": "Members reporting faster live reactions"},
+                {"value": "72%", "label": "of practice happens in small community circles"},
+                {"value": "3 steps", "label": "per lesson keeps learning simple every week"},
+                {"value": "38 cities", "label": "host FOREIGN community sessions today"},
             ],
         },
     )
@@ -2684,64 +2714,79 @@ class PromiseView(TemplateView):
                 "stage_details": PROGRAM_STAGE_DETAILS,
                 "pillars": [
                     {
-                        "title": "Human-first immersion",
-                        "description": "We choreograph live interactions with ambitious peers, mentors, and native speakers so English becomes lived, not recited.",
+                        "title": "Warm circles",
+                        "description": "We learn in circles that feel like family—food on the table, names remembered, wins applauded.",
+                        "details": [
+                            "Hosts trained to make every newcomer feel at home",
+                            "Stories and check-ins before any grammar or drills",
+                            "Shared rituals that build trust and courage to speak",
+                        ],
                     },
                     {
-                        "title": "Game-layered mastery",
-                        "description": "Adaptive missions and cinematic narratives lock in vocabulary, rhythm, and intuition by keeping you in flow state.",
+                        "title": "Simple structure",
+                        "description": "Every session follows the same rhythm so you can relax and focus on speaking, not guessing what’s next.",
+                        "details": [
+                            "One phrase, one gesture, one goal per lesson",
+                            "Listen · try · use framework that keeps English digestible",
+                            "Printable and digital cards so notes stay light",
+                        ],
                     },
                     {
-                        "title": "Immediate clarity",
-                        "description": "Data-rich feedback loops and mentor nudges help you correct in the moment and accelerate compounding gains.",
+                        "title": "Shared progress",
+                        "description": "We measure growth through community wins—recordings, voice notes, and celebrations logged together.",
+                        "details": [
+                            "Weekly highlight threads celebrating real-life conversations",
+                            "Audio clips stored in personal and community journals",
+                            "Mentor feedback that sounds human, not academic",
+                        ],
                     },
                 ],
                 "modalities": [
                     {
-                        "name": "Gravity Rooms",
+                        "name": "Neighbourhood Circles",
                         "mode": "In-person",
-                        "description": "Deep-dive studio immersions hosted in our cities. You co-create with mentors and peers, surrounded by the energy of a live arena.",
-                        "touchpoints": "3-hour labs · mentor council · live reflection pods",
+                        "description": "Weekly gatherings hosted in community spaces. Expect shared meals, storytelling, and practical English.",
+                        "touchpoints": "Warm-up circle · paired practice · community reflection",
                     },
                     {
-                        "name": "Signal Streams",
+                        "name": "Home Streams",
                         "mode": "Online",
-                        "description": "High-tempo live sessions delivered through our digital command center. Adaptive missions, instant feedback, zero commute.",
-                        "touchpoints": "60-min live missions · AI rehearsal · async nudges",
+                        "description": "Live video sessions designed for small screens and busy homes. Bring your family, unmute when you’re ready.",
+                        "touchpoints": "Live mission · instant recap · same-day action prompt",
                     },
                     {
-                        "name": "Dual Engine",
-                        "mode": "Duo",
-                        "description": "Blend in-person surges with remote precision sprints so momentum never drops—perfect for execs on the move.",
-                        "touchpoints": "Monthly summits · weekly online missions · personal strategist",
+                        "name": "Bridge Mode",
+                        "mode": "Hybrid",
+                        "description": "Mix in-person circles with online sessions so learning follows you—perfect for families and teams.",
+                        "touchpoints": "Monthly meet-up · weekly online mission · shared progress board",
                     },
                 ],
                 "commitments": [
                     {
                         "label": "Curation",
-                        "body": "Every learner is matched with a pod and mentor team engineered for tension and trust so you never plateau alone.",
+                        "body": "We group learners by goals, schedules, and location so every conversation feels relevant and supportive.",
                     },
                     {
                         "label": "Evidence",
-                        "body": "We capture audio, video, and mission artefacts so you can see the delta in confidence, accuracy, and influence week over week.",
+                        "body": "Voice clips, reflections, and cheer threads show progress without exam pressure.",
                     },
                     {
                         "label": "Momentum",
-                        "body": "Rapid response cycles keep you shipping English in public. No ghosting, no drifting—just guided acceleration.",
+                        "body": "Daily nudges, light challenges, and circle shout-outs keep English alive between sessions.",
                     },
                 ],
                 "outcomes": [
                     {
-                        "metric": "92%",
-                        "caption": "of members report thinking in English during live exchanges within 6 weeks",
+                        "metric": "87%",
+                        "caption": "of members speak English with their community at least twice a week",
                     },
                     {
-                        "metric": "4.7/5",
-                        "caption": "average coach rating for actionable feedback and accountability",
+                        "metric": "4.8/5",
+                        "caption": "average rating for the ease and clarity of each session",
                     },
                     {
-                        "metric": "3x",
-                        "caption": "increase in on-demand speaking confidence measured across mission recordings",
+                        "metric": "3.2x",
+                        "caption": "increase in self-recorded conversations within the first 30 days",
                     },
                 ],
             }
@@ -2759,38 +2804,41 @@ class MethodView(TemplateView):
                 "stage_details": PROGRAM_STAGE_DETAILS,
                 "rituals": [
                     {
-                        "title": "Sunday Systems Reset",
-                        "details": "Prime the week with 15-minute async planning, resource drops, and vocabulary packs tuned to upcoming missions.",
+                        "title": "Sunday Circle Prep",
+                        "details": "Share a quick win, pick the week’s focus, and download simple phrase cards before we meet.",
                     },
                     {
-                        "title": "Mid-week Live Lab",
-                        "details": "Immersive scenario where squads tackle real briefs—negotiations, pitches, storytelling—in rapid rotations.",
+                        "title": "Mid-week Practice Room",
+                        "details": "Rotate through guided mini-conversations with peers while mentors keep the energy high.",
                     },
                     {
                         "title": "Friday Playback",
-                        "details": "Coaches and AI signal engine annotate your clips, highlighting instinct wins and adjustment cues for the next loop.",
+                        "details": "Listen back to your clips, share reflections, and choose one real-life action for the weekend.",
                     },
                 ],
                 "toolkit": [
-                    "FOREIGN app for mission briefs, AI rehearsal, and evidence tracking",
-                    "Mentor office hours and on-demand voice notes when you need a quick reset",
-                    "Community feed with peer accountability, wins, and knowledge exchanges",
+                    "FOREIGN app with lesson cards, voice recorder, and celebration threads",
+                    "On-demand mentors for voice notes when you need a boost",
+                    "Community feed with prompts, resources, and shared wins",
                 ],
                 "modalities": [
                     {
-                        "name": "Gravity Rooms",
+                        "name": "Neighbourhood Circles",
                         "mode": "In-person",
-                        "description": "Anchor weeks where squads meet at our city studios for high-impact labs, feedback circles, and cultural immersions.",
+                        "description": "Anchor weeks where squads meet locally for high-touch practice, shared snacks, and real conversation.",
+                        "touchpoints": "Welcome circle · guided practice · shared reflection",
                     },
                     {
-                        "name": "Signal Streams",
+                        "name": "Home Streams",
                         "mode": "Online",
-                        "description": "Adaptive live missions delivered through our digital hub, combined with async precision drills and mentor touchpoints.",
+                        "description": "Adaptive live missions you can join from your sofa with instant transcripts and recap cards.",
+                        "touchpoints": "Live mission · recap · community action point",
                     },
                     {
-                        "name": "Dual Engine",
-                        "mode": "Duo",
-                        "description": "Hybrid flow blending Gravity Rooms surges with Signal Streams cadence—ideal for leaders balancing travel and deep work.",
+                        "name": "Bridge Mode",
+                        "mode": "Hybrid",
+                        "description": "Hybrid flow blending neighbourhood circles with online streams—ideal for busy families or teams.",
+                        "touchpoints": "Monthly community day · flexible online sessions · shared progress board",
                     },
                 ],
             }
@@ -2808,16 +2856,16 @@ class PricingView(TemplateView):
             {
                 "tiers": [
                     {
-                        "name": "Explorer Pass",
-                        "label": "Starter · Signal Streams",
+                        "name": "Circle Pass",
+                        "label": "Starter · Home Streams",
                         "price": "$149/mo",
-                        "description": "Launch your English instincts with live online missions, adaptive drills, and mentor guidance wherever you are.",
+                        "description": "Join live streams from home, meet friendly partners, and follow one simple lesson card each week.",
                         "features": [
-                            "3 live Signal Streams missions weekly",
-                            "Placement + monthly calibration",
-                            "FOREIGN app with unlimited AI rehearsal",
-                            "Community accountability pods",
-                            "Coach feedback drops every week",
+                            "3 live Home Stream missions every week",
+                            "Monthly community calibration with a coach",
+                            "FOREIGN app with lesson cards & voice journal",
+                            "Accountability pods that celebrate every clip",
+                            "Weekly feedback notes you can read in minutes",
                         ],
                         "animations": {
                             "badge": "fade-up",
@@ -2825,16 +2873,16 @@ class PricingView(TemplateView):
                         },
                     },
                     {
-                        "name": "Gravity Labs",
-                        "label": "Flagship · Gravity Rooms + Streams",
-                        "price": "$389/mo",
-                        "description": "The full FOREIGN immersion: in-person surges plus online cadence, engineered for rapid transformation.",
+                        "name": "Gather & Grow",
+                        "label": "Flagship · Circles + Streams",
+                        "price": "$329/mo",
+                        "description": "Blend in-person circles with online streams for the full community experience—perfect for families and teams.",
                         "features": [
-                            "Bi-weekly Gravity Room immersions",
-                            "Weekly Signal Streams missions",
-                            "Dedicated mentor strategist",
-                            "Quarterly evidence reel & assessment",
-                            "Invites to VIP speaker labs",
+                            "Bi-weekly neighbourhood circle hosted near you",
+                            "Weekly Home Stream sessions with your facilitator",
+                            "Dedicated community coach for nudges and support",
+                            "Quarterly showcase night with shared highlights",
+                            "Priority access to partner-led community events",
                         ],
                         "highlight": True,
                         "animations": {
@@ -2843,16 +2891,16 @@ class PricingView(TemplateView):
                         },
                     },
                     {
-                        "name": "Dual Engine Studio",
-                        "label": "Hybrid · Executive Duo",
+                        "name": "Community Studio",
+                        "label": "Hybrid · Custom Partner Plan",
                         "price": "Custom",
-                        "description": "Design a bespoke program blending Gravity Rooms, Signal Streams, and concierge coaching for leadership teams.",
+                        "description": "Design a bespoke plan for workplaces, schools, or housing communities. We provide hosts, lesson cards, and ongoing coaching.",
                         "features": [
-                            "Private Gravity Room summits",
-                            "Weekly executive Signal Streams",
-                            "Cultural fluency + negotiation labs",
-                            "Concierge strategist & evidence analytics",
-                            "Quarterly immersion retreats",
+                            "On-site facilitator training & launch workshop",
+                            "Weekly hybrid sessions with shared progress board",
+                            "Tailored lesson decks for your group’s goals",
+                            "Community success reporting every quarter",
+                            "Dedicated strategist for scheduling & support",
                         ],
                         "animations": {
                             "badge": "fade-up",
@@ -2862,16 +2910,16 @@ class PricingView(TemplateView):
                 ],
                 "extras": [
                     {
-                        "title": "TEAM LAUNCH",
-                        "summary": "Craft a shared playbook for your global team, from cultural onboarding to pitch rehearsals.",
+                        "title": "Family Starter Kit",
+                        "summary": "Story games, school scripts, and weekend challenges designed for parents and kids learning together.",
                     },
                     {
-                        "title": "IMPACT RETAINER",
-                        "summary": "Keep a FOREIGN strategist on call for ongoing missions, evidence reviews, and leadership coaching.",
+                        "title": "Workplace Circle",
+                        "summary": "Custom session plan for teams who want to practise English together over lunch or stand-ups.",
                     },
                     {
-                        "title": "CAMPUS PARTNER",
-                        "summary": "Bring FOREIGN to your college or accelerator with tailored cohorts and faculty integration.",
+                        "title": "Community Host Residency",
+                        "summary": "Bring a FOREIGN facilitator to your organisation to train volunteers and launch new circles.",
                     },
                 ],
             }

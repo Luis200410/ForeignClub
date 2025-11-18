@@ -2,58 +2,45 @@
 {% block title %}FOREIGN Method{% endblock %}
 {% block content %}
 <section class="container-xl py-7">
-    <div class="page-intro" data-animate="fade-up">
-        <p class="eyebrow mb-2">The Method</p>
-        <h1 class="display-4 fw-bold tracking-tight mb-3">Launch Pad. Flight Deck. Afterburner.</h1>
-        <p class="text-white-50 lead mb-0">A behavior-designed loop that primes your instincts, rehearses at game speed, and locks the gains before your next big meeting. No theory—only repeatable proof.</p>
+    <div class="section-heading" data-animate="fade-up">
+        <span class="section-heading__eyebrow">The method</span>
+        <h1 class="section-heading__title">Three simple loops keep everyone speaking.</h1>
+        <p class="section-heading__subtitle">Warm-Up Circle, Practice Room, Everyday Replay. The rhythm stays the same so you can relax into community, focus on conversation, and carry the language into daily life.</p>
     </div>
 </section>
 
 <section class="container-xl pb-7">
-    <div class="module-stage-grid">
-        {% for stage in stage_details %}
-            <article class="module-stage-card method-stage-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s" data-tilt="4">
-                <span class="module-stage-ordinal">{{ stage.order|stringformat:"02d" }}</span>
-                <div class="module-stage-card__body">
-                    <span class="stage-chip">{{ stage.label }} · {{ stage.tagline }}</span>
-                    <h2 class="module-stage-title">{{ stage.label }}</h2>
-                    <p class="module-stage-subtitle">{{ stage.description }}</p>
-                    <ul class="stage-highlights">
-                        {% for highlight in stage.highlights %}
-                            <li>{{ highlight }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </article>
-        {% endfor %}
-    </div>
-</section>
-
-<section class="container-xl pb-7">
-    <div class="text-center mb-5" data-animate="fade-up">
-        <p class="eyebrow mb-2">Modalities</p>
-        <h2 class="h4 tracking-tight mb-3">Different entry points, one uncompromising standard</h2>
-        <p class="text-white-50 mb-0">Whether you thrive in live labs, async quests, or hybrid pods, every modality is architected to trigger the same cognitive anchors that make English stick.</p>
-    </div>
-    <div class="modality-grid">
-        {% for modality in modalities %}
-            <article class="modality-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s" data-tilt="4">
-                <p class="eyebrow mb-2">{{ modality.mode }}</p>
-                <h2 class="h4 tracking-tight mb-2">{{ modality.name }}</h2>
-                <p class="text-white-50 mb-0">{{ modality.description }}</p>
-            </article>
-        {% endfor %}
+    <div class="slider" data-slider>
+        <div class="slider__nav">
+            <button class="slider__button" type="button" data-slider-prev aria-label="Previous stage">‹</button>
+            <button class="slider__button" type="button" data-slider-next aria-label="Next stage">›</button>
+        </div>
+        <div class="slider__track" data-slider-track>
+            {% for stage in stage_details %}
+                <article class="slider__slide">
+                    <div class="simple-card h-100">
+                        <span class="eyebrow mb-2">{{ stage.label }} · {{ stage.tagline }}</span>
+                        <h2 class="h4 tracking-tight mb-3">{{ stage.label }}</h2>
+                        <p class="text-white-50 mb-3">{{ stage.description }}</p>
+                        <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-0">
+                            {% for highlight in stage.highlights %}
+                                <li>• {{ highlight }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
     </div>
 </section>
 
 <section class="container-xl pb-7">
     <div class="glass-panel p-5 p-lg-6" data-animate="fade-scale" data-tilt="3">
-        <p class="eyebrow mb-2">Rhythm</p>
-        <h2 class="h4 tracking-tight mb-3">Support layers woven into every loop</h2>
+        <p class="eyebrow mb-2">Weekly rhythm</p>
         <div class="row g-4">
             {% for ritual in rituals %}
                 <div class="col-lg-4" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
-                    <div class="placeholder-block" data-tilt="3">
+                    <div class="simple-card h-100">
                         <span class="placeholder-title">{{ ritual.title }}</span>
                         <p class="text-white-50 small mb-0">{{ ritual.details }}</p>
                     </div>
@@ -68,39 +55,52 @@
                 {% endfor %}
             </ul>
             <div class="text-center">
-                <a class="btn btn-outline-light btn-lg px-5" href="{% url 'experiences' %}">Explore missions</a>
+                <a class="btn btn-outline-light btn-lg px-5" href="{% url 'experiences' %}" data-magnetic>Explore circles</a>
             </div>
         </div>
     </div>
 </section>
 
 <section class="container-xl pb-7">
+    <div class="modality-grid">
+        {% for modality in modalities %}
+            <article class="modality-card simple-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
+                <p class="eyebrow mb-2">{{ modality.mode }}</p>
+                <h2 class="h4 tracking-tight mb-2">{{ modality.name }}</h2>
+                <p class="text-white-50 mb-3">{{ modality.description }}</p>
+                <p class="text-white-50 small mb-0">{{ modality.touchpoints }}</p>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="container-xl pb-7">
     <div class="method-diagram glass-panel p-5 p-lg-6" data-animate="fade-scale" data-tilt="3">
         <p class="eyebrow mb-2">Systems stack</p>
-        <h2 class="h4 tracking-tight mb-4">Tools that keep you in motion long after class ends</h2>
+        <h2 class="h4 tracking-tight mb-4">Tools that keep community learning simple</h2>
         <div class="method-stack">
             <div class="stack-column" data-animate="fade-up" data-animate-delay="0.1s">
                 <h3 class="h6 tracking-tight mb-2">Live arena</h3>
                 <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-0">
-                    <li>Mission labs (negotiation, storytelling, leadership)</li>
-                    <li>Peer pods engineered for tension and trust</li>
-                    <li>Coach-led retros with action-oriented notes</li>
+                    <li>Neighbourhood circles with rotating hosts and familiar faces</li>
+                    <li>Practice prompts designed for pairs and trios</li>
+                    <li>Collective reflections that highlight what worked</li>
                 </ul>
             </div>
             <div class="stack-column" data-animate="fade-up" data-animate-delay="0.2s">
                 <h3 class="h6 tracking-tight mb-2">Digital layer</h3>
                 <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-0">
-                    <li>FOREIGN app with mission briefs and evidence vault</li>
-                    <li>AI rehearsal that adapts to vocabulary + rhythm gaps</li>
-                    <li>Voice analytics surfacing pronunciation & fluency trends</li>
+                    <li>FOREIGN app with lesson cards, audio recorder, and shared journals</li>
+                    <li>AI rehearsal that mirrors the exact phrase we practised</li>
+                    <li>Voice analytics that gently surface rhythm and clarity tips</li>
                 </ul>
             </div>
             <div class="stack-column" data-animate="fade-up" data-animate-delay="0.3s">
                 <h3 class="h6 tracking-tight mb-2">Momentum layer</h3>
                 <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-0">
-                    <li>Community pulse with daily wins and accountability</li>
-                    <li>Mentor office hours + instant voice notes</li>
-                    <li>Quarterly showcases to prove your leap on stage</li>
+                    <li>Community feed with prompts, celebrations, and resource drops</li>
+                    <li>On-demand mentors and buddies for quick encouragement</li>
+                    <li>Monthly showcase nights to share progress with friends and family</li>
                 </ul>
             </div>
         </div>

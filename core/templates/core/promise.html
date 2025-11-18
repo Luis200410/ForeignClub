@@ -2,45 +2,66 @@
 {% block title %}FOREIGN Promise{% endblock %}
 {% block content %}
 <section class="container-xl py-7">
-    <div class="page-intro" data-animate="fade-up">
-        <p class="eyebrow mb-2">The Promise</p>
-        <h1 class="display-4 fw-bold tracking-tight mb-3">We turn English into your influence language—and we put our reputation on it.</h1>
-        <p class="text-white-50 lead mb-0">Every member moves through Launch Pad, Flight Deck, and Afterburner with coaches tracking real-life wins. If you don’t feel the shift in critical conversations, we redesign the experience until you do.</p>
+    <div class="section-heading" data-animate="fade-up">
+        <span class="section-heading__eyebrow">Our promise</span>
+        <h1 class="section-heading__title">We keep English warm, simple, and shared.</h1>
+        <p class="section-heading__subtitle">FOREIGN is a community project. If conversation ever feels complicated or lonely, we redesign the experience—because language grows fastest when we grow together.</p>
     </div>
 </section>
 
 <section class="container-xl pb-7">
-    <div class="module-stage-grid">
-        {% for stage in stage_details %}
-            <article class="module-stage-card promise-stage-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s" data-tilt="4">
-                <span class="module-stage-ordinal">{{ stage.order|stringformat:"02d" }}</span>
-                <div class="module-stage-card__body">
-                    <span class="stage-chip">{{ stage.label }} · {{ stage.tagline }}</span>
-                    <p class="module-stage-subtitle mb-3">{{ stage.summary }}</p>
-                    <p class="text-white-50 small mb-0">{{ stage.promise }}</p>
-                </div>
-            </article>
-        {% endfor %}
+    <div class="slider" data-slider>
+        <div class="slider__nav">
+            <button class="slider__button" type="button" data-slider-prev aria-label="Previous stage">‹</button>
+            <button class="slider__button" type="button" data-slider-next aria-label="Next stage">›</button>
+        </div>
+        <div class="slider__track" data-slider-track>
+            {% for stage in stage_details %}
+                <article class="slider__slide">
+                    <div class="simple-card h-100">
+                        <span class="eyebrow mb-2">{{ stage.label }} · {{ stage.tagline }}</span>
+                        <h2 class="h4 tracking-tight mb-3">Step {{ stage.order }}: {{ stage.label }}</h2>
+                        <p class="text-white-50 mb-3">{{ stage.summary }}</p>
+                        <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-0">
+                            {% for highlight in stage.highlights %}
+                                <li>• {{ highlight }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
     </div>
 </section>
 
 <section class="container-xl pb-7">
-    <div class="row g-4">
-        {% for pillar in pillars %}
-            <div class="col-lg-4" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
-                <div class="program-card" data-tilt="4">
-                    <h2 class="h4 tracking-tight mb-3">{{ pillar.title }}</h2>
-                    <p class="text-white-50 mb-0">{{ pillar.description }}</p>
-                </div>
-            </div>
-        {% endfor %}
+    <div class="slider" data-slider>
+        <div class="slider__nav">
+            <button class="slider__button" type="button" data-slider-prev aria-label="Previous pillar">‹</button>
+            <button class="slider__button" type="button" data-slider-next aria-label="Next pillar">›</button>
+        </div>
+        <div class="slider__track" data-slider-track>
+            {% for pillar in pillars %}
+                <article class="slider__slide">
+                    <div class="simple-card h-100">
+                        <h2 class="h4 tracking-tight mb-3">{{ pillar.title }}</h2>
+                        <p class="text-white-50 mb-3">{{ pillar.description }}</p>
+                        <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-0">
+                            {% for detail in pillar.details %}
+                                <li>• {{ detail }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
     </div>
 </section>
 
 <section class="container-xl pb-7">
     <div class="modality-grid">
         {% for modality in modalities %}
-            <article class="modality-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s" data-tilt="4">
+            <article class="modality-card simple-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
                 <p class="eyebrow mb-2">{{ modality.mode }}</p>
                 <h2 class="h4 tracking-tight mb-2">{{ modality.name }}</h2>
                 <p class="text-white-50 mb-3">{{ modality.description }}</p>
@@ -54,7 +75,7 @@
     <div class="row g-4">
         {% for commitment in commitments %}
             <div class="col-lg-4" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
-                <div class="commitment-card" data-tilt="3">
+                <div class="commitment-card simple-card h-100">
                     <p class="eyebrow mb-2">{{ commitment.label }}</p>
                     <p class="text-white-50 mb-0">{{ commitment.body }}</p>
                 </div>
@@ -66,7 +87,7 @@
 <section class="container-xl pb-7">
     <div class="glass-panel p-5 p-lg-6" data-animate="fade-scale" data-tilt="3">
         <p class="eyebrow mb-2">Proof</p>
-        <h2 class="h4 tracking-tight mb-3">Momentum you can measure without guesswork</h2>
+        <h2 class="h4 tracking-tight mb-3">Evidence that community-first English works</h2>
         <div class="metrics-grid">
             {% for outcome in outcomes %}
                 <div class="metric-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
@@ -76,7 +97,7 @@
             {% endfor %}
         </div>
         <div class="text-center mt-4" data-animate="fade-up" data-animate-delay="0.3s">
-            <a class="btn btn-light btn-lg px-5" href="{% url 'register' %}">Claim Your Spot</a>
+            <a class="btn btn-light btn-lg px-5" href="{% url 'register' %}" data-magnetic>Join the circle</a>
         </div>
     </div>
 </section>
@@ -84,22 +105,22 @@
 <section class="container-xl pb-7">
     <div class="glass-panel p-5 p-lg-6" data-animate="fade-scale" data-tilt="3">
         <p class="eyebrow mb-2">In the wild</p>
-        <h2 class="h4 tracking-tight mb-3">Snapshots from inside FOREIGN</h2>
+        <h2 class="h4 tracking-tight mb-3">Snapshots from inside our learning circles</h2>
         <div class="case-study-grid">
-            <article class="case-card" data-animate="fade-up" data-animate-delay="0.1s" data-tilt="3">
-                <p class="eyebrow mb-1">Global Product Lead · B2 to C1</p>
-                <h3 class="h5 tracking-tight mb-3">Negotiating live with US investors</h3>
-                <p class="text-white-50 small mb-0">“The combination of game missions and immediate mentor corrections made English my default. I closed our round without switching back to Spanish once.”</p>
+            <article class="case-card simple-card" data-animate="fade-up" data-animate-delay="0.1s">
+                <p class="eyebrow mb-1">Neighbourhood Circle · Queens</p>
+                <h3 class="h5 tracking-tight mb-3">Parents helping parents</h3>
+                <p class="text-white-50 small mb-0">“We practised parent-teacher meetings together. The next day three of us used the phrases and came back smiling.”</p>
             </article>
-            <article class="case-card" data-animate="fade-up" data-animate-delay="0.2s" data-tilt="3">
-                <p class="eyebrow mb-1">Creative Director · A2 to B1</p>
-                <h3 class="h5 tracking-tight mb-3">Pitching a global campaign</h3>
-                <p class="text-white-50 small mb-0">“FOREIGN staged the entire presentation with role players who pushed me. The real pitch felt like a repeat level—instinctive.”</p>
+            <article class="case-card simple-card" data-animate="fade-up" data-animate-delay="0.2s">
+                <p class="eyebrow mb-1">Home Stream · Manila & Madrid</p>
+                <h3 class="h5 tracking-tight mb-3">Friends across time zones</h3>
+                <p class="text-white-50 small mb-0">“We log in with coffee at 10pm and practise two phrases. Our kids wave at each other. English became our family routine.”</p>
             </article>
-            <article class="case-card" data-animate="fade-up" data-animate-delay="0.3s" data-tilt="3">
-                <p class="eyebrow mb-1">Medical Fellow · B1 to B2</p>
-                <h3 class="h5 tracking-tight mb-3">Running fast consults with patients</h3>
-                <p class="text-white-50 small mb-0">“Live clinical drills plus AI pronunciation labs rewired my response time. My supervisors now forget English isn’t my first language.”</p>
+            <article class="case-card simple-card" data-animate="fade-up" data-animate-delay="0.3s">
+                <p class="eyebrow mb-1">Bridge Mode · Nairobi & Berlin</p>
+                <h3 class="h5 tracking-tight mb-3">Workspace English made easy</h3>
+                <p class="text-white-50 small mb-0">“We recorded quick reflections after meetings and coaches gave gentle corrections. I now host our stand-up in English.”</p>
             </article>
         </div>
     </div>
@@ -108,27 +129,27 @@
 <section class="container-xl pb-7">
     <div class="journey-timeline glass-panel p-5 p-lg-6" data-animate="fade-scale" data-tilt="3">
         <p class="eyebrow mb-2">Your first 30 days</p>
-        <h2 class="h4 tracking-tight mb-4">A promise backed by a clear path</h2>
+        <h2 class="h4 tracking-tight mb-4">A 30-day path that turns English into a shared habit</h2>
         <ol class="journey-steps list-unstyled mb-0">
             <li data-animate="fade-up" data-animate-delay="0.1s">
                 <span class="step-marker">01</span>
                 <div>
-                    <h3 class="h6 mb-1">Calibration & mission design</h3>
-                    <p class="text-white-50 small mb-0">We audit the English moments that define your next promotion and assemble the pod, mentor, and mission engine built to deliver them.</p>
+                    <h3 class="h6 mb-1">Join a circle & share your goals</h3>
+                    <p class="text-white-50 small mb-0">Meet your community, choose times that work, and receive the starter phrase cards for the week.</p>
                 </div>
             </li>
             <li data-animate="fade-up" data-animate-delay="0.2s">
                 <span class="step-marker">02</span>
                 <div>
-                    <h3 class="h6 mb-1">Immersive launch sprint</h3>
-                    <p class="text-white-50 small mb-0">Live labs plus adaptive gameplay stack early wins and trigger commitment bias—so showing up becomes automatic.</p>
+                    <h3 class="h6 mb-1">Practise, laugh, and record together</h3>
+                    <p class="text-white-50 small mb-0">Rotate through short conversations, capture clips, and celebrate the wins that happen mid-session.</p>
                 </div>
             </li>
             <li data-animate="fade-up" data-animate-delay="0.3s">
                 <span class="step-marker">03</span>
                 <div>
-                    <h3 class="h6 mb-1">Evidence review & elevation</h3>
-                    <p class="text-white-50 small mb-0">We review recordings, spotlight the delta in influence, and level up the next mission so momentum keeps compounding.</p>
+                    <h3 class="h6 mb-1">Use it in real life & report back</h3>
+                    <p class="text-white-50 small mb-0">Take one simple action—call a friend, greet a neighbour—and drop a voice note so the circle can cheer with you.</p>
                 </div>
             </li>
         </ol>

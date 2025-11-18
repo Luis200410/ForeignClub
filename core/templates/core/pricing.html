@@ -4,12 +4,12 @@
 <section class="container-xl py-7">
     <div class="page-intro" data-animate="fade-up">
         <p class="eyebrow mb-2">Pricing</p>
-        <h1 class="display-4 fw-bold tracking-tight mb-3">Choose the mission format that fits your orbit.</h1>
-        <p class="text-white-50 lead mb-0">Each tier combines live interaction, adaptive coaching, and evidence tracking to anchor progress you can prove. Lock in the rhythm that matches your goals—upgrade or pause anytime.</p>
+        <h1 class="display-4 fw-bold tracking-tight mb-3">Choose the community plan that fits your life.</h1>
+        <p class="text-white-50 lead mb-0">Each plan keeps the same simple method and shared accountability. Select the mix of circles and home sessions that supports your family, team, or neighbourhood.</p>
         <div class="pricing-pills" data-animate="fade-up" data-animate-delay="0.15s">
-            <span class="pill">Gravity Rooms · In-person</span>
-            <span class="pill">Signal Streams · Online</span>
-            <span class="pill">Dual Engine · Hybrid</span>
+            <span class="pill">Neighbourhood Circles · In-person</span>
+            <span class="pill">Home Streams · Online</span>
+            <span class="pill">Bridge Mode · Hybrid</span>
         </div>
     </div>
 </section>
@@ -27,7 +27,7 @@
                         <li>• {{ feature }}</li>
                     {% endfor %}
                 </ul>
-                <a class="btn {% if tier.highlight %}btn-light{% else %}btn-outline-light{% endif %} btn-lg w-100" href="{% url 'experiences' %}">Start with {{ tier.name }}</a>
+                <a class="btn {% if tier.highlight %}btn-light{% else %}btn-outline-light{% endif %} btn-lg w-100" href="{% url 'experiences' %}" data-magnetic>Start with {{ tier.name }}</a>
             </article>
         {% endfor %}
     </div>
@@ -39,10 +39,10 @@
             <div class="pricing-compare-card">
                 <p class="eyebrow mb-2">What’s included</p>
                 <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-0">
-                    <li>Placement + quarterly recalibration</li>
-                    <li>Personal mentor strategist checkpoint</li>
-                    <li>FOREIGN app with evidence vault & AI rehearsal</li>
-                    <li>Community accountability pods</li>
+                    <li>Placement + quarterly recalibration with your circle coach</li>
+                    <li>Personal strategist focused on community connection</li>
+                    <li>FOREIGN app with lesson cards, voice journal & celebrations</li>
+                    <li>Accountability pods spanning more than 30 cities</li>
                 </ul>
             </div>
         </div>
@@ -68,12 +68,12 @@
     <div class="glass-panel p-5 p-lg-6" data-animate="fade-scale" data-tilt="3">
         <div class="row g-4 align-items-center">
             <div class="col-lg-7">
-                <p class="eyebrow mb-2">Need a custom orbit?</p>
-                <h2 class="h4 tracking-tight mb-3">Enterprise, leadership cohorts, and campus partnerships</h2>
-                <p class="text-white-50 mb-0">Build a bespoke FOREIGN layer for your team—multi-market activations, executive shadow programs, or culture onboarding. Share the influence metrics you need and we’ll chart the route.</p>
+                <p class="eyebrow mb-2">Need a custom route?</p>
+                <h2 class="h4 tracking-tight mb-3">Enterprise, leadership cohorts, and cross-border partners</h2>
+                <p class="text-white-50 mb-0">Design a FOREIGN layer for relocating teams, investors, or campuses. We align language training with legal partners, sponsorship goals, and cultural onboarding so everyone lands ready.</p>
             </div>
             <div class="col-lg-5 text-lg-end">
-                <a class="btn btn-light btn-lg px-5" href="mailto:command@foreign.club?subject=FOREIGN%20Enterprise">Book a strategy call</a>
+                <a class="btn btn-light btn-lg px-5" href="mailto:command@foreign.club?subject=FOREIGN%20Enterprise" data-magnetic>Book a strategy call</a>
             </div>
         </div>
     </div>

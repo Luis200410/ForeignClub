@@ -2,28 +2,39 @@
 {% block title %}Experiences · FOREIGN{% endblock %}
 {% block content %}
 <section class="container-xl py-7">
-    <div class="page-intro" data-animate="fade-up">
-        <p class="eyebrow mb-2">Programs & Courses</p>
-        <h1 class="display-4 fw-bold tracking-tight mb-3">Choose the mission path that fits your ambition.</h1>
-        <p class="text-white-50 lead mb-0">Each level blends live cohorts, cinematic challenges, and rapid feedback loops so you can anchor your progress to visible wins—not vague promises.</p>
+    <div class="section-heading" data-animate="fade-up">
+        <span class="section-heading__eyebrow">Programs & Courses</span>
+        <h1 class="section-heading__title">Choose the community track that fits your rhythm.</h1>
+        <p class="section-heading__subtitle">Every track combines warm circles, simple lesson cards, and shared wins. Pick the pace and format that match your schedule and comfort level.</p>
     </div>
 </section>
 
 <section class="container-xl pb-7">
-    <div class="program-grid">
-        {% for level in program_levels %}
-            <article class="program-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s" data-tilt="4">
-                <header class="program-card__header">
-                    <div class="program-card__code">{{ level.title }}</div>
-                    <span class="badge badge-soft">{{ level.course_count }} courses</span>
-                </header>
-                <p class="h5 tracking-tight mb-2">{{ level.headline }}</p>
-                <p class="text-white-50 mb-4">{{ level.tagline }}</p>
-                <div class="program-card__cta">
-                    <a class="btn btn-light w-100" href="{% url 'program_detail' level.code %}">Unlock this mission path</a>
-                </div>
-            </article>
-        {% endfor %}
+    <div class="slider" data-slider>
+        <div class="slider__nav">
+            <button class="slider__button" type="button" data-slider-prev aria-label="Previous level">‹</button>
+            <button class="slider__button" type="button" data-slider-next aria-label="Next level">›</button>
+        </div>
+        <div class="slider__track" data-slider-track>
+            {% for level in program_levels %}
+                <article class="slider__slide">
+                    <div class="simple-card h-100">
+                        <header class="program-card__header mb-3">
+                            <div class="program-card__code">{{ level.title }}</div>
+                            <span class="badge badge-soft">{{ level.course_count }} courses</span>
+                        </header>
+                        <p class="h5 tracking-tight mb-2">{{ level.headline }}</p>
+                        <p class="text-white-50 mb-3">{{ level.tagline }}</p>
+                        <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-4">
+                            {% for detail in level.details %}
+                                <li>• {{ detail }}</li>
+                            {% endfor %}
+                        </ul>
+                        <a class="btn btn-light w-100" href="{% url 'program_detail' level.code %}" data-magnetic>View this track</a>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
     </div>
 </section>
 
@@ -32,10 +43,10 @@
         <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-4">
             <div>
                 <p class="eyebrow mb-2">Courses</p>
-                <h2 class="h4 tracking-tight mb-2">Mission portfolio by intensity</h2>
-                <p class="text-white-50 mb-0">Every course merges elite coaching, story-driven missions, and measurable checkpoints so you feel the upgrade in real meetings.</p>
+                <h2 class="h4 tracking-tight mb-2">Mission portfolio by community intensity</h2>
+                <p class="text-white-50 mb-0">Filter by Foundation, Intensive, or Mastery to find circles and streams that match your energy and availability.</p>
             </div>
-            <a class="btn btn-outline-light btn-lg px-5" href="{% url 'course_list' %}">Full course directory</a>
+            <a class="btn btn-outline-light btn-lg px-5" href="{% url 'course_list' %}" data-magnetic>Full course directory</a>
         </div>
 
         {% if has_courses %}

@@ -1,140 +1,174 @@
 {% extends "core/base.html" %}
-{% block title %}FOREIGN · Speak English Like You Belong{% endblock %}
+{% block title %}FOREIGN · Speak Together{% endblock %}
 {% block content %}
-<section class="hero container-xl py-5 py-lg-7 position-relative overflow-hidden">
-    <div class="row align-items-center g-5">
-        <div class="col-lg-6">
-            <div class="eyebrow text-uppercase mb-3">Engineered for real-life stakes</div>
-            <h1 class="display-2 fw-bold tracking-tight mb-4" data-animate="fade-up">Turn high-stakes English moments into your unfair advantage.</h1>
-            <p class="lead text-white-50 mb-5" data-animate="fade-up" data-animate-delay="0.1s">FOREIGN fuses behavioral science, live mentorship, and cinematic language missions so you react in English with instinct—not translation—when the meeting, pitch, or interview is on the line.</p>
-            <div class="d-flex flex-column flex-md-row gap-3" data-animate="fade-up" data-animate-delay="0.2s">
-                <a class="btn btn-light btn-lg px-5" href="{% url 'register' %}">Start Your Fluency Mission</a>
-                <a class="btn btn-outline-light btn-lg px-5" href="{% url 'login' %}">Enter Command Center</a>
+<section class="hero">
+    <div class="container-xl hero-layout">
+        <div class="hero-intro" data-animate="fade-up">
+            <p class="eyebrow text-uppercase mb-2">Community-first English</p>
+            <h1>Learn together, speak with ease.</h1>
+            <p>FOREIGN keeps English simple by learning in community. We gather neighbours, mentors, and coaches around real conversations so every session feels natural, welcoming, and repeatable.</p>
+            <div class="hero-actions">
+                <a class="btn btn-light btn-lg px-5" href="{% url 'register' %}" data-magnetic>Join the Circle</a>
+                <a class="btn btn-outline-light btn-lg px-5" href="{% url 'login' %}" data-magnetic>Member Log in</a>
             </div>
+            <ul class="hero-list">
+                <li>Weekly community labs that turn speaking into shared practice, not solo study.</li>
+                <li>Guides who simplify grammar and pronunciation into one-step actions.</li>
+                <li>Instant feedback clips you can replay, share, and celebrate with your cohort.</li>
+            </ul>
         </div>
-        <div class="col-lg-6" data-animate="fade-up" data-animate-delay="0.3s">
-            <div class="glass-panel p-4 p-md-5" data-tilt="4">
-                <div class="text-white-50 text-uppercase small mb-3">FOREIGN Advantage Framework</div>
-                <ul class="list-unstyled fs-5 mb-0">
-                    <li class="d-flex align-items-start gap-3 mb-3">
-                        <span class="dot"></span>
-                        <span>Rehearse investor calls, product demos, and interviews with specialists calibrated to your goals.</span>
-                    </li>
-                    <li class="d-flex align-items-start gap-3 mb-3">
-                        <span class="dot"></span>
-                        <span>Play adaptive, game-grade missions that push you into the desirable difficulty zone where fluency sticks.</span>
-                    </li>
-                    <li class="d-flex align-items-start gap-3 mb-0">
-                        <span class="dot"></span>
-                        <span>Collect instant micro-feedback from elite coaches so each rep compounds into confidence.</span>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    <div class="hero-orb orb-left"></div>
-    <div class="hero-orb orb-right"></div>
-</section>
-
-<section id="promise" class="container-xl py-7">
-    <div class="row align-items-center g-5">
-        <div class="col-lg-5" data-animate="slide-right">
-            <p class="eyebrow">The Promise</p>
-            <h2 class="display-5 fw-bold tracking-tight mb-4">Fluency that holds up under pressure because you earn it in motion.</h2>
-        </div>
-        <div class="col-lg-7" data-animate="slide-left" data-animate-delay="0.1s">
-            <div class="promise-grid">
-                <div class="promise-card">
-                    <h3 class="h5 mb-3">Curated human circles</h3>
-                    <p class="text-white-50 mb-0">Every mission pairs you with peers and mentors selected to mirror your real-life audiences—leveraging social proof and accountability to accelerate the leap.</p>
+        <div class="hero-points">
+            <div class="slider" data-slider>
+                <div class="slider__nav">
+                    <button class="slider__button" type="button" data-slider-prev aria-label="Previous story">‹</button>
+                    <button class="slider__button" type="button" data-slider-next aria-label="Next story">›</button>
                 </div>
-                <div class="promise-card">
-                    <h3 class="h5 mb-3">Immersive game psychology</h3>
-                    <p class="text-white-50 mb-0">Narrative challenges, progress streaks, and smart anchors keep motivation high so practice becomes habit before doubt can settle.</p>
-                </div>
-                <div class="promise-card">
-                    <h3 class="h5 mb-3">Precision micro-feedback</h3>
-                    <p class="text-white-50 mb-0">AI insight plus elite coaches deliver immediate, specific next moves—removing guesswork and reinforcing the gains with every iteration.</p>
-                </div>
-                <div class="promise-card">
-                    <h3 class="h5 mb-3">Momentum-driven community</h3>
-                    <p class="text-white-50 mb-0">Surround yourself with ambitious learners celebrating wins daily—leveraging commitment bias to keep you shipping progress.</p>
+                <div class="slider__track" data-slider-track>
+                    <article class="slider__slide">
+                        <div class="glass-panel hero-panel p-4 p-md-5">
+                            <p class="eyebrow mb-2">Community Story</p>
+                            <h2 class="h4 tracking-tight mb-3">“We rewrote English nights with my neighbours.”</h2>
+                            <p class="text-white-50 mb-0">“Instead of memorising alone, FOREIGN paired me with parents on the same journey. We practised school calls together, swapped notes, and confidence came from the community.”</p>
+                            <p class="text-white-50 small mt-3 mb-0">Luisa · São Paulo → Boston</p>
+                        </div>
+                    </article>
+                    <article class="slider__slide">
+                        <div class="glass-panel hero-panel p-4 p-md-5">
+                            <p class="eyebrow mb-2">Community Story</p>
+                            <h2 class="h4 tracking-tight mb-3">“Simple cues, same-day wins.”</h2>
+                            <p class="text-white-50 mb-0">“Coaches gave us one phrase, one gesture, one goal. We tested it in the community lab, then used it that afternoon at work. That rhythm is how English finally stuck.”</p>
+                            <p class="text-white-50 small mt-3 mb-0">Nandita · Mumbai → London</p>
+                        </div>
+                    </article>
+                    <article class="slider__slide">
+                        <div class="glass-panel hero-panel p-4 p-md-5">
+                            <p class="eyebrow mb-2">Community Story</p>
+                            <h2 class="h4 tracking-tight mb-3">“Practice felt like belonging.”</h2>
+                            <p class="text-white-50 mb-0">“FOREIGN made English about connection. We opened every session with check-ins, not drills. Speaking became easier because I felt understood first.”</p>
+                            <p class="text-white-50 small mt-3 mb-0">Mateo · Bogotá → Madrid</p>
+                        </div>
+                    </article>
                 </div>
             </div>
+            {% for stat in landing_metrics %}
+                <div class="hero-metric">
+                    <span class="hero-metric__value">{{ stat.value }}</span>
+                    <span class="hero-metric__label">{{ stat.label }}</span>
+                </div>
+            {% endfor %}
         </div>
     </div>
 </section>
 
-<section id="method" class="method-section py-7">
-    <div class="container-xl">
-        <div class="text-center mb-5">
-            <p class="eyebrow">Method</p>
-            <h2 class="display-5 fw-bold tracking-tight">Launch Pad → Flight Deck → Afterburner</h2>
-            <p class="text-white-50 lead">Three stages, one evidence-backed arc. Prime your instincts, rehearse at full velocity, and lock the gains before the week resets.</p>
+<section class="container-xl py-7">
+    <div class="slider" data-slider>
+        <div class="slider__nav">
+            <button class="slider__button" type="button" data-slider-prev aria-label="Previous value">‹</button>
+            <button class="slider__button" type="button" data-slider-next aria-label="Next value">›</button>
         </div>
-        <div class="module-stage-grid landing-stage-grid">
+        <div class="slider__track" data-slider-track>
+            <article class="slider__slide">
+                <div class="simple-card h-100">
+                    <h2 class="h4 tracking-tight mb-3">Community makes language stick.</h2>
+                    <p class="text-white-50 mb-0">Hello circles, celebration threads, and shared reflection turn English into a social activity you look forward to each week.</p>
+                </div>
+            </article>
+            <article class="slider__slide">
+                <div class="simple-card h-100">
+                    <h2 class="h4 tracking-tight mb-3">Simplicity keeps you moving.</h2>
+                    <p class="text-white-50 mb-0">Every session follows listen · try · use. One phrase, one gesture, one real-world action—no overwhelm, only progress.</p>
+                </div>
+            </article>
+            <article class="slider__slide">
+                <div class="simple-card h-100">
+                    <h2 class="h4 tracking-tight mb-3">Shared wins build confidence.</h2>
+                    <p class="text-white-50 mb-0">Clips, voice notes, and community shout-outs show how far you’ve come. English becomes a collective success.</p>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="slider" data-slider>
+        <div class="slider__nav">
+            <button class="slider__button" type="button" data-slider-prev aria-label="Previous stage">‹</button>
+            <button class="slider__button" type="button" data-slider-next aria-label="Next stage">›</button>
+        </div>
+        <div class="slider__track" data-slider-track>
             {% for stage in stage_details %}
-                <article class="module-stage-card landing-stage-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s" data-tilt="4">
-                    <span class="module-stage-ordinal">{{ stage.order|stringformat:"02d" }}</span>
-                    <div class="module-stage-card__body">
-                        <span class="stage-chip">{{ stage.label }} · {{ stage.tagline }}</span>
-                        <h3 class="module-stage-title mb-1">{{ stage.label }}</h3>
-                        <p class="module-stage-subtitle">{{ stage.summary }}</p>
+                <article class="slider__slide">
+                    <div class="simple-card h-100">
+                        <span class="eyebrow mb-2">{{ stage.label }} · {{ stage.tagline }}</span>
+                        <h2 class="h4 tracking-tight mb-3">{{ stage.label }}</h2>
+                        <p class="text-white-50 mb-3">{{ stage.summary }}</p>
+                        <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-0">
+                            {% for highlight in stage.highlights %}
+                                <li>• {{ highlight }}</li>
+                            {% endfor %}
+                        </ul>
                     </div>
                 </article>
             {% endfor %}
         </div>
-        <div class="landing-metrics" data-animate="fade-up" data-animate-delay="0.3s">
-            {% for stat in landing_metrics %}
-                <div class="landing-metric">
-                    <span class="landing-metric__value">{{ stat.value }}</span>
-                    <span class="landing-metric__label">{{ stat.label }}</span>
-                </div>
-            {% endfor %}
-        </div>
     </div>
 </section>
 
-<section id="programs" class="container-xl py-7">
+<section class="container-xl pb-7">
     <div class="row g-4">
-        <div class="col-lg-4" data-animate="fade-up">
-            <div class="program-card border-light-subtle" data-tilt="4">
-                <div class="text-uppercase small text-white-50 mb-3">Starter</div>
-                <h3 class="h3 mb-4">Ignition Sprints</h3>
-                <p class="text-white-50">20-minute daily bursts designed to break hesitation. Quick wins, rapid reinforcement, and proof you can feel in the first week.</p>
-                <a class="btn btn-outline-light mt-3" href="{% url 'register' %}">Apply now</a>
+        {% for stat in landing_metrics %}
+            <div class="col-md-4" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter0 }}s">
+                <div class="simple-card h-100 text-center">
+                    <span class="display-5 fw-bold d-block mb-2">{{ stat.value }}</span>
+                    <p class="text-white-50 small mb-0 text-uppercase" style="letter-spacing:0.18em;">{{ stat.label }}</p>
+                </div>
             </div>
-        </div>
-        <div class="col-lg-4" data-animate="fade-up" data-animate-delay="0.1s">
-            <div class="program-card border-light-subtle highlight" data-tilt="4">
-                <div class="text-uppercase small text-white-50 mb-3">Flagship</div>
-                <h3 class="h3 mb-4">Immersion Labs</h3>
-                <p class="text-white-50">Our most requested track—live cohorts, cinematic missions, and expert mentors guiding each decision. Seats open quarterly and fill fast.</p>
-                <a class="btn btn-light mt-3" href="{% url 'register' %}">Secure your spot</a>
-            </div>
-        </div>
-        <div class="col-lg-4" data-animate="fade-up" data-animate-delay="0.2s">
-            <div class="program-card border-light-subtle" data-tilt="4">
-                <div class="text-uppercase small text-white-50 mb-3">Advanced</div>
-                <h3 class="h3 mb-4">Proficiency Studios</h3>
-                <p class="text-white-50">Executive-level coaching, negotiation labs, and cultural intelligence bootcamps tailored to leaders who cannot afford miscommunication.</p>
-                <a class="btn btn-outline-light mt-3" href="{% url 'register' %}">Get invited</a>
-            </div>
-        </div>
+        {% endfor %}
     </div>
-    <div class="text-center mt-5" data-animate="fade-up" data-animate-delay="0.2s">
-        <a class="btn btn-outline-light btn-lg px-5" href="{% url 'experiences' %}">Explore A1 – C2 Programs</a>
+</section>
+
+<section class="container-xl pb-7">
+    <div class="slider" data-slider>
+        <div class="slider__nav">
+            <button class="slider__button" type="button" data-slider-prev aria-label="Previous track">‹</button>
+            <button class="slider__button" type="button" data-slider-next aria-label="Next track">›</button>
+        </div>
+        <div class="slider__track" data-slider-track>
+            <article class="slider__slide">
+                <div class="simple-card h-100">
+                    <span class="eyebrow mb-2">Neighbourhood circles</span>
+                    <h2 class="h4 tracking-tight mb-3">Gather locally</h2>
+                    <p class="text-white-50 mb-3">Weekly meet-ups with hosts, snacks, and story prompts. Build friendships and English at the same time.</p>
+                    <a class="btn btn-outline-light btn-sm" href="{% url 'experiences' %}" data-magnetic>Find a circle</a>
+                </div>
+            </article>
+            <article class="slider__slide">
+                <div class="simple-card h-100">
+                    <span class="eyebrow mb-2">Home streams</span>
+                    <h2 class="h4 tracking-tight mb-3">Learn from your sofa</h2>
+                    <p class="text-white-50 mb-3">Log in with family or friends. We keep the sessions short, interactive, and easy to repeat during the week.</p>
+                    <a class="btn btn-outline-light btn-sm" href="{% url 'experiences' %}" data-magnetic>Join a stream</a>
+                </div>
+            </article>
+            <article class="slider__slide">
+                <div class="simple-card h-100">
+                    <span class="eyebrow mb-2">Bridge mode</span>
+                    <h2 class="h4 tracking-tight mb-3">Mix both worlds</h2>
+                    <p class="text-white-50 mb-3">Combine in-person circles with online sessions. Perfect for teams, families, or friends in different neighbourhoods.</p>
+                    <a class="btn btn-outline-light btn-sm" href="{% url 'experiences' %}" data-magnetic>Design your plan</a>
+                </div>
+            </article>
+        </div>
     </div>
 </section>
 
 <section class="cta container-xl py-7">
     <div class="glass-panel text-center py-6 px-4 px-md-6" data-animate="fade-scale">
-        <h2 class="display-5 fw-bold tracking-tight mb-4">Ready to hear yourself lead in English?</h2>
-        <p class="text-white-50 lead mb-5">FOREIGN is the shift from endless study to decisive action. Step inside, feel the difference, and let the results anchor your next move.
-        </p>
+        <h2 class="display-5 fw-bold tracking-tight mb-4">Ready to learn English with your people?</h2>
+        <p class="text-white-50 lead mb-5">FOREIGN keeps the method simple and the room welcoming. Join a circle, share your story, and feel your English grow week after week.</p>
         <div class="d-flex flex-column flex-md-row justify-content-center gap-3">
-            <a class="btn btn-light btn-lg px-5" href="{% url 'register' %}">Join FOREIGN</a>
-            <a class="btn btn-outline-light btn-lg px-5" href="{% url 'login' %}">Log in</a>
+            <a class="btn btn-light btn-lg px-5" href="{% url 'register' %}" data-magnetic>Join FOREIGN</a>
+            <a class="btn btn-outline-light btn-lg px-5" href="{% url 'login' %}" data-magnetic>Log in</a>
         </div>
     </div>
 </section>

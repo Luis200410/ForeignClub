@@ -14,7 +14,7 @@
             <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 ms-lg-4 mt-3 mt-lg-0">
                 {% if user.is_authenticated %}
                     <div class="dropdown">
-                        <a class="btn btn-outline-light btn-sm px-4 dropdown-toggle" href="#" id="navigationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="btn btn-outline-light btn-sm px-4 dropdown-toggle" href="#" id="navigationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-magnetic>
                             Navigation
                         </a>
                         <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end mt-2" aria-labelledby="navigationDropdown">
@@ -22,10 +22,10 @@
                             <li><a class="dropdown-item" href="{% url 'account' %}">My account</a></li>
                         </ul>
                     </div>
-                    <a class="btn btn-outline-light btn-sm px-4" href="{% url 'logout' %}">Log out</a>
+                    <a class="btn btn-outline-light btn-sm px-4" href="{% url 'logout' %}" data-magnetic>Log out</a>
                 {% else %}
-                    <a class="btn btn-outline-light btn-sm px-4" href="{% url 'login' %}">Log in</a>
-                    <a class="btn btn-light btn-sm px-4" href="{% url 'register' %}">Join FOREIGN</a>
+                    <a class="btn btn-outline-light btn-sm px-4" href="{% url 'login' %}" data-magnetic>Log in</a>
+                    <a class="btn btn-light btn-sm px-4" href="{% url 'register' %}" data-magnetic>Join FOREIGN</a>
                 {% endif %}
             </div>
         </div>
