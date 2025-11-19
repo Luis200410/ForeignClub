@@ -2,26 +2,95 @@
 {% block title %}{{ module.title }} · {{ course.title }}{% endblock %}
 {% block content %}
 <section class="container-xl py-7">
-    <div class="row g-5">
-        <div class="col-lg-8">
-            <article class="module-card glass-panel p-5 p-lg-6 mb-5" data-tilt="3">
-                <p class="eyebrow mb-2">{{ course.title }}</p>
-                <div class="module-stage-pills">
-                    {% for stage in stage_cards %}
-                        <span class="stage-chip">{{ stage.label }} · {{ stage.tagline }}</span>
-                    {% endfor %}
+    <div class="module-hero glass-panel" data-tilt="3">
+        <div class="module-hero__content">
+            <p class="module-hero__eyebrow">Week {{ module.order }} · {{ course.title }}</p>
+            <h1 class="module-hero__title">{{ module.title }}</h1>
+            {% if module.description %}
+                <p class="module-hero__tagline">{{ module.description|truncatechars:140|linebreaksbr }}</p>
+            {% endif %}
+            <div class="module-hero__chips">
+                {% if module.focus_keyword %}<span class="module-chip">{{ module.focus_keyword }}</span>{% endif %}
+                <span class="module-chip">Conversation Club</span>
+                <span class="module-chip">Relax & Connect</span>
+                {% if course.get_delivery_mode_display %}<span class="module-chip">{{ course.get_delivery_mode_display }}</span>{% endif %}
+            </div>
+            <div class="module-hero__stats">
+                <div class="module-stat">
+                    <span>{{ stage_cards|length }}</span>
+                    <span>Stages</span>
                 </div>
-
-                <h1 class="h3 fw-bold tracking-tight mb-3">{{ module.title }}</h1>
-                {% if module.description %}
-                    <p class="text-white-50 mb-4">{{ module.description|linebreaksbr }}</p>
-                {% endif %}
-                {% if module.outcomes %}
-                    <div class="module-outcomes mb-4">
-                        <span class="course-label">Outcomes</span>
-                        <p class="text-white-50 mb-0">{{ module.outcomes|linebreaksbr }}</p>
+                <div class="module-stat">
+                    <span>{{ module.sessions.count }}</span>
+                    <span>Live Touchpoints</span>
+                </div>
+                <div class="module-stat">
+                    <span>{{ course.weekly_commitment_hours }}h</span>
+                    <span>Weekly Play</span>
+                </div>
+            </div>
+        </div>
+        <div class="module-hero__image">
+            <div class="module-hero__photo"></div>
+            <div class="module-hero__bubble">Laugh · Play · Relax</div>
+            {% with featured_stage=stage_cards|first %}
+                {% if featured_stage %}
+                    <div class="module-hero__card">
+                        <span>Up next</span>
+                        <h3>{{ featured_stage.label }}</h3>
+                        <p class="mb-0">{{ featured_stage.summary }}</p>
                     </div>
                 {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+    <div class="module-media-grid">
+        <div class="module-media module-media--photo" data-tilt="2">
+            <div class="module-media__image module-media__image--primary"></div>
+            <div class="module-media__chip">Community drops in · no scripts</div>
+            <div class="module-media__caption">
+                <p class="module-media__eyebrow">Mood</p>
+                <h3 class="module-media__title">Sunset Lounge Energy</h3>
+                <p class="module-media__text">Sit on floor pillows, laugh, sip something cold. That’s the brief.</p>
+            </div>
+        </div>
+        <div class="module-media module-media--note" data-tilt="2">
+            <p class="module-media__eyebrow">Tiny agenda</p>
+            <h3 class="module-media__title">Say less, vibe more</h3>
+            <ul class="module-media__list">
+                <li>Pick one phrase, remix it in three ways.</li>
+                <li>High-five voice notes, celebrate weird accents.</li>
+                <li>Log a win in 30 seconds, done.</li>
+            </ul>
+        </div>
+        <div class="module-media module-media--loop" data-tilt="2">
+            <p class="module-media__eyebrow">This week’s loop</p>
+            {% with first_stage=stage_cards|first %}
+                {% with final_stage=stage_cards|last %}
+                    {% if first_stage and final_stage %}
+                        <h3 class="module-media__title">{{ first_stage.label }} ➝ {{ final_stage.label }}</h3>
+                    {% else %}
+                        <h3 class="module-media__title">Launch ➝ Celebrate</h3>
+                    {% endif %}
+                {% endwith %}
+            {% endwith %}
+            <div class="module-media__loop">
+                {% for stage in stage_cards %}
+                    <span class="module-media__loop-pill">{{ stage.label }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="row g-5">
+        <div class="col-lg-8">
+            <article class="module-flow glass-panel" data-tilt="2">
+                <div class="module-flow__header">
+                    <div>
+                        <p class="eyebrow mb-2">Conversation path</p>
+                        <h2 class="h4 tracking-tight mb-0">Drop in, vibe, repeat</h2>
+                    </div>
+                    <p class="module-flow__note mb-0">Pick a vibe, jump in, keep the chat moving.</p>
+                </div>
 
                 <div class="module-stage-grid" data-animate="fade-up" data-animate-delay="0.05s">
                     {% for stage in stage_cards %}
@@ -29,16 +98,18 @@
                             <a class="module-stage-card module-stage-card--open" href="{{ stage.url }}">
                                 <span class="module-stage-ordinal">{{ stage.order|stringformat:"02d" }}</span>
                                 <div class="module-stage-card__body">
+                                    <span class="module-stage-tag">{{ stage.tagline }}</span>
                                     <h2 class="module-stage-title">{{ stage.label }}</h2>
-                                    <p class="module-stage-subtitle">{{ stage.summary }}</p>
+                                    <p class="module-stage-subtitle">{{ stage.summary|truncatechars:110 }}</p>
                                 </div>
                             </a>
                         {% else %}
                             <div class="module-stage-card module-stage-card--locked">
                                 <span class="module-stage-ordinal">{{ stage.order|stringformat:"02d" }}</span>
                                 <div class="module-stage-card__body">
+                                    <span class="module-stage-tag">{{ stage.tagline }}</span>
                                     <h2 class="module-stage-title">{{ stage.label }}</h2>
-                                    <p class="module-stage-subtitle">{{ stage.summary }}</p>
+                                    <p class="module-stage-subtitle mb-2">{{ stage.summary|truncatechars:110 }}</p>
                                     <span class="module-stage-locked">Unlock by completing Launch Pad tasks</span>
                                 </div>
                             </div>
@@ -48,17 +119,27 @@
             </article>
         </div>
         <div class="col-lg-4">
-            <aside class="glass-panel p-4 p-lg-5" data-tilt="4">
-                <p class="eyebrow mb-2">Navigation</p>
-                <div class="d-grid gap-2">
+            <aside class="glass-panel p-4 p-lg-5 position-relative overflow-hidden" data-tilt="4">
+                <div class="mb-4">
+                    <p class="eyebrow mb-2">Navigation</p>
+                    <h2 class="h5 tracking-tight mb-0">Keep the flow going</h2>
+                </div>
+                <div class="d-grid gap-3">
                     {% if previous_order %}
-                        <a class="btn btn-outline-light" href="{% url 'course_module' course.slug previous_order %}">← Week {{ previous_order }}</a>
+                        <a class="btn btn-outline-light w-100 d-flex justify-content-between align-items-center" href="{% url 'course_module' course.slug previous_order %}">
+                            <span>Week {{ previous_order }}</span>
+                            <span class="fs-4">←</span>
+                        </a>
                     {% endif %}
-                    <a class="btn btn-light" href="{% url 'course_detail' course.slug %}">Back to course overview</a>
+                    <a class="btn btn-light w-100 d-flex justify-content-between align-items-center" href="{% url 'course_detail' course.slug %}">
+                        <span>Back to course</span>
+                        <span class="fs-4">◎</span>
+                    </a>
                     {% if next_order %}
                         {% if flight_deck_unlocked %}
-                            <a class="btn btn-outline-light d-flex align-items-center justify-content-between" href="{% url 'course_module' course.slug next_order %}">
-                                <span>Week {{ next_order }} →</span>
+                            <a class="btn btn-outline-light w-100 d-flex justify-content-between align-items-center" href="{% url 'course_module' course.slug next_order %}">
+                                <span>Week {{ next_order }}</span>
+                                <span class="fs-4">→</span>
                             </a>
                         {% else %}
                             <span class="btn btn-outline-light disabled stage-next-btn stage-next-btn--locked d-flex align-items-center justify-content-between" role="button" aria-disabled="true">
