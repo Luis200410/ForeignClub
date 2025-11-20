@@ -11,7 +11,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Count, Sum, F, Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -1404,6 +1404,10 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                                 "course_module_flashcards_log",
                                 args=[course.slug, module.order],
                             ),
+                            "analytics": reverse(
+                                "course_module_flashcards_analytics",
+                                args=[course.slug, module.order],
+                            ),
                         }
                     }
                 )
@@ -1418,6 +1422,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                 game_props_for_stage = {
                     "queueUrl": afterburner_game_card["flashcards_api"]["queue"],
                     "logUrl": afterburner_game_card["flashcards_api"]["log"],
+                    "analyticsUrl": afterburner_game_card["flashcards_api"]["analytics"],
                 }
                 if initial_flashcards:
                     game_props_for_stage["initialCards"] = initial_flashcards
@@ -1629,7 +1634,7 @@ class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
     template_name = "core/modules/afterburner_dashboard.html"
     login_url = "login"
 
-    def get_context_data(self, **kwargs):
+    def get(self, request, *args, **kwargs):
         context = super().get_context_data(**kwargs)
         slug = kwargs["slug"]
         order = kwargs["order"]
@@ -1645,10 +1650,10 @@ class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
             slug=slug,
             is_published=True,
         )
-        user = self.request.user
+        user = request.user
         enrollment, can_view_course = _get_enrollment_and_access(user, course)
         if not can_view_course:
-            messages.warning(self.request, "Finish your application to unlock weekly missions.")
+            messages.warning(request, "Finish your application to unlock weekly missions.")
             return redirect("course_detail", slug=slug)
 
         module = get_object_or_404(
@@ -1660,14 +1665,14 @@ class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
         if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
             previous_week = max(1, module.order - 1)
             messages.warning(
-                self.request,
+                request,
                 f"Complete Week {previous_week} Launch Pad missions to unlock Week {module.order}.",
             )
             return redirect("course_module", slug=slug, order=previous_week)
 
         stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
         if not stage_unlocks.get(ModuleStageProgress.StageKey.AFTERBURNER, False):
-            messages.warning(self.request, "Unlock Afterburner to view this dashboard.")
+            messages.warning(request, "Unlock Afterburner to view this dashboard.")
             return redirect("course_module", slug=slug, order=order)
 
         try:
@@ -1695,6 +1700,9 @@ class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
                     .order_by("order")
                     .first()
                 )
+            if selected_game is None or selected_game.game_type != ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
+                # Fallback to any adaptive game tied to the module so the dashboard always has a queue.
+                selected_game = _resolve_adaptive_game(module)
 
         reading_chapters = []
         grammar_points = []
@@ -1736,6 +1744,10 @@ class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
                         "course_module_flashcards_log",
                         args=[course.slug, module.order],
                     ),
+                    "analyticsUrl": reverse(
+                        "course_module_flashcards_analytics",
+                        args=[course.slug, module.order],
+                    ),
                 }
                 if initial_flashcards:
                     game_props["initialCards"] = initial_flashcards
@@ -1760,7 +1772,7 @@ class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
                 "grammar_points": grammar_points,
             }
         )
-        return context
+        return self.render_to_response(context)
 
 
 class ModuleMeetingSignupView(PlacementRequiredMixin, View):
@@ -2223,6 +2235,146 @@ class ModuleGameFlashcardLogView(PlacementRequiredMixin, View):
                 "remaining_due": remaining_due,
             }
         )
+
+
+class ModuleGameFlashcardAnalyticsView(PlacementRequiredMixin, View):
+    """Return per-learner flashcard analytics for the adaptive game."""
+
+    login_url = "login"
+
+    def get(self, request, slug: str, order: int):
+        course = get_object_or_404(
+            Course.objects.prefetch_related(
+                Prefetch(
+                    "modules",
+                    queryset=CourseModule.objects.prefetch_related("sessions").order_by("order"),
+                )
+            ),
+            slug=slug,
+            is_published=True,
+        )
+
+        user = request.user
+        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        if not can_view_course:
+            return JsonResponse(
+                {"redirect_url": reverse("course_detail", args=[course.slug])},
+                status=403,
+            )
+
+        module = get_object_or_404(
+            CourseModule.objects.prefetch_related("sessions"),
+            course=course,
+            order=order,
+        )
+
+        if not user.is_superuser and not _is_module_unlocked(
+            user, course, module, enrollment, can_view_course
+        ):
+            return JsonResponse({"error": "module_locked"}, status=403)
+
+        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        if not user.is_superuser and not stage_unlocks.get(
+            ModuleStageProgress.StageKey.AFTERBURNER, False
+        ):
+            return JsonResponse({"error": "afterburner_locked"}, status=403)
+
+        game_activity = (
+            module.afterburner_activities.filter(
+                slot=ModuleAfterburnerActivity.Slot.GAME,
+                is_active=True,
+            )
+            .select_related("game")
+            .first()
+        )
+        module_game = getattr(game_activity, "game", None)
+        if module_game is None or module_game.game_type != ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
+            module_game = _resolve_adaptive_game(module)
+        if not module_game:
+            return JsonResponse({"error": "game_unavailable"}, status=400)
+
+        profile = _resolve_profile(user, allow_admin_create=True)
+        if profile is None:
+            return JsonResponse({"error": "profile_missing"}, status=403)
+
+        now = timezone.now()
+        progress_qs = ModuleGameFlashcardProgress.objects.filter(
+            profile=profile,
+            flashcard__game=module_game,
+            flashcard__is_active=True,
+        ).select_related("flashcard")
+
+        logs_qs = ModuleGameFlashcardLog.objects.filter(progress__in=progress_qs)
+
+        total_reviews = logs_qs.count()
+        correct_reviews = logs_qs.filter(outcome="correct").count()
+        incorrect_reviews = logs_qs.filter(outcome="incorrect").count()
+
+        progress_totals = progress_qs.aggregate(
+            total_points=Sum("total_points"),
+            total_seen=Count("id", filter=Q(seen_count__gt=0)),
+            due_now=Count("id", filter=Q(next_review_at__lte=now)),
+        )
+
+        most_missed = list(
+            logs_qs.filter(outcome="incorrect")
+            .values(
+                "progress__flashcard_id",
+                "progress__flashcard__word",
+                "progress__flashcard__meaning",
+            )
+            .annotate(missed_count=Count("id"))
+            .order_by("-missed_count", "progress__flashcard__word")[:8]
+        )
+
+        recent = list(
+            logs_qs.order_by("-recorded_at")
+            .values(
+                word=F("progress__flashcard__word"),
+                outcome=F("outcome"),
+                recorded_at=F("recorded_at"),
+                streak_length=F("streak_length"),
+                points_awarded=F("points_awarded"),
+            )[:6]
+        )
+
+        payload = {
+            "stats": {
+                "total_active": module_game.flashcards.filter(is_active=True).count(),
+                "total_seen": progress_totals.get("total_seen") or 0,
+                "due_now": progress_totals.get("due_now") or 0,
+                "total_points": progress_totals.get("total_points") or 0,
+                "total_reviews": total_reviews,
+                "correct_reviews": correct_reviews,
+                "incorrect_reviews": incorrect_reviews,
+                "accuracy": round((correct_reviews / total_reviews) * 100, 1)
+                if total_reviews
+                else 0.0,
+            },
+            "missed_words": [
+                {
+                    "id": entry["progress__flashcard_id"],
+                    "word": entry["progress__flashcard__word"],
+                    "meaning": entry["progress__flashcard__meaning"],
+                    "missed_count": entry["missed_count"],
+                }
+                for entry in most_missed
+            ],
+            "recent_activity": [
+                {
+                    "word": row["word"],
+                    "outcome": row["outcome"],
+                    "recorded_at": row["recorded_at"].isoformat()
+                    if hasattr(row["recorded_at"], "isoformat")
+                    else row["recorded_at"],
+                    "streak_length": row["streak_length"],
+                    "points_awarded": row["points_awarded"],
+                }
+                for row in recent
+            ],
+        }
+
+        return JsonResponse(payload)
 
 class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
     login_url = "login"

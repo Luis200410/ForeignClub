@@ -18,6 +18,7 @@ from .views import (
     CourseModuleDetailView,
     CourseModuleStageView,
     ModuleGameFlashcardLogView,
+    ModuleGameFlashcardAnalyticsView,
     ModuleGameFlashcardQueueView,
     ModuleMeetingCancelView,
     ModuleMeetingSignupView,
@@ -67,6 +68,11 @@ urlpatterns = [
         "courses/<slug:slug>/module/<int:order>/afterburner/flashcards/log/",
         ModuleGameFlashcardLogView.as_view(),
         name="course_module_flashcards_log",
+    ),
+    path(
+        "courses/<slug:slug>/module/<int:order>/afterburner/flashcards/analytics/",
+        ModuleGameFlashcardAnalyticsView.as_view(),
+        name="course_module_flashcards_analytics",
     ),
     path(
         "courses/<slug:slug>/module/<int:order>/afterburner/<str:slot>/dashboard/",

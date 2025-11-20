@@ -1,174 +1,142 @@
 {% extends "core/base.html" %}
 {% block title %}FOREIGN · Speak Together{% endblock %}
 {% block content %}
-<section class="hero">
-    <div class="container-xl hero-layout">
-        <div class="hero-intro" data-animate="fade-up">
-            <p class="eyebrow text-uppercase mb-2">Community-first English</p>
-            <h1>Learn together, speak with ease.</h1>
-            <p>FOREIGN keeps English simple by learning in community. We gather neighbours, mentors, and coaches around real conversations so every session feels natural, welcoming, and repeatable.</p>
-            <div class="hero-actions">
+<section class="hero hero-split">
+    <div class="parallax-sphere sphere-a" aria-hidden="true"></div>
+    <div class="parallax-sphere sphere-b" aria-hidden="true"></div>
+    <div class="container-xl hero-grid">
+        <div class="hero-copy" data-animate="fade-up">
+            <p class="eyebrow text-uppercase mb-3">Community-first English</p>
+            <h1 class="display-4 mb-3">Learn together, speak with ease.</h1>
+            <p class="lead text-white-50 mb-4">Conversations, not drills. We match neighbours, mentors, and coaches so you practice with real people, every week.</p>
+            <div class="hero-actions gap-3 flex-wrap">
                 <a class="btn btn-light btn-lg px-5" href="{% url 'register' %}" data-magnetic>Join the Circle</a>
                 <a class="btn btn-outline-light btn-lg px-5" href="{% url 'login' %}" data-magnetic>Member Log in</a>
             </div>
-            <ul class="hero-list">
-                <li>Weekly community labs that turn speaking into shared practice, not solo study.</li>
-                <li>Guides who simplify grammar and pronunciation into one-step actions.</li>
-                <li>Instant feedback clips you can replay, share, and celebrate with your cohort.</li>
-            </ul>
-        </div>
-        <div class="hero-points">
-            <div class="slider" data-slider>
-                <div class="slider__nav">
-                    <button class="slider__button" type="button" data-slider-prev aria-label="Previous story">‹</button>
-                    <button class="slider__button" type="button" data-slider-next aria-label="Next story">›</button>
-                </div>
-                <div class="slider__track" data-slider-track>
-                    <article class="slider__slide">
-                        <div class="glass-panel hero-panel p-4 p-md-5">
-                            <p class="eyebrow mb-2">Community Story</p>
-                            <h2 class="h4 tracking-tight mb-3">“We rewrote English nights with my neighbours.”</h2>
-                            <p class="text-white-50 mb-0">“Instead of memorising alone, FOREIGN paired me with parents on the same journey. We practised school calls together, swapped notes, and confidence came from the community.”</p>
-                            <p class="text-white-50 small mt-3 mb-0">Luisa · São Paulo → Boston</p>
-                        </div>
-                    </article>
-                    <article class="slider__slide">
-                        <div class="glass-panel hero-panel p-4 p-md-5">
-                            <p class="eyebrow mb-2">Community Story</p>
-                            <h2 class="h4 tracking-tight mb-3">“Simple cues, same-day wins.”</h2>
-                            <p class="text-white-50 mb-0">“Coaches gave us one phrase, one gesture, one goal. We tested it in the community lab, then used it that afternoon at work. That rhythm is how English finally stuck.”</p>
-                            <p class="text-white-50 small mt-3 mb-0">Nandita · Mumbai → London</p>
-                        </div>
-                    </article>
-                    <article class="slider__slide">
-                        <div class="glass-panel hero-panel p-4 p-md-5">
-                            <p class="eyebrow mb-2">Community Story</p>
-                            <h2 class="h4 tracking-tight mb-3">“Practice felt like belonging.”</h2>
-                            <p class="text-white-50 mb-0">“FOREIGN made English about connection. We opened every session with check-ins, not drills. Speaking became easier because I felt understood first.”</p>
-                            <p class="text-white-50 small mt-3 mb-0">Mateo · Bogotá → Madrid</p>
-                        </div>
-                    </article>
-                </div>
+            <div class="hero-tags">
+                <span class="pill">Micro-missions</span>
+                <span class="pill">Live feedback</span>
+                <span class="pill">Clips you can replay</span>
             </div>
-            {% for stat in landing_metrics %}
-                <div class="hero-metric">
-                    <span class="hero-metric__value">{{ stat.value }}</span>
-                    <span class="hero-metric__label">{{ stat.label }}</span>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-
-<section class="container-xl py-7">
-    <div class="slider" data-slider>
-        <div class="slider__nav">
-            <button class="slider__button" type="button" data-slider-prev aria-label="Previous value">‹</button>
-            <button class="slider__button" type="button" data-slider-next aria-label="Next value">›</button>
-        </div>
-        <div class="slider__track" data-slider-track>
-            <article class="slider__slide">
-                <div class="simple-card h-100">
-                    <h2 class="h4 tracking-tight mb-3">Community makes language stick.</h2>
-                    <p class="text-white-50 mb-0">Hello circles, celebration threads, and shared reflection turn English into a social activity you look forward to each week.</p>
-                </div>
-            </article>
-            <article class="slider__slide">
-                <div class="simple-card h-100">
-                    <h2 class="h4 tracking-tight mb-3">Simplicity keeps you moving.</h2>
-                    <p class="text-white-50 mb-0">Every session follows listen · try · use. One phrase, one gesture, one real-world action—no overwhelm, only progress.</p>
-                </div>
-            </article>
-            <article class="slider__slide">
-                <div class="simple-card h-100">
-                    <h2 class="h4 tracking-tight mb-3">Shared wins build confidence.</h2>
-                    <p class="text-white-50 mb-0">Clips, voice notes, and community shout-outs show how far you’ve come. English becomes a collective success.</p>
-                </div>
-            </article>
-        </div>
-    </div>
-</section>
-
-<section class="container-xl pb-7">
-    <div class="slider" data-slider>
-        <div class="slider__nav">
-            <button class="slider__button" type="button" data-slider-prev aria-label="Previous stage">‹</button>
-            <button class="slider__button" type="button" data-slider-next aria-label="Next stage">›</button>
-        </div>
-        <div class="slider__track" data-slider-track>
-            {% for stage in stage_details %}
-                <article class="slider__slide">
-                    <div class="simple-card h-100">
-                        <span class="eyebrow mb-2">{{ stage.label }} · {{ stage.tagline }}</span>
-                        <h2 class="h4 tracking-tight mb-3">{{ stage.label }}</h2>
-                        <p class="text-white-50 mb-3">{{ stage.summary }}</p>
-                        <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-0">
-                            {% for highlight in stage.highlights %}
-                                <li>• {{ highlight }}</li>
-                            {% endfor %}
-                        </ul>
+            <div class="hero-metrics">
+                {% for stat in landing_metrics %}
+                    <div class="metric-tile">
+                        <span class="metric-value">{{ stat.value }}</span>
+                        <span class="metric-label">{{ stat.label }}</span>
                     </div>
-                </article>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-
-<section class="container-xl pb-7">
-    <div class="row g-4">
-        {% for stat in landing_metrics %}
-            <div class="col-md-4" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter0 }}s">
-                <div class="simple-card h-100 text-center">
-                    <span class="display-5 fw-bold d-block mb-2">{{ stat.value }}</span>
-                    <p class="text-white-50 small mb-0 text-uppercase" style="letter-spacing:0.18em;">{{ stat.label }}</p>
-                </div>
+                {% endfor %}
             </div>
-        {% endfor %}
+        </div>
+        <div class="hero-visual" data-animate="fade-scale">
+            <div class="floating-card accent">
+                <p class="eyebrow mb-1">Community Story</p>
+                <p class="h5 mb-2">“English felt like belonging.”</p>
+                <p class="small text-white-50 mb-0">Daily check-ins, simple cues, and real neighbours cheering me on.</p>
+                <span class="small text-white-50 mt-3 d-block">Mateo · Bogotá → Madrid</span>
+            </div>
+            <div class="floating-card glass">
+                <p class="eyebrow mb-1">Live Clip</p>
+                <p class="h6 mb-2">“Can you share that link?”</p>
+                <p class="small text-white-50 mb-0">Coach breaks it down. You repeat. The room applauds.</p>
+            </div>
+            <div class="hero-gallery">
+                <div class="gallery-item gallery-item--primary"></div>
+                <div class="gallery-item gallery-item--secondary"></div>
+                <div class="gallery-item gallery-item--tertiary"></div>
+            </div>
+        </div>
     </div>
 </section>
 
-<section class="container-xl pb-7">
+<section class="container-xl py-7 story-rail" data-animate="fade-up">
+    <div class="rail-header">
+        <p class="eyebrow text-uppercase mb-2">Community stories</p>
+    </div>
     <div class="slider" data-slider>
-        <div class="slider__nav">
-            <button class="slider__button" type="button" data-slider-prev aria-label="Previous track">‹</button>
-            <button class="slider__button" type="button" data-slider-next aria-label="Next track">›</button>
+        <div class="rail-actions">
+            <button class="rail-button" type="button" data-slider-prev aria-label="Previous story">‹</button>
+            <button class="rail-button" type="button" data-slider-next aria-label="Next story">›</button>
         </div>
-        <div class="slider__track" data-slider-track>
-            <article class="slider__slide">
-                <div class="simple-card h-100">
-                    <span class="eyebrow mb-2">Neighbourhood circles</span>
-                    <h2 class="h4 tracking-tight mb-3">Gather locally</h2>
-                    <p class="text-white-50 mb-3">Weekly meet-ups with hosts, snacks, and story prompts. Build friendships and English at the same time.</p>
-                    <a class="btn btn-outline-light btn-sm" href="{% url 'experiences' %}" data-magnetic>Find a circle</a>
-                </div>
+        <div class="story-track" data-slider-track>
+            <article class="story-card">
+                <p class="eyebrow mb-2">Parents · São Paulo → Boston</p>
+                <h3 class="h5 mb-2">“We rewrote English nights together.”</h3>
+                <p class="text-white-50 small mb-0">We practised school calls, swapped notes, and confidence came from the circle.</p>
             </article>
-            <article class="slider__slide">
-                <div class="simple-card h-100">
-                    <span class="eyebrow mb-2">Home streams</span>
-                    <h2 class="h4 tracking-tight mb-3">Learn from your sofa</h2>
-                    <p class="text-white-50 mb-3">Log in with family or friends. We keep the sessions short, interactive, and easy to repeat during the week.</p>
-                    <a class="btn btn-outline-light btn-sm" href="{% url 'experiences' %}" data-magnetic>Join a stream</a>
-                </div>
+            <article class="story-card">
+                <p class="eyebrow mb-2">Nandita · Mumbai → London</p>
+                <h3 class="h5 mb-2">“Simple cues, same-day wins.”</h3>
+                <p class="text-white-50 small mb-0">One phrase, one gesture, one goal. Tried in the lab, used that afternoon.</p>
             </article>
-            <article class="slider__slide">
-                <div class="simple-card h-100">
-                    <span class="eyebrow mb-2">Bridge mode</span>
-                    <h2 class="h4 tracking-tight mb-3">Mix both worlds</h2>
-                    <p class="text-white-50 mb-3">Combine in-person circles with online sessions. Perfect for teams, families, or friends in different neighbourhoods.</p>
-                    <a class="btn btn-outline-light btn-sm" href="{% url 'experiences' %}" data-magnetic>Design your plan</a>
-                </div>
+            <article class="story-card">
+                <p class="eyebrow mb-2">Mateo · Bogotá → Madrid</p>
+                <h3 class="h5 mb-2">“Practice felt like belonging.”</h3>
+                <p class="text-white-50 small mb-0">Check-ins over drills. Speaking got easier because I felt understood first.</p>
+            </article>
+            <article class="story-card">
+                <p class="eyebrow mb-2">Kemi · Lagos → Toronto</p>
+                <h3 class="h5 mb-2">“Coaching that fits real life.”</h3>
+                <p class="text-white-50 small mb-0">We rehearsed work calls, then shared wins with family threads.</p>
             </article>
         </div>
     </div>
 </section>
 
-<section class="cta container-xl py-7">
-    <div class="glass-panel text-center py-6 px-4 px-md-6" data-animate="fade-scale">
-        <h2 class="display-5 fw-bold tracking-tight mb-4">Ready to learn English with your people?</h2>
-        <p class="text-white-50 lead mb-5">FOREIGN keeps the method simple and the room welcoming. Join a circle, share your story, and feel your English grow week after week.</p>
-        <div class="d-flex flex-column flex-md-row justify-content-center gap-3">
-            <a class="btn btn-light btn-lg px-5" href="{% url 'register' %}" data-magnetic>Join FOREIGN</a>
-            <a class="btn btn-outline-light btn-lg px-5" href="{% url 'login' %}" data-magnetic>Log in</a>
+<section class="container-xl py-7 loops-section">
+    <div class="section-header" data-animate="fade-up">
+        <p class="eyebrow text-uppercase mb-2">Three simple loops</p>
+        <h2 class="display-6 mb-2">Stay speaking without overthinking.</h2>
+        <p class="text-white-50 mb-0">Warm-up, practice, replay. The rhythm stays the same, so you can focus on real conversations.</p>
+    </div>
+    <div class="loop-grid">
+        <div class="loop-card" data-animate="fade-up" data-animate-delay="0.05s">
+            <span class="pill">Arrive + connect</span>
+            <h3 class="h5 mb-2">Warm-Up Circle</h3>
+            <p class="text-white-50 mb-0">Check-ins, one phrase, one gesture. Screenshots you can reuse later.</p>
+        </div>
+        <div class="loop-card" data-animate="fade-up" data-animate-delay="0.1s">
+            <span class="pill">Try it together</span>
+            <h3 class="h5 mb-2">Practice Room</h3>
+            <p class="text-white-50 mb-0">Partner rotations, live cues, and gentle feedback clips you can replay.</p>
+        </div>
+        <div class="loop-card" data-animate="fade-up" data-animate-delay="0.15s">
+            <span class="pill">Use it today</span>
+            <h3 class="h5 mb-2">Everyday Replay</h3>
+            <p class="text-white-50 mb-0">Record a quick win, outline one real-world action, and celebrate together.</p>
+        </div>
+    </div>
+</section>
+
+<section class="container-xl py-7 image-ribbon">
+    <div class="image-tile image-tile--warm" data-animate="fade-scale">
+        <p class="eyebrow mb-1">Weekly rhythm</p>
+        <h3 class="h5 mb-2">Sunday Circle Prep</h3>
+        <p class="text-white-50 small mb-0">Pick the week’s focus and download phrase cards before we meet.</p>
+    </div>
+    <div class="image-tile image-tile--cool" data-animate="fade-scale" data-animate-delay="0.05s">
+        <p class="eyebrow mb-1">Mid-week boost</p>
+        <h3 class="h5 mb-2">Practice Room</h3>
+        <p class="text-white-50 small mb-0">Mini conversations with rotating partners and instant coaching clips.</p>
+    </div>
+    <div class="image-tile image-tile--neutral" data-animate="fade-scale" data-animate-delay="0.1s">
+        <p class="eyebrow mb-1">Friday playback</p>
+        <h3 class="h5 mb-2">Everyday Replay</h3>
+        <p class="text-white-50 small mb-0">Listen back, share reflections, and pick one action for the weekend.</p>
+    </div>
+</section>
+
+<section class="container-xl py-7 cta-stack">
+    <div class="cta-card" data-animate="fade-scale">
+        <div class="cta-grid">
+            <div>
+                <p class="eyebrow text-uppercase mb-2">Join the movement</p>
+                <h2 class="display-6 mb-3">English made social, gentle, and repeatable.</h2>
+                <p class="text-white-50 mb-0">Pick your circle, bring a friend, and let coaches guide the rhythm. Less text, more talking.</p>
+            </div>
+            <div class="cta-actions">
+                <a class="btn btn-light btn-lg px-5" href="{% url 'register' %}" data-magnetic>Start today</a>
+                <a class="btn btn-outline-light btn-lg px-5" href="{% url 'experiences' %}" data-magnetic>See circles</a>
+            </div>
         </div>
     </div>
 </section>
