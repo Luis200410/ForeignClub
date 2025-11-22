@@ -1,167 +1,123 @@
 {% extends "core/base.html" %}
 {% block title %}{{ course.title }} · FOREIGN{% endblock %}
 {% block content %}
-<section class="container-xl py-7">
-    <div class="row g-5">
-        <div class="col-lg-8">
-            <article class="course-hero glass-panel p-5 p-lg-6 mb-5" data-animate="fade-up" data-tilt="3">
-                <div class="d-flex flex-wrap gap-3 mb-4">
-                    <span class="badge badge-outline">{{ course.get_delivery_mode_display }}</span>
-                    <span class="badge badge-soft">{{ course.get_difficulty_display }}</span>
-                    <span class="badge badge-soft">{{ course.focus_area }}</span>
-                    <span class="badge badge-soft">Level {{ course.get_fluency_level_display }}</span>
-                </div>
-                <h1 class="display-5 fw-bold tracking-tight mb-3">{{ course.title }}</h1>
-                {% if course.subtitle %}
-                    <p class="lead text-white-50 mb-4">{{ course.subtitle }}</p>
-                {% endif %}
-                <p class="text-white-50 mb-4">{{ course.summary }}</p>
-                <div class="course-grid">
-                    <div>
-                        <span class="course-label">Duration</span>
-                        <span class="course-value">{{ course.duration_weeks }} weeks</span>
-                        {% if course.modules.exists %}<a class="course-link" href="{% url 'course_module' course.slug 1 %}">Start week 1</a>{% endif %}
-                    </div>
-                    <div>
-                        <span class="course-label">Weekly commitment</span>
-                        <span class="course-value">{{ course.weekly_commitment_hours }} hrs</span>
-                    </div>
-                    <div>
-                        <span class="course-label">Cohort size</span>
-                        <span class="course-value">{{ course.cohort_size }} learners</span>
-                    </div>
-                    <div>
-                        <span class="course-label">Kickoff</span>
-                        <span class="course-value">{{ course.start_date|date:"M j, Y"|default:"Rolling" }}</span>
-                    </div>
-                </div>
-            </article>
 
-            <section class="mb-6">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <p class="eyebrow mb-2">Curriculum flow</p>
-                        <h2 class="h4 tracking-tight mb-0">What you will experience</h2>
-                    </div>
-                    <a class="btn btn-outline-light btn-sm px-3" href="{% url 'course_list' %}">All courses</a>
+<!-- Hero Section -->
+<section class="section-kinetic pt-7 pb-5">
+    <div class="container">
+        <div class="row align-items-end mb-6">
+            <div class="col-lg-8">
+                <div class="d-flex flex-wrap gap-3 mb-4" data-scroll>
+                    <span class="badge border border-light text-white">{{ course.get_delivery_mode_display }}</span>
+                    <span class="badge border border-light text-white">{{ course.get_difficulty_display }}</span>
+                    <span class="badge border border-light text-neon">{{ course.focus_area }}</span>
                 </div>
-
-                {% if not can_view_course %}
-                    <div class="course-lock-banner" data-animate="fade-up">
-                        {% if enrollment %}
-                            <span class="course-lock-banner__label">Pending approval</span>
-                            <p class="text-white-50 mb-0">Our command team is reviewing your application. We will unlock Launch Pad as soon as your seat is confirmed.</p>
-                        {% else %}
-                            <span class="course-lock-banner__label">Request access</span>
-                            <p class="text-white-50 mb-0">Submit your application to unlock the weekly missions. You'll see Launch Pad, Flight Deck, and Afterburner as soon as approval lands.</p>
-                        {% endif %}
-                    </div>
-                {% endif %}
-
-                {% if modules %}
-                    <div class="module-accordion">
-                        {% for item in modules %}
-                            {% with module=item.module is_unlocked=item.is_unlocked %}
-                                <article class="course-module-card {% if is_unlocked %}course-module-card--open{% else %}course-module-card--locked{% endif %}" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
-                                    <span class="course-module-card__ordinal" aria-hidden="true">{{ module.order|stringformat:"02d" }}</span>
-                                    <div class="course-module-card__content">
-                                        <div class="course-module-card__meta">
-                                            <span class="course-module-card__week">Week {{ module.order }}</span>
-                                            {% if module.focus_keyword %}<span class="badge badge-outline">{{ module.focus_keyword }}</span>{% endif %}
-                                        </div>
-                                        <div class="course-module-card__headline">
-                                            <h3 class="h5 tracking-tight mb-1">{{ module.title }}</h3>
-                                            <span class="module-lock" role="presentation">
-                                                <svg class="lock-icon lock-icon--closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                                                    <rect x="5.5" y="10.5" width="13" height="9" rx="2.5" />
-                                                    <path d="M8.5 10.5v-2.8a3.5 3.5 0 0 1 7 0v2.8" />
-                                                    <circle cx="12" cy="15.5" r="1.4" />
-                                                </svg>
-                                                <svg class="lock-icon lock-icon--open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                                                    <rect x="5.5" y="10.5" width="13" height="9" rx="2.5" />
-                                                    <path d="M15.5 10.5v-2.8a3.5 3.5 0 1 0-7 0" />
-                                                    <circle cx="12" cy="15.5" r="1.4" />
-                                                </svg>
-                                            </span>
-                                        </div>
-                                        {% if module.description %}
-                                            <p class="text-white-50 mb-3">{{ module.description|linebreaksbr }}</p>
-                                        {% endif %}
-                                        {% if module.outcomes %}
-                                            <div class="module-outcomes mb-0">
-                                                <span class="course-label">Outcomes</span>
-                                                <p class="text-white-50 mb-0">{{ module.outcomes|linebreaksbr }}</p>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                    {% if is_unlocked %}
-                                        <a class="stretched-link" href="{% url 'course_module' course.slug module.order %}">
-                                            <span class="visually-hidden">Explore week {{ module.order }} for {{ course.title }}</span>
-                                        </a>
-                                    {% else %}
-                                        <span class="course-module-card__lock-label">
-                                            <span class="visually-hidden">Locked</span>
-                                            {% if can_view_course %}
-                                                {% if module.order > 1 %}
-                                                    Unlock after completing Week {{ module.order|add:"-1" }}
-                                                {% else %}
-                                                    Launch Pad unlocks once you start the program loop
-                                                {% endif %}
-                                            {% elif enrollment %}
-                                                Awaiting approval from FOREIGN command
-                                            {% else %}
-                                                Request access to unlock this mission
-                                            {% endif %}
-                                        </span>
-                                    {% endif %}
-                                </article>
-                            {% endwith %}
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="dashboard-panel">
-                        <p class="mb-2 fw-semibold">Curriculum in progress</p>
-                        <p class="text-white-50 mb-0">We are evolving this course. Stay tuned for new modules.</p>
-                    </div>
-                {% endif %}
-            </section>
-        </div>
-        <div class="col-lg-4">
-            <aside class="enrollment-card glass-panel p-4 p-lg-5" data-animate="fade-up" data-animate-delay="0.2s" data-tilt="4">
-                {% if enrollment %}
-                    <p class="eyebrow mb-2">You are in</p>
-                    <h2 class="h4 tracking-tight mb-3">Status: {{ enrollment.get_status_display }}</h2>
-                    <p class="text-white-50 mb-4">We will notify you as soon as cohort logistics are confirmed. Keep your schedule current so we can match you faster.</p>
-                    <form action="{% url 'course_enroll' course.slug %}" method="post">
-                        {% csrf_token %}
-                        <div class="mb-4">
-                            <label class="form-label text-uppercase small text-white-50">Motivation</label>
-                            <textarea name="motivation" rows="4" class="form-control">{{ enrollment.motivation }}</textarea>
-                        </div>
-                        <button class="btn btn-light w-100" type="submit">Update enrollment</button>
-                    </form>
-                {% else %}
-                    <p class="eyebrow mb-2">Join this mission</p>
-                    <h2 class="h4 tracking-tight mb-3">Reserve your seat</h2>
-                    <p class="text-white-50 mb-4">Complete the request below. Our team will review your profile, align schedules, and confirm your placement.</p>
-                    <form action="{% url 'course_enroll' course.slug %}" method="post">
-                        {% csrf_token %}
-                        <div class="mb-4">
-                            <label class="form-label text-uppercase small text-white-50">Motivation</label>
-                            {{ form.motivation }}
-                            {% if form.motivation.errors %}
-                                <div class="text-danger small mt-1">{{ form.motivation.errors|join:" " }}</div>
-                            {% endif %}
-                        </div>
-                        <button class="btn btn-light w-100" type="submit">Request access</button>
-                    </form>
-                {% endif %}
-                <div class="mt-4">
-                    <p class="eyebrow mb-2">Need help?</p>
-                    <p class="text-white-50 small mb-0">Email us at <a class="link-light" href="mailto:command@foreign.club">command@foreign.club</a> and we will craft the right path for you.</p>
+                <h1 class="display-xl mb-4" data-scroll>{{ course.title }}</h1>
+                <p class="lead text-ink-dim mb-0" data-scroll>{{ course.subtitle|default:course.summary }}</p>
+            </div>
+            <div class="col-lg-4 text-lg-end" data-scroll>
+                <div class="d-flex flex-column gap-2 text-ink-dim">
+                    <span>{{ course.duration_weeks }} Weeks</span>
+                    <span>{{ course.weekly_commitment_hours }} Hours / Week</span>
+                    <span>{{ course.cohort_size }} Seats</span>
                 </div>
-            </aside>
+            </div>
         </div>
     </div>
 </section>
+
+<!-- Modules List (Sticky Stack / Accordion Style) -->
+<section class="section-kinetic sticky-stack-wrapper">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <p class="text-neon text-uppercase tracking-widest mb-0">Mission Map</p>
+            {% if not can_view_course %}
+            <span class="badge bg-surface-highlight text-ink-dim">Access Locked</span>
+            {% endif %}
+        </div>
+
+        {% if modules %}
+        {% for item in modules %}
+        {% with module=item.module is_unlocked=item.is_unlocked %}
+        <div class="sticky-card"
+            style="{% if is_unlocked %}background: var(--surface-highlight);{% else %}opacity: 0.5;{% endif %}">
+            <div class="row">
+                <div class="col-lg-2 mb-3 mb-lg-0">
+                    <span class="display-4 text-neon">0{{ module.order }}</span>
+                    <span class="d-block text-ink-dim small text-uppercase tracking-widest">Week</span>
+                </div>
+                <div class="col-lg-7 mb-4 mb-lg-0">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <h3 class="h2 mb-0">{{ module.title }}</h3>
+                        {% if not is_unlocked %}
+                        <span class="badge border border-light text-white-50">Locked</span>
+                        {% endif %}
+                    </div>
+                    <p class="lead text-ink-dim mb-4">{{ module.description|default:"Module content locked." }}</p>
+
+                    {% if module.outcomes %}
+                    <div class="p-3 border border-light rounded-3 bg-black">
+                        <p class="text-neon small text-uppercase mb-2">Outcomes</p>
+                        <p class="text-white-50 small mb-0">{{ module.outcomes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-lg-3 text-lg-end d-flex flex-column justify-content-between">
+                    {% if module.focus_keyword %}
+                    <span class="badge border border-light text-white align-self-lg-end mb-3">{{ module.focus_keyword
+                        }}</span>
+                    {% endif %}
+
+                    {% if is_unlocked %}
+                    <a href="{% url 'course_module' course.slug module.order %}" class="btn-kinetic-outline w-100">Enter
+                        Mission</a>
+                    {% else %}
+                    <button class="btn btn-outline-secondary w-100" disabled>Locked</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+        {% else %}
+        <div class="p-5 border border-light rounded-4 text-center">
+            <p class="text-ink-dim mb-0">Curriculum loading...</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Enrollment / Status Sidebar (Bottom on mobile, Side on desktop) -->
+<section class="section-kinetic pt-0">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="p-5 border border-light rounded-4 bg-surface-highlight text-center">
+                    {% if enrollment %}
+                    <h3 class="h2 text-white mb-3">Status: <span class="text-neon">{{ enrollment.get_status_display
+                            }}</span></h3>
+                    <p class="text-ink-dim mb-4">Your seat is confirmed. Check your email for cohort details.</p>
+                    <a href="{% url 'dashboard' %}" class="btn-kinetic">Go to Command Center</a>
+                    {% else %}
+                    <h3 class="h2 text-white mb-3">Ready to deploy?</h3>
+                    <p class="text-ink-dim mb-4">Secure your spot in the next cohort. Applications are reviewed rolling.
+                    </p>
+                    <form action="{% url 'course_enroll' course.slug %}" method="post" class="text-start">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label text-uppercase small text-neon">Motivation</label>
+                            {{ form.motivation }}
+                            {% if form.motivation.errors %}
+                            <div class="text-danger small mt-1">{{ form.motivation.errors|join:" " }}</div>
+                            {% endif %}
+                        </div>
+                        <button class="btn-kinetic w-100" type="submit">Request Access</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 {% endblock %}

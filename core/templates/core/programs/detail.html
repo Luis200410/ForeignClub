@@ -1,90 +1,94 @@
 {% extends "core/base.html" %}
 {% block title %}{{ program.title }} · FOREIGN{% endblock %}
 {% block content %}
-<section class="container-xl py-7 program-detail">
-    <div class="glass-panel p-5 p-lg-6 mb-5" data-animate="fade-up" data-tilt="3">
-        <p class="eyebrow mb-2">Program</p>
-        <h1 class="display-4 fw-bold tracking-tight mb-3">{{ program.title }}</h1>
-        <p class="text-white-50 lead mb-0">{{ program.headline }}</p>
-    </div>
 
-    <div class="row g-5">
-        <div class="col-lg-8" data-animate="fade-up" data-animate-delay="0.1s">
-            <section class="program-stage">
-                <h2 class="h4 tracking-tight mb-3">Mission staging area</h2>
-                <p class="text-white-50 mb-4">This is where we will publish the full mission map for {{ program.title }}. Expect phase breakdowns, milestone gates, and integrated mentor prompts.</p>
-                <div class="placeholder-grid">
-                    <div class="placeholder-block" data-animate="fade-up" data-animate-delay="0.1s" data-tilt="3">
-                        <span class="placeholder-title">Immersion labs</span>
-                        <p class="text-white-50 small mb-0">Live exchanges, scenario play, and adaptive coaching tailored to this level.</p>
-                    </div>
-                    <div class="placeholder-block" data-animate="fade-up" data-animate-delay="0.15s" data-tilt="3">
-                        <span class="placeholder-title">Game missions</span>
-                        <p class="text-white-50 small mb-0">Interactive storylines and feedback loops that calibrate to your instincts in real time.</p>
-                    </div>
-                    <div class="placeholder-block" data-animate="fade-up" data-animate-delay="0.2s" data-tilt="3">
-                        <span class="placeholder-title">Performance labs</span>
-                        <p class="text-white-50 small mb-0">Recording bays, peer panels, and rapid review feedback to reinforce breakthroughs.</p>
-                    </div>
+<!-- Hero Section -->
+<section class="section-kinetic pt-7 pb-5">
+    <div class="container">
+        <div class="row align-items-end mb-6">
+            <div class="col-lg-8">
+                <p class="text-neon text-uppercase tracking-widest mb-2">Program Track</p>
+                <h1 class="display-xl mb-4" data-scroll>{{ program.title }}</h1>
+                <p class="lead text-ink-dim mb-0" data-scroll>{{ program.headline }}</p>
+            </div>
+            <div class="col-lg-4 text-lg-end" data-scroll>
+                <div class="p-4 border border-light rounded-4 bg-surface-highlight d-inline-block text-start">
+                    <p class="text-uppercase small text-neon mb-1">Code</p>
+                    <p class="h3 text-white mb-0">{{ program.code }}</p>
                 </div>
-            </section>
-
-            <section class="program-courses mt-5">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="h4 tracking-tight mb-0">Courses aligned to {{ program.title }}</h2>
-                    <a class="btn btn-outline-light btn-sm px-3" href="{% url 'course_list' %}">Explore all courses</a>
-                </div>
-                {% if has_courses %}
-                    <ul class="program-course-list">
-                        {% for course in courses %}
-                            <li class="course-card" data-animate="fade-up" data-animate-delay="{{ forloop.counter0|add:1 }}00ms" data-tilt="5">
-                                <div class="d-flex flex-wrap gap-3 mb-3">
-                                    <span class="badge badge-outline">{{ course.get_delivery_mode_display }}</span>
-                                    <span class="badge badge-soft">{{ course.get_difficulty_display }}</span>
-                                    <span class="badge badge-soft">Level {{ course.get_fluency_level_display }}</span>
-                                </div>
-                                <h3 class="h5 tracking-tight mb-2">{{ course.title }}</h3>
-                                <p class="text-white-50 mb-3">{{ course.subtitle|default:course.summary|truncatechars:140 }}</p>
-                                <div class="course-meta-inline text-white-50 small mb-3">
-                                    <span>{{ course.duration_weeks }} weeks</span>
-                                    <span>{{ course.weekly_commitment_hours }} hrs / week</span>
-                                    <span>{{ course.cohort_size }} cohort size</span>
-                                </div>
-                                <a class="btn btn-light" href="{% url 'course_detail' course.slug %}">View experience</a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <div class="empty-state">
-                        <p class="mb-2 fw-semibold">Course roster coming soon</p>
-                        <p class="text-white-50 mb-0">We are cataloguing the missions that will power {{ program.title }}. Check back shortly or reach out to curate a custom path.</p>
-                    </div>
-                {% endif %}
-            </section>
-        </div>
-        <div class="col-lg-4" data-animate="fade-up" data-animate-delay="0.2s">
-            <aside class="program-sidebar glass-panel p-4 p-lg-5">
-                <h3 class="h5 tracking-tight mb-3">Program DNA</h3>
-                <ul class="sidebar-list">
-                    <li>
-                        <span class="sidebar-label">Level code</span>
-                        <span class="sidebar-value">{{ program.code }}</span>
-                    </li>
-                    <li>
-                        <span class="sidebar-label">Core outcome</span>
-                        <span class="sidebar-value">{{ program.tagline }}</span>
-                    </li>
-                    <li>
-                        <span class="sidebar-label">Status</span>
-                        <span class="sidebar-value">Blueprinting in progress</span>
-                    </li>
-                </ul>
-                <div class="program-cta text-center mt-4">
-                    <p class="text-white-50 small mb-3">Want to be first in line when this program drops?</p>
-                    <a class="btn btn-light w-100" href="mailto:command@foreign.club?subject=Program%20{{ program.code }}">Notify me</a>
-                </div>
-            </aside>
+            </div>
         </div>
     </div>
 </section>
+
+<!-- Staging Area -->
+<section class="section-kinetic">
+    <div class="container">
+        <h2 class="h2 text-white mb-5">Mission Staging</h2>
+        <div class="row g-4">
+            <div class="col-lg-4" data-scroll>
+                <div class="p-4 border border-light rounded-4 h-100 bg-surface-highlight">
+                    <h3 class="h4 text-neon mb-3">Immersion Labs</h3>
+                    <p class="text-ink-dim mb-0">Live exchanges, scenario play, and adaptive coaching tailored to this
+                        level.</p>
+                </div>
+            </div>
+            <div class="col-lg-4" data-scroll>
+                <div class="p-4 border border-light rounded-4 h-100 bg-surface-highlight">
+                    <h3 class="h4 text-neon mb-3">Game Missions</h3>
+                    <p class="text-ink-dim mb-0">Interactive storylines and feedback loops that calibrate to your
+                        instincts.</p>
+                </div>
+            </div>
+            <div class="col-lg-4" data-scroll>
+                <div class="p-4 border border-light rounded-4 h-100 bg-surface-highlight">
+                    <h3 class="h4 text-neon mb-3">Performance</h3>
+                    <p class="text-ink-dim mb-0">Recording bays, peer panels, and rapid review feedback to reinforce
+                        breakthroughs.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Courses List -->
+<section class="section-kinetic pb-7">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h2 class="h2 text-white mb-0">Aligned Courses</h2>
+            <a href="{% url 'course_list' %}"
+                class="text-neon text-uppercase tracking-widest small text-decoration-none">View All</a>
+        </div>
+
+        {% if has_courses %}
+        <div class="d-flex flex-column gap-4">
+            {% for course in courses %}
+            <div class="p-5 border border-light rounded-4 bg-surface-highlight hover-3d" data-scroll>
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <div class="d-flex gap-3 mb-3">
+                            <span class="badge border border-light text-white">{{ course.get_delivery_mode_display
+                                }}</span>
+                            <span class="badge border border-light text-neon">Level {{ course.get_fluency_level_display
+                                }}</span>
+                        </div>
+                        <h3 class="h2 mb-3">{{ course.title }}</h3>
+                        <p class="text-ink-dim mb-0">{{ course.subtitle|default:course.summary|truncatechars:140 }}</p>
+                    </div>
+                    <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                        <a href="{% url 'course_detail' course.slug %}" class="btn-kinetic-outline">View Experience</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-6 border border-light rounded-4 text-center">
+            <p class="display-6 text-ink-dim mb-3">Missions inbound.</p>
+            <p class="text-white-50">We are cataloguing the missions for {{ program.title }}.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
 {% endblock %}

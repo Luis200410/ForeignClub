@@ -1,81 +1,128 @@
 {% extends "core/base.html" %}
 {% block title %}Pricing · FOREIGN{% endblock %}
 {% block content %}
-<section class="container-xl py-7">
-    <div class="page-intro" data-animate="fade-up">
-        <p class="eyebrow mb-2">Pricing</p>
-        <h1 class="display-4 fw-bold tracking-tight mb-3">Choose the community plan that fits your life.</h1>
-        <p class="text-white-50 lead mb-0">Each plan keeps the same simple method and shared accountability. Select the mix of circles and home sessions that supports your family, team, or neighbourhood.</p>
-        <div class="pricing-pills" data-animate="fade-up" data-animate-delay="0.15s">
-            <span class="pill">Neighbourhood Circles · In-person</span>
-            <span class="pill">Home Streams · Online</span>
-            <span class="pill">Bridge Mode · Hybrid</span>
-        </div>
-    </div>
-</section>
+<div id="smooth-wrapper">
+    <div id="smooth-content">
 
-<section class="container-xl pb-7">
-    <div class="pricing-grid">
-        {% for tier in tiers %}
-            <article class="pricing-card {% if tier.highlight %}highlight{% endif %}" data-animate="{{ tier.animations.card }}" data-animate-delay="0.{{ forloop.counter }}s" data-tilt="4">
-                <p class="eyebrow mb-2" data-animate="{{ tier.animations.badge }}" data-animate-delay="0.{{ forloop.counter }}s">{{ tier.label }}</p>
-                <h2 class="h3 tracking-tight mb-2">{{ tier.name }}</h2>
-                <p class="display-6 fw-bold mb-4">{{ tier.price }}</p>
-                <p class="text-white-50 mb-4">{{ tier.description }}</p>
-                <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-4">
-                    {% for feature in tier.features %}
-                        <li>• {{ feature }}</li>
-                    {% endfor %}
-                </ul>
-                <a class="btn {% if tier.highlight %}btn-light{% else %}btn-outline-light{% endif %} btn-lg w-100" href="{% url 'experiences' %}" data-magnetic>Start with {{ tier.name }}</a>
-            </article>
-        {% endfor %}
-    </div>
-</section>
-
-<section class="container-xl pb-7">
-    <div class="row g-4 pricing-compare">
-        <div class="col-lg-4" data-animate="fade-up" data-tilt="3">
-            <div class="pricing-compare-card">
-                <p class="eyebrow mb-2">What’s included</p>
-                <ul class="text-white-50 small list-unstyled d-grid gap-2 mb-0">
-                    <li>Placement + quarterly recalibration with your circle coach</li>
-                    <li>Personal strategist focused on community connection</li>
-                    <li>FOREIGN app with lesson cards, voice journal & celebrations</li>
-                    <li>Accountability pods spanning more than 30 cities</li>
-                </ul>
+        <section class="section-kinetic">
+            <div class="container">
+                <p class="text-neon text-uppercase mb-4">Pricing</p>
+                <h1 class="display-xl" data-scroll>Invest in your <br><span class="text-neon">future self.</span></h1>
             </div>
-        </div>
-        <div class="col-lg-8" data-animate="fade-up" data-animate-delay="0.1s" data-tilt="3">
-            <div class="pricing-compare-card">
-                <p class="eyebrow mb-2">Custom partnerships</p>
-                <div class="row g-3">
-                    {% for extra in extras %}
-                        <div class="col-md-4">
-                            <div class="pricing-extra">
-                                <h3 class="h6 tracking-tight mb-2">{{ extra.title }}</h3>
-                                <p class="text-white-50 small mb-0">{{ extra.summary }}</p>
-                            </div>
+        </section>
+
+        <!-- Sticky Stack Pricing -->
+        <section class="section-kinetic sticky-stack-wrapper">
+            <div class="container">
+                <div class="sticky-card">
+                    <div class="row h-100 align-items-center">
+                        <div class="col-lg-6">
+                            <span class="text-uppercase tracking-widest mb-3 d-block">The Starter</span>
+                            <h2 class="display-xl mb-4">Stream</h2>
+                            <p class="display-4 mb-4">$49<span class="fs-4 text-muted">/mo</span></p>
+                            <p class="lead mb-5">Perfect for self-starters who want daily practice without the
+                                commitment of live sessions. Build your habit, track your progress, and get async
+                                feedback.</p>
+                            <a href="{% url 'register' %}" class="btn-kinetic-outline">Choose Stream</a>
                         </div>
-                    {% endfor %}
+                        <div class="col-lg-6">
+                            <ul class="list-unstyled lead">
+                                <li class="mb-3 border-bottom border-light pb-2">✓ Daily Micro-missions</li>
+                                <li class="mb-3 border-bottom border-light pb-2">✓ Async Coach Feedback</li>
+                                <li class="mb-3 border-bottom border-light pb-2">✓ Global Community Access</li>
+                                <li class="mb-3 border-bottom border-light pb-2">✓ Progress Tracking</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sticky-card" style="background: var(--surface-highlight);">
+                    <div class="row h-100 align-items-center">
+                        <div class="col-lg-6">
+                            <span class="text-uppercase tracking-widest mb-3 d-block">Most Popular</span>
+                            <h2 class="display-xl mb-4">Circle</h2>
+                            <p class="display-4 mb-4">$99<span class="fs-4 text-muted">/mo</span></p>
+                            <p class="lead mb-5">The core FOREIGN experience. Join a local cohort for weekly live
+                                sessions. This is where you break through the fear barrier and find your flow.</p>
+                            <a href="{% url 'register' %}" class="btn-kinetic">Choose Circle</a>
+                        </div>
+                        <div class="col-lg-6">
+                            <ul class="list-unstyled lead">
+                                <li class="mb-3 border-bottom border-light pb-2">✓ Everything in Stream</li>
+                                <li class="mb-3 border-bottom border-light pb-2">✓ Weekly Live Sessions (90m)</li>
+                                <li class="mb-3 border-bottom border-light pb-2">✓ Dedicated Circle Coach</li>
+                                <li class="mb-3 border-bottom border-light pb-2">✓ Quarterly Social Events</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sticky-card" style="background: var(--primary); color: var(--ink-dark);">
+                    <div class="row h-100 align-items-center">
+                        <div class="col-lg-6">
+                            <span class="text-uppercase tracking-widest mb-3 d-block">For Leaders</span>
+                            <h2 class="display-xl mb-4">Bridge</h2>
+                            <p class="display-4 mb-4">$199<span class="fs-4 text-muted">/mo</span></p>
+                            <p class="lead mb-5">Accelerate your career with high-stakes practice. Pitch, negotiate, and
+                                lead in English. Includes monthly intensive workshops and executive coaching.</p>
+                            <a href="{% url 'register' %}" class="btn-kinetic-outline"
+                                style="border-color: var(--ink-dark); color: var(--ink-dark);">Choose Bridge</a>
+                        </div>
+                        <div class="col-lg-6">
+                            <ul class="list-unstyled lead">
+                                <li class="mb-3 border-bottom border-dark pb-2">✓ Everything in Circle</li>
+                                <li class="mb-3 border-bottom border-dark pb-2">✓ Monthly Intensive Workshops</li>
+                                <li class="mb-3 border-bottom border-dark pb-2">✓ 1-on-1 Executive Coaching</li>
+                                <li class="mb-3 border-bottom border-dark pb-2">✓ Professional Certification</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-</section>
+        </section>
 
-<section class="container-xl pb-7">
-    <div class="glass-panel p-5 p-lg-6" data-animate="fade-scale" data-tilt="3">
-        <div class="row g-4 align-items-center">
-            <div class="col-lg-7">
-                <p class="eyebrow mb-2">Need a custom route?</p>
-                <h2 class="h4 tracking-tight mb-3">Enterprise, leadership cohorts, and cross-border partners</h2>
-                <p class="text-white-50 mb-0">Design a FOREIGN layer for relocating teams, investors, or campuses. We align language training with legal partners, sponsorship goals, and cultural onboarding so everyone lands ready.</p>
+        <!-- Comparison -->
+        <section class="section-kinetic">
+            <div class="container">
+                <h2 class="display-xl mb-6" data-scroll>Included for all</h2>
+                <div class="row g-4">
+                    <div class="col-lg-4" data-scroll>
+                        <div class="p-5 border border-light rounded-4 h-100 bg-surface-highlight">
+                            <h3 class="h2 mb-4">Placement</h3>
+                            <p class="text-ink-dim">Quarterly recalibration with your circle coach to ensure you're
+                                always challenged.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4" data-scroll>
+                        <div class="p-5 border border-light rounded-4 h-100 bg-surface-highlight">
+                            <h3 class="h2 mb-4">Strategist</h3>
+                            <p class="text-ink-dim">Personal strategist focused on your community connection and
+                                long-term goals.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4" data-scroll>
+                        <div class="p-5 border border-light rounded-4 h-100 bg-surface-highlight">
+                            <h3 class="h2 mb-4">Global Pods</h3>
+                            <p class="text-ink-dim">Access to accountability pods spanning more than 30 cities
+                                worldwide.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="col-lg-5 text-lg-end">
-                <a class="btn btn-light btn-lg px-5" href="mailto:command@foreign.club?subject=FOREIGN%20Enterprise" data-magnetic>Book a strategy call</a>
-            </div>
-        </div>
+        </section>
+
     </div>
-</section>
+</div>
+
+<!-- Navigation Dock -->
+<nav class="nav-dock">
+    <a href="{% url 'landing' %}">Home</a>
+    <a href="{% url 'promise' %}">Promise</a>
+    <a href="{% url 'method' %}">Method</a>
+    <a href="{% url 'experiences' %}">Experiences</a>
+    <a href="{% url 'pricing' %}" class="active">Pricing</a>
+    <a href="{% url 'login' %}" style="color: var(--primary);">Login</a>
+</nav>
+
+<div class="noise-overlay"></div>
 {% endblock %}

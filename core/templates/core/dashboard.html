@@ -1,257 +1,160 @@
 {% extends "core/base.html" %}
-{% block title %}Dashboard · FOREIGN{% endblock %}
+{% block title %}Command Center · FOREIGN{% endblock %}
 {% block content %}
+
 {% if not dashboard_ready %}
-<section class="container-xl py-7" data-animate="fade-up">
-    <div class="dashboard-panel">
-        <h1 class="h4 mb-3">We are preparing your dashboard</h1>
-        <p class="text-white-50 mb-0">Your account is almost synced. Please refresh in a few seconds or contact support if this persists.</p>
+<section class="section-kinetic" style="min-height: 60vh; align-items: center;">
+    <div class="container text-center">
+        <h1 class="h2 text-neon mb-3">Initializing Command Center...</h1>
+        <p class="text-ink-dim">Syncing your profile. Please refresh in a moment.</p>
     </div>
 </section>
 {% else %}
-<section class="dashboard-hero container-xl py-7" data-animate="fade-up">
-    <div class="glass-panel p-5 p-lg-6" data-tilt="3">
-        <div class="row g-5 align-items-center">
-            <div class="col-lg-7" data-animate="slide-right">
-                <p class="eyebrow mb-3">Command center</p>
-                <h1 class="display-5 fw-bold tracking-tight mb-3">Welcome back, {{ profile.display_name|default:user.get_username }}.</h1>
-                <p class="text-white-50 mb-4">{{ profile.headline|default:"Your journey continues—immerse, adapt, and own every conversation." }}</p>
-                <div class="d-flex flex-wrap gap-3">
-                    <span class="badge badge-soft">Goal focus: {{ profile.get_target_focus_display }}</span>
-                    <span class="badge badge-soft">Target level: {{ profile.get_desired_fluency_level_display }}</span>
-                    {% if interaction_preferences %}
-                        <span class="badge badge-soft">Prefers {{ interaction_preferences.get_preferred_session_format_display }}</span>
-                        <span class="badge badge-soft">Team size: {{ interaction_preferences.preferred_group_size }}</span>
-                    {% endif %}
+
+<!-- Hero / Stats -->
+<section class="section-kinetic pt-7 pb-5">
+    <div class="container">
+        <div class="row align-items-end mb-6">
+            <div class="col-lg-8">
+                <p class="text-neon text-uppercase tracking-widest mb-2">Command Center</p>
+                <h1 class="display-xl" data-scroll>Welcome back, <span class="text-white">{{
+                        profile.display_name|default:user.get_username }}</span>.</h1>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <p class="lead text-ink-dim">{{ profile.headline|default:"Your journey continues." }}</p>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="row g-4 mb-6">
+            <div class="col-6 col-md-3" data-scroll>
+                <div class="p-4 border border-light rounded-4 bg-surface-highlight h-100">
+                    <p class="text-ink-dim text-uppercase small mb-2">Active Goals</p>
+                    <p class="display-4 text-neon mb-0">{{ stats.total_goals|default:0 }}</p>
                 </div>
             </div>
-            <div class="col-lg-5" data-animate="slide-left" data-animate-delay="0.1s">
-                <div class="dashboard-stat-grid">
-                    <div class="stat-card">
-                        <span class="stat-label">Active goals</span>
-                        <span class="stat-value">{{ stats.total_goals|default:0 }}</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">Live windows</span>
-                        <span class="stat-value">{{ stats.engagement_windows|default:0 }}</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">Progress notes</span>
-                        <span class="stat-value">{{ stats.progress_notes|default:0 }}</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">Latest assessment</span>
+            <div class="col-6 col-md-3" data-scroll>
+                <div class="p-4 border border-light rounded-4 bg-surface-highlight h-100">
+                    <p class="text-ink-dim text-uppercase small mb-2">Live Windows</p>
+                    <p class="display-4 text-white mb-0">{{ stats.engagement_windows|default:0 }}</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3" data-scroll>
+                <div class="p-4 border border-light rounded-4 bg-surface-highlight h-100">
+                    <p class="text-ink-dim text-uppercase small mb-2">Progress Notes</p>
+                    <p class="display-4 text-white mb-0">{{ stats.progress_notes|default:0 }}</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3" data-scroll>
+                <div class="p-4 border border-light rounded-4 bg-surface-highlight h-100">
+                    <p class="text-ink-dim text-uppercase small mb-2">Fluency Level</p>
+                    <p class="display-4 text-neon mb-0">
                         {% if stats.last_assessment %}
-                            <span class="stat-value">{{ stats.last_assessment.get_fluency_level_display }}</span>
-                            <span class="stat-meta">{{ stats.last_assessment.assessed_at|date:"M j" }}</span>
+                        {{ stats.last_assessment.get_fluency_level_display|slice:":2" }}
                         {% else %}
-                            <span class="stat-value">Pending</span>
+                        --
                         {% endif %}
-                    </div>
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<section class="container-xl pb-7" data-animate="fade-up">
-    {% if active_enrollments %}
-        <div class="dashboard-panel">
-            <div class="panel-header d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <p class="eyebrow mb-1">Weekly missions</p>
-                    <h2 class="h4 tracking-tight mb-0">{{ primary_course.title }}</h2>
+<!-- Active Course -->
+{% if active_enrollments %}
+<section class="section-kinetic pb-5">
+    <div class="container">
+        <div class="sticky-card" style="background: var(--primary); color: var(--ink-dark);">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <p class="text-uppercase tracking-widest mb-2" style="opacity: 0.7;">Current Mission</p>
+                    <h2 class="display-4 mb-3">{{ primary_course.title }}</h2>
+                    <p class="lead mb-4" style="opacity: 0.8;">{{ primary_course.subtitle|default:"Continue your active
+                        module." }}</p>
+                    <a href="{% url 'course_detail' primary_course.slug %}"
+                        class="btn btn-dark rounded-pill px-4 py-2">Resume Mission</a>
                 </div>
-                <a class="btn btn-outline-light btn-sm px-3" href="{% url 'course_detail' primary_course.slug %}">View course</a>
-            </div>
-            <div class="row g-3">
-                {% for enrollment in active_enrollments %}
-                    {% with course=enrollment.course %}
-                    <div class="col-md-6 col-xl-4">
-                        <a class="module-link-card" href="{% url 'course_detail' course.slug %}">
-                            <span class="module-link-order">Status: {{ enrollment.get_status_display }}</span>
-                            <span class="module-link-title">{{ course.title }}</span>
-                            <span class="module-link-theme text-white-50">{{ course.subtitle|default:course.summary|truncatechars:80 }}</span>
-                        </a>
-                    </div>
-                    {% endwith %}
-                {% endfor %}
+                <div class="col-lg-4 d-none d-lg-block text-end">
+                    <span class="display-1" style="opacity: 0.2;">→</span>
+                </div>
             </div>
         </div>
-    {% endif %}
+    </div>
 </section>
+{% endif %}
 
-<section class="container-xl pb-7">
-    <div class="row g-4">
-        <div class="col-xl-6" data-animate="fade-up">
-            <div class="dashboard-panel">
-                <div class="panel-header d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <p class="eyebrow mb-1">Mission priority</p>
-                        <h2 class="h4 tracking-tight mb-0">Primary learning goal</h2>
-                    </div>
-                    <a class="btn btn-outline-light btn-sm px-3" href="{% url 'manage_goal' %}">Update goal</a>
+<!-- Goals & Progress -->
+<section class="section-kinetic pb-7">
+    <div class="container">
+        <div class="row g-5">
+            <!-- Goals -->
+            <div class="col-lg-6">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="h2 text-white">Mission Priority</h3>
+                    <a href="{% url 'manage_goal' %}"
+                        class="text-neon text-uppercase tracking-widest small text-decoration-none">Update</a>
                 </div>
+
                 {% if primary_goal %}
-                    <div class="goal-card highlight" data-animate="fade-up" data-animate-delay="0.05s">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h3 class="h5 mb-2">{{ primary_goal.title }}</h3>
-                                <p class="text-white-50 small mb-3">{{ primary_goal.success_metric }}</p>
-                            </div>
-                            <span class="badge badge-outline">{{ primary_goal.get_focus_area_display }}</span>
-                        </div>
-                        <div class="d-flex flex-wrap gap-3 text-white-50 small">
-                            {% if primary_goal.target_date %}
-                                <span>Target: {{ primary_goal.target_date|date:"M j, Y" }}</span>
-                            {% endif %}
-                            <span>Priority: {{ primary_goal.get_priority_display }}</span>
-                        </div>
-                    </div>
+                <div class="sticky-card" style="margin-bottom: 2rem; padding: 2rem;">
+                    <span class="badge bg-neon text-dark mb-3">{{ primary_goal.get_focus_area_display }}</span>
+                    <h4 class="h3 mb-3">{{ primary_goal.title }}</h4>
+                    <p class="text-ink-dim mb-0">{{ primary_goal.success_metric }}</p>
+                </div>
                 {% else %}
-                    <div class="empty-state" data-animate="fade-up" data-animate-delay="0.05s">
-                        <p class="mb-1 fw-semibold">Set your first goal</p>
-                        <p class="text-white-50 mb-0">Define what fluency looks like for you to unlock tailored sessions.</p>
-                    </div>
+                <div class="p-5 border border-light rounded-4 text-center">
+                    <p class="text-ink-dim mb-3">No active mission.</p>
+                    <a href="{% url 'manage_goal' %}" class="btn-kinetic">Set Goal</a>
+                </div>
                 {% endif %}
 
                 {% if secondary_goals %}
-                    <div class="mt-4" data-animate="fade-up" data-animate-delay="0.1s">
-                        <p class="eyebrow mb-3">Supporting focus</p>
-                        <div class="goal-grid">
-                            {% for goal in secondary_goals %}
-                                <div class="goal-card" data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h3 class="h6 mb-0">{{ goal.title }}</h3>
-                                        <span class="badge badge-outline">{{ goal.get_focus_area_display }}</span>
-                                    </div>
-                                    <p class="text-white-50 small mb-2">{{ goal.success_metric }}</p>
-                                    <div class="text-white-50 small">
-                                        {% if goal.target_date %}
-                                            <span>Target: {{ goal.target_date|date:"M j, Y" }}</span>
-                                        {% else %}
-                                            <span>No target date</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            {% endfor %}
+                <div class="mt-4">
+                    <p class="text-ink-dim text-uppercase small mb-3">Supporting Objectives</p>
+                    {% for goal in secondary_goals %}
+                    <div class="p-3 border border-light rounded-3 mb-3 bg-surface-highlight">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-white">{{ goal.title }}</span>
+                            <span class="text-neon small">{{ goal.get_focus_area_display }}</span>
                         </div>
                     </div>
+                    {% endfor %}
+                </div>
                 {% endif %}
             </div>
-        </div>
-        <div class="col-xl-6" data-animate="fade-up" data-animate-delay="0.1s">
-            <div class="dashboard-panel h-100">
-                <div class="panel-header d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <p class="eyebrow mb-1">Momentum</p>
-                        <h2 class="h4 tracking-tight mb-0">Recent progress notes</h2>
-                    </div>
-                    <a class="btn btn-outline-light btn-sm px-3" href="{% url 'progress_add' %}">Add progress</a>
+
+            <!-- Progress -->
+            <div class="col-lg-6">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="h2 text-white">Momentum</h3>
+                    <a href="{% url 'progress_add' %}"
+                        class="text-neon text-uppercase tracking-widest small text-decoration-none">Log</a>
                 </div>
+
                 {% if recent_progress %}
-                    <ul class="progress-timeline">
-                        {% for entry in recent_progress %}
-                            <li data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
-                                <div class="timeline-dot"></div>
-                                <div class="timeline-content">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h3 class="h6 mb-0">{{ entry.summary }}</h3>
-                                        <span class="badge badge-soft">{{ entry.logged_at|date:"M j" }}</span>
-                                    </div>
-                                    <p class="text-white-50 small mb-2">{{ entry.details|default:"Focus session logged." }}</p>
-                                    <div class="text-white-50 small">Impact rating: {{ entry.impact_rating }} / 5 &middot; Logged by {{ entry.logged_by }}</div>
-                                    {% if entry.tags %}
-                                        <div class="d-flex flex-wrap gap-2 mt-2">
-                                            {% for tag in entry.tags %}
-                                                <span class="badge badge-outline">{{ tag }}</span>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <div class="empty-state">
-                        <p class="mb-1 fw-semibold">Capture your breakthroughs</p>
-                        <p class="text-white-50 mb-0">Log reflections after each mission to fuel data-driven coaching.</p>
+                <div class="d-flex flex-column gap-3">
+                    {% for entry in recent_progress %}
+                    <div class="p-4 border border-light rounded-4 bg-surface-highlight hover-3d">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-neon small">{{ entry.logged_at|date:"M j" }}</span>
+                            <span class="text-ink-dim small">Impact: {{ entry.impact_rating }}/5</span>
+                        </div>
+                        <h4 class="h5 mb-2">{{ entry.summary }}</h4>
+                        <p class="text-ink-dim small mb-0">{{ entry.details|truncatechars:100 }}</p>
                     </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-5 border border-light rounded-4 text-center">
+                    <p class="text-ink-dim mb-3">No progress logged yet.</p>
+                    <a href="{% url 'progress_add' %}" class="btn-kinetic">Log First Win</a>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </section>
 
-<section class="container-xl pb-7">
-    <div class="row g-4">
-        <div class="col-lg-6" data-animate="fade-up">
-            <div class="dashboard-panel h-100">
-                <div class="panel-header d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <p class="eyebrow mb-1">Live readiness</p>
-                        <h2 class="h4 tracking-tight mb-0">Availability windows</h2>
-                    </div>
-                    <a class="btn btn-outline-light btn-sm px-3" href="{% url 'availability_manage' %}">Edit windows</a>
-                </div>
-                {% if availability_windows %}
-                    <ul class="availability-list">
-                        {% for slot in availability_windows %}
-                            <li data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
-                                <div>
-                                    <h3 class="h6 mb-1">{{ slot.get_day_of_week_display }}</h3>
-                                    <p class="text-white-50 small mb-0">{{ slot.start_time|time:"H:i" }} &ndash; {{ slot.end_time|time:"H:i" }} ({{ slot.timezone }})</p>
-                                </div>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                    {% if stats.engagement_windows|default:0 > availability_windows|length %}
-                        <p class="text-white-50 small mt-3">Showing the first {{ availability_windows|length }} windows.</p>
-                    {% endif %}
-                {% else %}
-                    <div class="empty-state">
-                        <p class="mb-1 fw-semibold">Set your learning cadence</p>
-                        <p class="text-white-50 mb-0">Add when you’re free so we can match live experiences to your schedule.</p>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-        <div class="col-lg-6" data-animate="fade-up" data-animate-delay="0.1s">
-            <div class="dashboard-panel h-100">
-                <div class="panel-header d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <p class="eyebrow mb-1">Calibration</p>
-                        <h2 class="h4 tracking-tight mb-0">Recent assessments</h2>
-                    </div>
-                    <a class="btn btn-outline-light btn-sm px-3" href="{% url 'assessment_upload' %}">Upload evidence</a>
-                </div>
-                {% if assessments %}
-                    <ul class="assessment-list">
-                        {% for assessment in assessments %}
-                            <li data-animate="fade-up" data-animate-delay="0.{{ forloop.counter }}s">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <h3 class="h6 mb-0">{{ assessment.get_assessment_type_display }}</h3>
-                                    <span class="badge badge-soft">{{ assessment.assessed_at|date:"M j" }}</span>
-                                </div>
-                                <div class="text-white-50 small mb-1">Level: {{ assessment.get_fluency_level_display }}{% if assessment.score %} &middot; Score {{ assessment.score }}{% endif %}</div>
-                                {% if assessment.assessed_by %}
-                                    <div class="text-white-50 small">By {{ assessment.assessed_by }}</div>
-                                {% endif %}
-                                {% if assessment.notes %}
-                                    <p class="text-white-50 small mt-2">{{ assessment.notes }}</p>
-                                {% endif %}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <div class="empty-state">
-                        <p class="mb-1 fw-semibold">No assessments logged yet</p>
-                        <p class="text-white-50 mb-0">Schedule a placement or coach review to benchmark your fluency.</p>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</section>
 {% endif %}
 {% endblock %}

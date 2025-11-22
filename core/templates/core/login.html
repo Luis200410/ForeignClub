@@ -1,30 +1,42 @@
 {% extends "core/base.html" %}
 {% block title %}Log In · FOREIGN{% endblock %}
 {% block content %}
-<section class="auth-section container-sm py-7">
-    <div class="glass-panel p-5 mx-auto" style="max-width: 520px;" data-animate="fade-up">
-        <h1 class="h2 fw-bold tracking-tight mb-4 text-center">Welcome back</h1>
-        <p class="text-white-50 text-center mb-5">Keep your momentum—your immersive missions await.</p>
-        <form method="post" novalidate data-animate="fade-up" data-animate-delay="0.1s">
-            {% csrf_token %}
-            {% if form.non_field_errors %}
-                <div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>
-            {% endif %}
-            {% for field in form %}
-                <div class="mb-4">
-                    <label class="form-label text-uppercase small text-white-50">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.errors %}
-                        <div class="text-danger small mt-1">{{ field.errors|join:" " }}</div>
-                    {% endif %}
+<section class="section-kinetic" style="min-height: 100vh; align-items: center;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-5">
+                <div class="sticky-card"
+                    style="height: auto; padding: 3rem; margin-bottom: 0; background: var(--surface); border: 1px solid var(--border);">
+                    <h1 class="h2 fw-bold mb-2 text-center">Welcome back</h1>
+                    <p class="text-ink-dim text-center mb-5">Enter the circle.</p>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger mb-4">{{ form.non_field_errors|join:" " }}</div>
+                        {% endif %}
+
+                        {% for field in form %}
+                        <div class="mb-4">
+                            <label class="form-label text-uppercase tracking-widest small text-neon mb-2">{{ field.label
+                                }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                            <div class="text-danger small mt-1">{{ field.errors|join:" " }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+
+                        <button type="submit" class="btn-kinetic w-100 justify-content-center mt-2">Enter</button>
+                    </form>
+
+                    <p class="mt-5 text-center text-ink-dim small">
+                        New here?
+                        <a class="text-neon" href="{% url 'register' %}">Join the movement</a>
+                    </p>
                 </div>
-            {% endfor %}
-            <button type="submit" class="btn btn-light w-100 py-3">Enter FOREIGN</button>
-        </form>
-        <p class="mt-4 text-center text-white-50" data-animate="fade-up" data-animate-delay="0.2s">
-            New here?
-            <a class="link-light" href="{% url 'register' %}">Join the movement</a>
-        </p>
+            </div>
+        </div>
     </div>
 </section>
 {% endblock %}

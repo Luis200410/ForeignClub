@@ -10,152 +10,168 @@
                 <p class="eyebrow mb-2">Stage 3 · Afterburner · {{ slot_label }}</p>
                 <h1 class="h4 fw-bold tracking-tight mb-2">
                     {% if activity %}
-                        {{ activity.title }}
+                    {{ activity.title }}
                     {% elif slot_enum == game_slot_value and selected_game %}
-                        {{ selected_game.title|default:"Game Mission" }}
+                    {{ selected_game.title|default:"Game Mission" }}
                     {% else %}
-                        Afterburner Mission
+                    Afterburner Mission
                     {% endif %}
                 </h1>
                 {% if activity and activity.description %}
-                    <p class="text-white-50 mb-4">{{ activity.description }}</p>
+                <p class="text-white-50 mb-4">{{ activity.description }}</p>
                 {% elif slot_enum == game_slot_value and selected_game and selected_game.description %}
-                    <p class="text-white-50 mb-4">{{ selected_game.description }}</p>
+                <p class="text-white-50 mb-4">{{ selected_game.description }}</p>
                 {% else %}
-                    <p class="text-white-50 mb-4">Dive into the activity dashboard to complete this retention mission.</p>
+                <p class="text-white-50 mb-4">Dive into the activity dashboard to complete this retention mission.</p>
                 {% endif %}
 
                 {% if slot_enum == game_slot_value and selected_game %}
-                    {% with props_id="game-dashboard-props-"|add:course.slug|add:"-"|add:module.order %}
-                    <script type="application/json" id="{{ props_id }}">{{ game_props_json|default:'{}'|safe }}</script>
-                    <div class="vue-game"
-                         data-game-type="{{ selected_game.game_type }}"
-                         data-game-props-id="{{ props_id }}"
-                    ></div>
-                    {% endwith %}
-                    <p class="text-white-50 small mt-3">Return to the Afterburner page to mark this mission complete.</p>
+                {% with props_id="game-dashboard-props-"|add:course.slug|add:"-"|add:module.order %}
+                <script type="application/json" id="{{ props_id }}">{{ game_props_json|default:'{}'|safe }}</script>
+                <div class="vue-game" data-game-type="{{ selected_game.game_type }}"
+                    data-game-props-id="{{ props_id }}"></div>
+                {% endwith %}
+                <p class="text-white-50 small mt-3">Return to the Afterburner page to mark this mission complete.</p>
                 {% elif slot_enum == talk_slot_value %}
-                    <div class="recorder-panel js-recorder-card" data-activity="talk-record">
-                        <div class="recorder-controls">
-                            <button class="todo-check todo-check--ghost" type="button" data-recorder-action="start">Start Recording</button>
-                            <button class="todo-check todo-check--ghost" type="button" data-recorder-action="stop">Stop</button>
-                            <button class="todo-check todo-check--ghost" type="button" data-recorder-action="play">Play</button>
-                            <a class="todo-check todo-check--ghost js-recorder-download" href="#" download="afterburner-talk-recording.webm" hidden>Download</a>
-                        </div>
-                        <p class="recorder-status js-recorder-status text-white-50 small mb-2">Recorder idle.</p>
-                        <audio class="recorder-audio" controls hidden></audio>
-                        <p class="text-white-50 small mb-0">Practice your pronunciation and keep the best take for feedback.</p>
+                <div class="recorder-panel js-recorder-card" data-activity="talk-record">
+                    <div class="recorder-controls">
+                        <button class="todo-check todo-check--ghost" type="button" data-recorder-action="start">Start
+                            Recording</button>
+                        <button class="todo-check todo-check--ghost" type="button"
+                            data-recorder-action="stop">Stop</button>
+                        <button class="todo-check todo-check--ghost" type="button"
+                            data-recorder-action="play">Play</button>
+                        <a class="todo-check todo-check--ghost js-recorder-download" href="javascript:void(0)"
+                            download="afterburner-talk-recording.webm" hidden>Download</a>
                     </div>
+                    <p class="recorder-status js-recorder-status text-white-50 small mb-2">Recorder idle.</p>
+                    <audio class="recorder-audio" controls hidden></audio>
+                    <p class="text-white-50 small mb-0">Practice your pronunciation and keep the best take for feedback.
+                    </p>
+                </div>
                 {% elif slot_enum == reading_slot_value %}
-                    {% if reading_chapters %}
-                        <div class="reading-carousel" data-reading-slider>
-                            <div class="reading-carousel__rail">
-                                <button type="button" class="reading-carousel__arrow" data-slider-prev aria-label="{% trans "Previous chapter" %}" disabled>
-                                    <span aria-hidden="true">&#8592;</span>
-                                </button>
-                                <div class="reading-carousel__viewport">
-                                    {% for chapter in reading_chapters %}
-                                        <article class="reading-slide{% if forloop.first %} is-active{% endif %}" data-reading-card>
-                                            <header class="reading-slide__header">
-                                                <span class="reading-slide__chapter">{% trans "Chapter" %} {{ forloop.counter }}</span>
-                                                <h2 class="reading-slide__title h5 fw-semibold mb-2">{{ chapter.title }}</h2>
-                                            </header>
-                                            <div class="reading-slide__body">
-                                                {% if chapter.content %}
-                                                    <p class="reading-slide__text">{{ chapter.content|linebreaksbr }}</p>
-                                                {% else %}
-                                                    <p class="reading-slide__text text-white-50">{% trans "Add the story content for this chapter to guide learners." %}</p>
-                                                {% endif %}
-                                            </div>
-                                        </article>
-                                    {% endfor %}
+                {% if reading_chapters %}
+                <div class="reading-carousel" data-reading-slider>
+                    <div class="reading-carousel__rail">
+                        <button type="button" class="reading-carousel__arrow" data-slider-prev aria-label="{% trans "
+                            Previous chapter" %}" disabled>
+                            <span aria-hidden="true">&#8592;</span>
+                        </button>
+                        <div class="reading-carousel__viewport">
+                            {% for chapter in reading_chapters %}
+                            <article class="reading-slide{% if forloop.first %} is-active{% endif %}" data-reading-card>
+                                <header class="reading-slide__header">
+                                    <span class="reading-slide__chapter">{% trans "Chapter" %} {{ forloop.counter
+                                        }}</span>
+                                    <h2 class="reading-slide__title h5 fw-semibold mb-2">{{ chapter.title }}</h2>
+                                </header>
+                                <div class="reading-slide__body">
+                                    {% if chapter.content %}
+                                    <p class="reading-slide__text">{{ chapter.content|linebreaksbr }}</p>
+                                    {% else %}
+                                    <p class="reading-slide__text text-white-50">{% trans "Add the story content for
+                                        this chapter to guide learners." %}</p>
+                                    {% endif %}
                                 </div>
-                                <button type="button" class="reading-carousel__arrow" data-slider-next aria-label="{% trans "Next chapter" %}">
-                                    <span aria-hidden="true">&#8594;</span>
-                                </button>
-                            </div>
-                            <div class="reading-carousel__footer">
-                                <div class="reading-carousel__progress">
-                                    <span class="reading-carousel__index" data-slider-index>1</span>
-                                    <span class="reading-carousel__separator">/</span>
-                                    <span class="reading-carousel__total">{{ reading_chapters|length }}</span>
-                                </div>
-                                <div class="reading-carousel__dots" data-slider-dots>
-                                    {% for chapter in reading_chapters %}
-                                        <button type="button" class="reading-carousel__dot{% if forloop.first %} is-active{% endif %}" data-slider-dot="{{ forloop.counter0 }}" aria-label="{% blocktrans with num=forloop.counter %}Go to chapter {{ num }}{% endblocktrans %}"></button>
-                                    {% endfor %}
-                                </div>
-                            </div>
+                            </article>
+                            {% endfor %}
                         </div>
-                    {% else %}
-                        <div class="dashboard-placeholder">
-                            <p class="text-white-50 mb-0">{% trans "Add chapters in the admin to guide learners through the reading mission." %}</p>
+                        <button type="button" class="reading-carousel__arrow" data-slider-next aria-label="{% trans "
+                            Next chapter" %}">
+                            <span aria-hidden="true">&#8594;</span>
+                        </button>
+                    </div>
+                    <div class="reading-carousel__footer">
+                        <div class="reading-carousel__progress">
+                            <span class="reading-carousel__index" data-slider-index>1</span>
+                            <span class="reading-carousel__separator">/</span>
+                            <span class="reading-carousel__total">{{ reading_chapters|length }}</span>
                         </div>
-                    {% endif %}
-                {% elif slot_enum == grammar_slot_value %}
-                    <div class="grammar-points">
-                        {% if grammar_points %}
-                            <ul class="grammar-point-list">
-                                {% for point in grammar_points %}
-                                    <li class="grammar-point">
-                                        <h2 class="h6 fw-semibold mb-1">{{ point.formula }}</h2>
-                                        {% if point.explanation %}
-                                            <p class="text-white-50 mb-0">{{ point.explanation|linebreaksbr }}</p>
-                                        {% else %}
-                                            <p class="text-white-50 mb-0">Explain this pattern in simple terms for learners.</p>
-                                        {% endif %}
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <div class="dashboard-placeholder">
-                                <p class="text-white-50 mb-0">Add grammar equations in the admin to spell out the structure you want learners to master.</p>
-                            </div>
-                        {% endif %}
+                        <div class="reading-carousel__dots" data-slider-dots>
+                            {% for chapter in reading_chapters %}
+                            <button type="button"
+                                class="reading-carousel__dot{% if forloop.first %} is-active{% endif %}"
+                                data-slider-dot="{{ forloop.counter0 }}"
+                                aria-label="{% blocktrans with num=forloop.counter %}Go to chapter {{ num }}{% endblocktrans %}"></button>
+                            {% endfor %}
+                        </div>
                     </div>
-                {% elif slot_enum == real_world_slot_value %}
-                    <div class="real-world-challenge" data-realworld>
-                        {% if real_world_goal %}
-                            <div class="real-world-goal mb-3">
-                                <p class="eyebrow text-success mb-1">Goal</p>
-                                <p class="text-white mb-0">{{ real_world_goal }}</p>
-                            </div>
-                        {% endif %}
-                        {% if activity and activity.description %}
-                            <p class="text-white-50 mb-3">{{ activity.description|linebreaksbr }}</p>
-                        {% endif %}
-
-                        {% if real_world_steps %}
-                            <button type="button" class="btn btn-outline-light btn-sm real-world-toggle" data-realworld-toggle>
-                                {% trans "Show mission steps" %}
-                            </button>
-                            <ol class="real-world-steps" data-realworld-steps hidden>
-                                {% for step in real_world_steps %}
-                                    <li class="real-world-step">
-                                        <span class="real-world-step__badge">{{ forloop.counter }}</span>
-                                        <div class="real-world-step__body">
-                                            {% if step.title %}
-                                                <h3 class="real-world-step__title h6 mb-1">{{ step.title }}</h3>
-                                            {% endif %}
-                                            <p class="text-white-50 mb-0">{{ step.instruction|linebreaksbr }}</p>
-                                        </div>
-                                    </li>
-                                {% endfor %}
-                            </ol>
-                        {% else %}
-                            <div class="dashboard-placeholder mt-3">
-                                <p class="text-white-50 mb-0">Add detailed steps in the admin so learners know exactly how to execute the challenge.</p>
-                            </div>
-                        {% endif %}
-                    </div>
+                </div>
                 {% else %}
+                <div class="dashboard-placeholder">
+                    <p class="text-white-50 mb-0">{% trans "Add chapters in the admin to guide learners through the
+                        reading mission." %}</p>
+                </div>
+                {% endif %}
+                {% elif slot_enum == grammar_slot_value %}
+                <div class="grammar-points">
+                    {% if grammar_points %}
+                    <ul class="grammar-point-list">
+                        {% for point in grammar_points %}
+                        <li class="grammar-point">
+                            <h2 class="h6 fw-semibold mb-1">{{ point.formula }}</h2>
+                            {% if point.explanation %}
+                            <p class="text-white-50 mb-0">{{ point.explanation|linebreaksbr }}</p>
+                            {% else %}
+                            <p class="text-white-50 mb-0">Explain this pattern in simple terms for learners.</p>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
                     <div class="dashboard-placeholder">
-                        <p class="text-white-50 mb-0">Custom content for this activity is coming soon. Use this dashboard space to embed videos, upload resources, or provide interactive instructions.</p>
+                        <p class="text-white-50 mb-0">Add grammar equations in the admin to spell out the structure you
+                            want learners to master.</p>
                     </div>
+                    {% endif %}
+                </div>
+                {% elif slot_enum == real_world_slot_value %}
+                <div class="real-world-challenge" data-realworld>
+                    {% if real_world_goal %}
+                    <div class="real-world-goal mb-3">
+                        <p class="eyebrow text-success mb-1">Goal</p>
+                        <p class="text-white mb-0">{{ real_world_goal }}</p>
+                    </div>
+                    {% endif %}
+                    {% if activity and activity.description %}
+                    <p class="text-white-50 mb-3">{{ activity.description|linebreaksbr }}</p>
+                    {% endif %}
+
+                    {% if real_world_steps %}
+                    <button type="button" class="btn btn-outline-light btn-sm real-world-toggle" data-realworld-toggle>
+                        {% trans "Show mission steps" %}
+                    </button>
+                    <ol class="real-world-steps" data-realworld-steps hidden>
+                        {% for step in real_world_steps %}
+                        <li class="real-world-step">
+                            <span class="real-world-step__badge">{{ forloop.counter }}</span>
+                            <div class="real-world-step__body">
+                                {% if step.title %}
+                                <h3 class="real-world-step__title h6 mb-1">{{ step.title }}</h3>
+                                {% endif %}
+                                <p class="text-white-50 mb-0">{{ step.instruction|linebreaksbr }}</p>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ol>
+                    {% else %}
+                    <div class="dashboard-placeholder mt-3">
+                        <p class="text-white-50 mb-0">Add detailed steps in the admin so learners know exactly how to
+                            execute the challenge.</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="dashboard-placeholder">
+                    <p class="text-white-50 mb-0">Custom content for this activity is coming soon. Use this dashboard
+                        space to embed videos, upload resources, or provide interactive instructions.</p>
+                </div>
                 {% endif %}
 
                 <div class="mt-4">
-                    <a class="btn btn-outline-light" href="{% url 'course_module_stage' course.slug module.order 'afterburner' %}">Back to Afterburner</a>
+                    <a class="btn btn-outline-light"
+                        href="{% url 'course_module_stage' course.slug module.order 'afterburner' %}">Back to
+                        Afterburner</a>
                 </div>
             </article>
         </div>
@@ -164,275 +180,275 @@
 {% endblock %}
 
 {% block extra_scripts %}
-    {{ block.super }}
-    <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js"></script>
-    <script src="{% static 'core/games/components/vocabulary-cards.js' %}"></script>
-    <script src="{% static 'core/games/app.js' %}"></script>
-    {% if slot_enum == talk_slot_value %}
-        <script>
-            (function () {
-                const recorderCard = document.querySelector('.js-recorder-card');
-                if (!recorderCard || !navigator.mediaDevices) {
+{{ block.super }}
+<script src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js"></script>
+<script src="{% static 'core/games/components/vocabulary-cards.js' %}"></script>
+<script src="{% static 'core/games/app.js' %}"></script>
+{% if slot_enum == talk_slot_value %}
+<script>
+    (function () {
+        const recorderCard = document.querySelector('.js-recorder-card');
+        if (!recorderCard || !navigator.mediaDevices) {
+            return;
+        }
+
+        let mediaRecorder = null;
+        let mediaRecorderMimeType = '';
+        let activeStream = null;
+        let recordedChunks = [];
+        const statusEl = recorderCard.querySelector('.js-recorder-status');
+        const audioEl = recorderCard.querySelector('.recorder-audio');
+        const downloadEl = recorderCard.querySelector('.js-recorder-download');
+
+        const setStatus = function (text) {
+            if (statusEl) {
+                statusEl.textContent = text;
+            }
+        };
+
+        const resetRecording = function () {
+            recordedChunks = [];
+            if (audioEl) {
+                audioEl.src = '';
+                audioEl.hidden = true;
+            }
+            if (downloadEl) {
+                downloadEl.hidden = true;
+                downloadEl.removeAttribute('href');
+            }
+        };
+
+        const handleDataAvailable = function (event) {
+            if (event.data && event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
+        };
+
+        const pickMimeType = function () {
+            const candidates = [
+                'audio/webm;codecs=opus',
+                'audio/webm',
+                'audio/mp4',
+                'audio/mp4;codecs=mp4a.40.2',
+            ];
+            for (let i = 0; i < candidates.length; i += 1) {
+                if (window.MediaRecorder && MediaRecorder.isTypeSupported(candidates[i])) {
+                    return candidates[i];
+                }
+            }
+            return '';
+        };
+
+        const startRecording = function () {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                setStatus('Recording is not supported in this browser.');
+                return;
+            }
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                setStatus('Recording already in progress… hit stop to finish.');
+                return;
+            }
+
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+                activeStream = stream;
+                mediaRecorderMimeType = pickMimeType();
+                try {
+                    mediaRecorder = new MediaRecorder(stream, mediaRecorderMimeType ? { mimeType: mediaRecorderMimeType } : undefined);
+                } catch (err) {
+                    setStatus('Recorder could not start. Please try again.');
                     return;
                 }
-
-                let mediaRecorder = null;
-                let mediaRecorderMimeType = '';
-                let activeStream = null;
-                let recordedChunks = [];
-                const statusEl = recorderCard.querySelector('.js-recorder-status');
-                const audioEl = recorderCard.querySelector('.recorder-audio');
-                const downloadEl = recorderCard.querySelector('.js-recorder-download');
-
-                const setStatus = function (text) {
-                    if (statusEl) {
-                        statusEl.textContent = text;
-                    }
-                };
-
-                const resetRecording = function () {
-                    recordedChunks = [];
-                    if (audioEl) {
-                        audioEl.src = '';
-                        audioEl.hidden = true;
-                    }
-                    if (downloadEl) {
-                        downloadEl.hidden = true;
-                        downloadEl.removeAttribute('href');
-                    }
-                };
-
-                const handleDataAvailable = function (event) {
-                    if (event.data && event.data.size > 0) {
-                        recordedChunks.push(event.data);
-                    }
-                };
-
-                const pickMimeType = function () {
-                    const candidates = [
-                        'audio/webm;codecs=opus',
-                        'audio/webm',
-                        'audio/mp4',
-                        'audio/mp4;codecs=mp4a.40.2',
-                    ];
-                    for (let i = 0; i < candidates.length; i += 1) {
-                        if (window.MediaRecorder && MediaRecorder.isTypeSupported(candidates[i])) {
-                            return candidates[i];
-                        }
-                    }
-                    return '';
-                };
-
-                const startRecording = function () {
-                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                        setStatus('Recording is not supported in this browser.');
-                        return;
-                    }
-                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                        setStatus('Recording already in progress… hit stop to finish.');
-                        return;
-                    }
-
-                    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
-                        activeStream = stream;
-                        mediaRecorderMimeType = pickMimeType();
-                        try {
-                            mediaRecorder = new MediaRecorder(stream, mediaRecorderMimeType ? { mimeType: mediaRecorderMimeType } : undefined);
-                        } catch (err) {
-                            setStatus('Recorder could not start. Please try again.');
-                            return;
-                        }
-                        recordedChunks = [];
-                        mediaRecorder.addEventListener('dataavailable', handleDataAvailable);
-                        mediaRecorder.addEventListener('stop', function () {
-                            if (activeStream) {
-                                activeStream.getTracks().forEach(function (track) {
-                                    track.stop();
-                                });
-                                activeStream = null;
-                            }
-                            if (recordedChunks.length === 0) {
-                                setStatus('Recording stopped. Nothing captured.');
-                                return;
-                            }
-                            const blob = new Blob(recordedChunks, { type: mediaRecorderMimeType || 'audio/webm' });
-                            const url = URL.createObjectURL(blob);
-                            if (audioEl) {
-                                audioEl.src = url;
-                                audioEl.hidden = false;
-                            }
-                            if (downloadEl) {
-                                downloadEl.href = url;
-                                downloadEl.hidden = false;
-                            }
-                            setStatus('Recording ready. Replay or download your take.');
-                        });
-                        mediaRecorder.start();
-                        setStatus('Recording… speak clearly and pause when ready.');
-                    }).catch(function () {
-                        setStatus('Microphone permissions are required to record.');
-                    });
-                };
-
-                const stopRecording = function () {
-                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                        mediaRecorder.stop();
-                    } else {
-                        setStatus('No active recording to stop.');
-                    }
-                };
-
-                const playRecording = function () {
-                    if (audioEl && audioEl.src) {
-                        audioEl.play();
-                    } else {
-                        setStatus('Record first to unlock playback.');
-                    }
-                };
-
-                recorderCard.addEventListener('click', function (event) {
-                    const target = event.target.closest('[data-recorder-action]');
-                    if (!target) {
-                        return;
-                    }
-                    const action = target.getAttribute('data-recorder-action');
-                    if (action === 'start') {
-                        resetRecording();
-                        startRecording();
-                    } else if (action === 'stop') {
-                        stopRecording();
-                    } else if (action === 'play') {
-                        playRecording();
-                    }
-                });
-
-                window.addEventListener('beforeunload', function () {
+                recordedChunks = [];
+                mediaRecorder.addEventListener('dataavailable', handleDataAvailable);
+                mediaRecorder.addEventListener('stop', function () {
                     if (activeStream) {
                         activeStream.getTracks().forEach(function (track) {
                             track.stop();
                         });
+                        activeStream = null;
                     }
-                });
-            })();
-        </script>
-    {% endif %}
-    <script>
-        (function () {
-            const slider = document.querySelector('[data-reading-slider]');
-            if (!slider) {
-                return;
-            }
-            const cards = Array.from(slider.querySelectorAll('[data-reading-card]'));
-            const viewport = slider.querySelector('.reading-carousel__viewport');
-            const prevBtn = slider.querySelector('[data-slider-prev]');
-            const nextBtn = slider.querySelector('[data-slider-next]');
-            const indexEl = slider.querySelector('[data-slider-index]');
-            const dots = Array.from(slider.querySelectorAll('[data-slider-dot]'));
-            if (!cards.length) {
-                return;
-            }
-
-            let current = cards.findIndex((card) => card.classList.contains('is-active'));
-            if (current === -1) {
-                current = 0;
-                cards[0].classList.add('is-active');
-            }
-
-            const applyScrollState = (card) => {
-                if (!card) {
-                    return;
-                }
-                card.classList.remove('reading-slide--scroll');
-                const body = card.querySelector('.reading-slide__body');
-                if (body && body.scrollHeight > 340) {
-                    card.classList.add('reading-slide--scroll');
-                }
-            };
-
-            const updateState = () => {
-                cards.forEach((card, idx) => {
-                    card.classList.toggle('is-active', idx === current);
-                    if (idx !== current) {
-                        card.classList.remove('reading-slide--scroll');
-                    }
-                });
-                const active = cards[current];
-                applyScrollState(active);
-                if (viewport) {
-                    viewport.style.height = active ? `${active.offsetHeight}px` : '';
-                }
-                if (indexEl) {
-                    indexEl.textContent = String(current + 1);
-                }
-                if (prevBtn) {
-                    prevBtn.disabled = current === 0;
-                }
-                if (nextBtn) {
-                    nextBtn.disabled = current === cards.length - 1;
-                }
-                dots.forEach((dot, idx) => {
-                    dot.classList.toggle('is-active', idx === current);
-                });
-            };
-
-            if (prevBtn) {
-                prevBtn.addEventListener('click', () => {
-                    if (current > 0) {
-                        current -= 1;
-                        updateState();
-                    }
-                });
-            }
-
-            if (nextBtn) {
-                nextBtn.addEventListener('click', () => {
-                    if (current < cards.length - 1) {
-                        current += 1;
-                        updateState();
-                    }
-                });
-            }
-
-            dots.forEach((dot) => {
-                dot.addEventListener('click', () => {
-                    const target = Number(dot.dataset.sliderDot || 0);
-                    if (target === current) {
+                    if (recordedChunks.length === 0) {
+                        setStatus('Recording stopped. Nothing captured.');
                         return;
                     }
-                    current = Math.max(0, Math.min(cards.length - 1, target));
-                    updateState();
+                    const blob = new Blob(recordedChunks, { type: mediaRecorderMimeType || 'audio/webm' });
+                    const url = URL.createObjectURL(blob);
+                    if (audioEl) {
+                        audioEl.src = url;
+                        audioEl.hidden = false;
+                    }
+                    if (downloadEl) {
+                        downloadEl.href = url;
+                        downloadEl.hidden = false;
+                    }
+                    setStatus('Recording ready. Replay or download your take.');
                 });
+                mediaRecorder.start();
+                setStatus('Recording… speak clearly and pause when ready.');
+            }).catch(function () {
+                setStatus('Microphone permissions are required to record.');
             });
+        };
 
-            updateState();
-            window.addEventListener('resize', updateState);
-        })();
+        const stopRecording = function () {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            } else {
+                setStatus('No active recording to stop.');
+            }
+        };
 
-        {% trans "Show mission steps" as show_steps_label %}
-        {% trans "Hide mission steps" as hide_steps_label %}
-        (function () {
-            const showLabel = '{{ show_steps_label|escapejs }}';
-            const hideLabel = '{{ hide_steps_label|escapejs }}';
-            const container = document.querySelector('[data-realworld]');
-            if (!container) {
+        const playRecording = function () {
+            if (audioEl && audioEl.src) {
+                audioEl.play();
+            } else {
+                setStatus('Record first to unlock playback.');
+            }
+        };
+
+        recorderCard.addEventListener('click', function (event) {
+            const target = event.target.closest('[data-recorder-action]');
+            if (!target) {
                 return;
             }
-            const toggle = container.querySelector('[data-realworld-toggle]');
-            const list = container.querySelector('[data-realworld-steps]');
-            if (!toggle || !list) {
+            const action = target.getAttribute('data-recorder-action');
+            if (action === 'start') {
+                resetRecording();
+                startRecording();
+            } else if (action === 'stop') {
+                stopRecording();
+            } else if (action === 'play') {
+                playRecording();
+            }
+        });
+
+        window.addEventListener('beforeunload', function () {
+            if (activeStream) {
+                activeStream.getTracks().forEach(function (track) {
+                    track.stop();
+                });
+            }
+        });
+    })();
+</script>
+{% endif %}
+<script>
+    (function () {
+        const slider = document.querySelector('[data-reading-slider]');
+        if (!slider) {
+            return;
+        }
+        const cards = Array.from(slider.querySelectorAll('[data-reading-card]'));
+        const viewport = slider.querySelector('.reading-carousel__viewport');
+        const prevBtn = slider.querySelector('[data-slider-prev]');
+        const nextBtn = slider.querySelector('[data-slider-next]');
+        const indexEl = slider.querySelector('[data-slider-index]');
+        const dots = Array.from(slider.querySelectorAll('[data-slider-dot]'));
+        if (!cards.length) {
+            return;
+        }
+
+        let current = cards.findIndex((card) => card.classList.contains('is-active'));
+        if (current === -1) {
+            current = 0;
+            cards[0].classList.add('is-active');
+        }
+
+        const applyScrollState = (card) => {
+            if (!card) {
                 return;
             }
-            toggle.textContent = showLabel;
-            toggle.addEventListener('click', function () {
-                const isHidden = list.hasAttribute('hidden');
-                if (isHidden) {
-                    list.removeAttribute('hidden');
-                    toggle.textContent = hideLabel;
-                } else {
-                    list.setAttribute('hidden', 'hidden');
-                    toggle.textContent = showLabel;
+            card.classList.remove('reading-slide--scroll');
+            const body = card.querySelector('.reading-slide__body');
+            if (body && body.scrollHeight > 340) {
+                card.classList.add('reading-slide--scroll');
+            }
+        };
+
+        const updateState = () => {
+            cards.forEach((card, idx) => {
+                card.classList.toggle('is-active', idx === current);
+                if (idx !== current) {
+                    card.classList.remove('reading-slide--scroll');
                 }
             });
-        })();
-    </script>
+            const active = cards[current];
+            applyScrollState(active);
+            if (viewport) {
+                viewport.style.height = active ? `${active.offsetHeight}px` : '';
+            }
+            if (indexEl) {
+                indexEl.textContent = String(current + 1);
+            }
+            if (prevBtn) {
+                prevBtn.disabled = current === 0;
+            }
+            if (nextBtn) {
+                nextBtn.disabled = current === cards.length - 1;
+            }
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('is-active', idx === current);
+            });
+        };
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (current > 0) {
+                    current -= 1;
+                    updateState();
+                }
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                if (current < cards.length - 1) {
+                    current += 1;
+                    updateState();
+                }
+            });
+        }
+
+        dots.forEach((dot) => {
+            dot.addEventListener('click', () => {
+                const target = Number(dot.dataset.sliderDot || 0);
+                if (target === current) {
+                    return;
+                }
+                current = Math.max(0, Math.min(cards.length - 1, target));
+                updateState();
+            });
+        });
+
+        updateState();
+        window.addEventListener('resize', updateState);
+    })();
+
+    {% trans "Show mission steps" as show_steps_label %}
+    {% trans "Hide mission steps" as hide_steps_label %}
+    (function () {
+        const showLabel = '{{ show_steps_label|escapejs }}';
+        const hideLabel = '{{ hide_steps_label|escapejs }}';
+        const container = document.querySelector('[data-realworld]');
+        if (!container) {
+            return;
+        }
+        const toggle = container.querySelector('[data-realworld-toggle]');
+        const list = container.querySelector('[data-realworld-steps]');
+        if (!toggle || !list) {
+            return;
+        }
+        toggle.textContent = showLabel;
+        toggle.addEventListener('click', function () {
+            const isHidden = list.hasAttribute('hidden');
+            if (isHidden) {
+                list.removeAttribute('hidden');
+                toggle.textContent = hideLabel;
+            } else {
+                list.setAttribute('hidden', 'hidden');
+                toggle.textContent = showLabel;
+            }
+        });
+    })();
+</script>
 {% endblock %}

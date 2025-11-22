@@ -1,143 +1,234 @@
 {% extends "core/base.html" %}
 {% block title %}FOREIGN · Speak Together{% endblock %}
 {% block content %}
-<section class="hero hero-split">
-    <div class="parallax-sphere sphere-a" aria-hidden="true"></div>
-    <div class="parallax-sphere sphere-b" aria-hidden="true"></div>
-    <div class="container-xl hero-grid">
-        <div class="hero-copy" data-animate="fade-up">
-            <p class="eyebrow text-uppercase mb-3">Community-first English</p>
-            <h1 class="display-4 mb-3">Learn together, speak with ease.</h1>
-            <p class="lead text-white-50 mb-4">Conversations, not drills. We match neighbours, mentors, and coaches so you practice with real people, every week.</p>
-            <div class="hero-actions gap-3 flex-wrap">
-                <a class="btn btn-light btn-lg px-5" href="{% url 'register' %}" data-magnetic>Join the Circle</a>
-                <a class="btn btn-outline-light btn-lg px-5" href="{% url 'login' %}" data-magnetic>Member Log in</a>
+<div id="smooth-wrapper">
+    <div id="smooth-content">
+
+        <!-- Kinetic Hero -->
+        <section class="section-kinetic" style="height: 100vh; align-items: center; text-align: center;">
+            <h1 class="display-gigantic text-neon" data-scroll>FOREIGN</h1>
+            <div class="position-absolute bottom-0 start-50 translate-middle-x mb-5" data-scroll>
+                <p class="text-uppercase tracking-widest text-neon">Scroll to enter</p>
             </div>
-            <div class="hero-tags">
-                <span class="pill">Micro-missions</span>
-                <span class="pill">Live feedback</span>
-                <span class="pill">Clips you can replay</span>
+        </section>
+
+        <!-- Marquee -->
+        <div class="marquee-container bg-surface-highlight">
+            <div class="marquee-content">
+                SPEAK CONNECT GROW SPEAK CONNECT GROW SPEAK CONNECT GROW
             </div>
-            <div class="hero-metrics">
-                {% for stat in landing_metrics %}
-                    <div class="metric-tile">
-                        <span class="metric-value">{{ stat.value }}</span>
-                        <span class="metric-label">{{ stat.label }}</span>
+        </div>
+
+        <!-- Manifesto -->
+        <section class="section-kinetic">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <h2 class="display-xl text-ink mb-5" style="line-height: 1;" data-scroll>
+                            Real conversations. <span class="text-neon">Real people.</span> No drills. Just fluency.
+                        </h2>
+                        <div class="lead text-ink-dim" style="font-size: 1.5rem; line-height: 1.6;" data-scroll>
+                            <p class="mb-4">Most language apps treat you like a solitary data point. They drill you on
+                                vocabulary in isolation, leaving you frozen when it’s time to actually speak. We believe
+                                fluency isn't about memorizing lists—it's about the messy, beautiful, high-stakes game
+                                of connection.</p>
+                            <p class="mb-4">FOREIGN is a radical departure. We replace the lonely grind with a vibrant,
+                                living community. You don't just "learn" English; you live it. You debate, you joke, you
+                                negotiate, and you share your real life with people who are just as committed as you
+                                are.</p>
+                            <p>This is not a classroom. It's a global dinner table where the only rule is to keep the
+                                conversation flowing. Welcome to the circle.</p>
+                        </div>
+                        <div class="mt-6" data-scroll>
+                            <a href="{% url 'register' %}" class="btn-kinetic">Start Your Journey</a>
+                        </div>
                     </div>
-                {% endfor %}
+                </div>
             </div>
-        </div>
-        <div class="hero-visual" data-animate="fade-scale">
-            <div class="floating-card accent">
-                <p class="eyebrow mb-1">Community Story</p>
-                <p class="h5 mb-2">“English felt like belonging.”</p>
-                <p class="small text-white-50 mb-0">Daily check-ins, simple cues, and real neighbours cheering me on.</p>
-                <span class="small text-white-50 mt-3 d-block">Mateo · Bogotá → Madrid</span>
-            </div>
-            <div class="floating-card glass">
-                <p class="eyebrow mb-1">Live Clip</p>
-                <p class="h6 mb-2">“Can you share that link?”</p>
-                <p class="small text-white-50 mb-0">Coach breaks it down. You repeat. The room applauds.</p>
-            </div>
-            <div class="hero-gallery">
-                <div class="gallery-item gallery-item--primary"></div>
-                <div class="gallery-item gallery-item--secondary"></div>
-                <div class="gallery-item gallery-item--tertiary"></div>
-            </div>
-        </div>
-    </div>
-</section>
+        </section>
 
-<section class="container-xl py-7 story-rail" data-animate="fade-up">
-    <div class="rail-header">
-        <p class="eyebrow text-uppercase mb-2">Community stories</p>
-    </div>
-    <div class="slider" data-slider>
-        <div class="rail-actions">
-            <button class="rail-button" type="button" data-slider-prev aria-label="Previous story">‹</button>
-            <button class="rail-button" type="button" data-slider-next aria-label="Next story">›</button>
-        </div>
-        <div class="story-track" data-slider-track>
-            <article class="story-card">
-                <p class="eyebrow mb-2">Parents · São Paulo → Boston</p>
-                <h3 class="h5 mb-2">“We rewrote English nights together.”</h3>
-                <p class="text-white-50 small mb-0">We practised school calls, swapped notes, and confidence came from the circle.</p>
-            </article>
-            <article class="story-card">
-                <p class="eyebrow mb-2">Nandita · Mumbai → London</p>
-                <h3 class="h5 mb-2">“Simple cues, same-day wins.”</h3>
-                <p class="text-white-50 small mb-0">One phrase, one gesture, one goal. Tried in the lab, used that afternoon.</p>
-            </article>
-            <article class="story-card">
-                <p class="eyebrow mb-2">Mateo · Bogotá → Madrid</p>
-                <h3 class="h5 mb-2">“Practice felt like belonging.”</h3>
-                <p class="text-white-50 small mb-0">Check-ins over drills. Speaking got easier because I felt understood first.</p>
-            </article>
-            <article class="story-card">
-                <p class="eyebrow mb-2">Kemi · Lagos → Toronto</p>
-                <h3 class="h5 mb-2">“Coaching that fits real life.”</h3>
-                <p class="text-white-50 small mb-0">We rehearsed work calls, then shared wins with family threads.</p>
-            </article>
-        </div>
-    </div>
-</section>
-
-<section class="container-xl py-7 loops-section">
-    <div class="section-header" data-animate="fade-up">
-        <p class="eyebrow text-uppercase mb-2">Three simple loops</p>
-        <h2 class="display-6 mb-2">Stay speaking without overthinking.</h2>
-        <p class="text-white-50 mb-0">Warm-up, practice, replay. The rhythm stays the same, so you can focus on real conversations.</p>
-    </div>
-    <div class="loop-grid">
-        <div class="loop-card" data-animate="fade-up" data-animate-delay="0.05s">
-            <span class="pill">Arrive + connect</span>
-            <h3 class="h5 mb-2">Warm-Up Circle</h3>
-            <p class="text-white-50 mb-0">Check-ins, one phrase, one gesture. Screenshots you can reuse later.</p>
-        </div>
-        <div class="loop-card" data-animate="fade-up" data-animate-delay="0.1s">
-            <span class="pill">Try it together</span>
-            <h3 class="h5 mb-2">Practice Room</h3>
-            <p class="text-white-50 mb-0">Partner rotations, live cues, and gentle feedback clips you can replay.</p>
-        </div>
-        <div class="loop-card" data-animate="fade-up" data-animate-delay="0.15s">
-            <span class="pill">Use it today</span>
-            <h3 class="h5 mb-2">Everyday Replay</h3>
-            <p class="text-white-50 mb-0">Record a quick win, outline one real-world action, and celebrate together.</p>
-        </div>
-    </div>
-</section>
-
-<section class="container-xl py-7 image-ribbon">
-    <div class="image-tile image-tile--warm" data-animate="fade-scale">
-        <p class="eyebrow mb-1">Weekly rhythm</p>
-        <h3 class="h5 mb-2">Sunday Circle Prep</h3>
-        <p class="text-white-50 small mb-0">Pick the week’s focus and download phrase cards before we meet.</p>
-    </div>
-    <div class="image-tile image-tile--cool" data-animate="fade-scale" data-animate-delay="0.05s">
-        <p class="eyebrow mb-1">Mid-week boost</p>
-        <h3 class="h5 mb-2">Practice Room</h3>
-        <p class="text-white-50 small mb-0">Mini conversations with rotating partners and instant coaching clips.</p>
-    </div>
-    <div class="image-tile image-tile--neutral" data-animate="fade-scale" data-animate-delay="0.1s">
-        <p class="eyebrow mb-1">Friday playback</p>
-        <h3 class="h5 mb-2">Everyday Replay</h3>
-        <p class="text-white-50 small mb-0">Listen back, share reflections, and pick one action for the weekend.</p>
-    </div>
-</section>
-
-<section class="container-xl py-7 cta-stack">
-    <div class="cta-card" data-animate="fade-scale">
-        <div class="cta-grid">
-            <div>
-                <p class="eyebrow text-uppercase mb-2">Join the movement</p>
-                <h2 class="display-6 mb-3">English made social, gentle, and repeatable.</h2>
-                <p class="text-white-50 mb-0">Pick your circle, bring a friend, and let coaches guide the rhythm. Less text, more talking.</p>
+        <!-- Horizontal Scroll Features -->
+        <section class="horizontal-scroll-section">
+            <div class="horizontal-scroll-wrapper">
+                <div class="horizontal-track">
+                    <div class="horizontal-card">
+                        <h3 class="display-xl text-neon">01</h3>
+                        <div>
+                            <h4 class="h2 mb-3">Micro-missions</h4>
+                            <p class="lead text-ink-dim">Forget hour-long lectures. We give you bite-sized, actionable
+                                missions—"Describe your morning coffee," "Debate a news headline"—that fit into your
+                                coffee break. Small reps, massive compound interest.</p>
+                        </div>
+                    </div>
+                    <div class="horizontal-card">
+                        <h3 class="display-xl text-neon">02</h3>
+                        <div>
+                            <h4 class="h2 mb-3">Live Feedback</h4>
+                            <p class="lead text-ink-dim">Our coaches don't just correct grammar; they coach confidence.
+                                Get instant, human feedback on your tone, pronunciation, and flow. It's like having a
+                                personal strategist in your pocket.</p>
+                        </div>
+                    </div>
+                    <div class="horizontal-card">
+                        <h3 class="display-xl text-neon">03</h3>
+                        <div>
+                            <h4 class="h2 mb-3">The Circle</h4>
+                            <p class="lead text-ink-dim">You join a cohort of peers at your level. You track each
+                                other's streaks, celebrate wins, and pick each other up when you stumble. You're never
+                                learning alone.</p>
+                        </div>
+                    </div>
+                    <div class="horizontal-card" style="background: var(--primary); color: var(--ink-dark);">
+                        <h3 class="display-xl">Join</h3>
+                        <div>
+                            <h4 class="h2 mb-3">Ready to speak?</h4>
+                            <p class="lead mb-4">The best time to start was yesterday. The second best time is now.</p>
+                            <a href="{% url 'register' %}" class="btn btn-dark rounded-pill px-4 py-2">Get Started</a>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="cta-actions">
-                <a class="btn btn-light btn-lg px-5" href="{% url 'register' %}" data-magnetic>Start today</a>
-                <a class="btn btn-outline-light btn-lg px-5" href="{% url 'experiences' %}" data-magnetic>See circles</a>
+        </section>
+
+        <!-- Who is this for? Grid -->
+        <section class="section-kinetic">
+            <div class="container">
+                <h2 class="display-xl mb-6" data-scroll>Who belongs here?</h2>
+                <div class="row g-5">
+                    <div class="col-lg-6" data-scroll>
+                        <div class="p-5 border border-light rounded-4 h-100 bg-surface-highlight">
+                            <h3 class="h2 text-neon mb-3">The Founder</h3>
+                            <p class="lead text-ink-dim mb-4">You're pitching to global investors. You don't need
+                                perfect grammar; you need persuasion, clarity, and the ability to command a room. We
+                                help you find your "executive voice" in English.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-6" data-scroll>
+                        <div class="p-5 border border-light rounded-4 h-100 bg-surface-highlight">
+                            <h3 class="h2 text-neon mb-3">The Creative</h3>
+                            <p class="lead text-ink-dim mb-4">Your work is visual, emotional, and nuanced. Standard
+                                English classes feel sterile. You need to express abstract ideas, tell compelling
+                                stories, and connect on a human level.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-6" data-scroll>
+                        <div class="p-5 border border-light rounded-4 h-100 bg-surface-highlight">
+                            <h3 class="h2 text-neon mb-3">The Executive</h3>
+                            <p class="lead text-ink-dim mb-4">You're leading a remote, cross-cultural team.
+                                Misunderstandings are costly. You need to navigate cultural subtleties, give clear
+                                feedback, and build trust across borders.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-6" data-scroll>
+                        <div class="p-5 border border-light rounded-4 h-100 bg-surface-highlight">
+                            <h3 class="h2 text-neon mb-3">The Expat</h3>
+                            <p class="lead text-ink-dim mb-4">You're living in a new city. You can order coffee, but you
+                                can't make friends. You crave deep, meaningful connection. We help you bridge the gap
+                                from "survival English" to "social English."</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </section>
+
+        <!-- Sticky Stack Stories -->
+        <section class="section-kinetic sticky-stack-wrapper">
+            <div class="container">
+                <p class="text-neon text-uppercase mb-5">Stories from the circle</p>
+
+                <div class="sticky-card">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <h3 class="h1 mb-4">"I finally feel confident."</h3>
+                            <p class="lead text-ink-dim mb-4">"I spent years on apps, but I froze every time I had to
+                                speak in a meeting. FOREIGN changed everything. The daily micro-missions forced me to
+                                speak every single day, and the circle support made me feel safe to make mistakes. Now,
+                                I lead calls with international clients without a second thought."</p>
+                            <p class="text-neon text-uppercase tracking-widest">Mateo · Bogotá → Madrid</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sticky-card" style="background: var(--surface-highlight);">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <h3 class="h1 mb-4">"English became our family routine."</h3>
+                            <p class="lead text-ink-dim mb-4">"We wanted our kids to grow up bilingual, but we didn't
+                                know how to start. The Home Stream gave us simple, fun games to play at dinner. It
+                                stopped being a 'lesson' and just became how we talk. It's brought us closer together."
+                            </p>
+                            <p class="text-neon text-uppercase tracking-widest">The Garcias · Manila & Madrid</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sticky-card" style="background: var(--secondary); color: white;">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <h3 class="h1 mb-4">"I now host our stand-up in English."</h3>
+                            <p class="lead mb-4">"My startup is expanding to Europe, and I needed to level up fast. The
+                                Bridge Mode connected me with other founders. We practice pitching, negotiating, and
+                                leading. It's high-stakes practice in a low-risk environment. Invaluable."</p>
+                            <p class="text-uppercase tracking-widest" style="opacity: 0.8;">Sarah · Nairobi & Berlin</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Science -->
+        <section class="section-kinetic">
+            <div class="container">
+                <div class="row justify-content-center mb-5">
+                    <div class="col-lg-8 text-center">
+                        <h2 class="display-xl mb-4" data-scroll>Why it works.</h2>
+                        <p class="lead text-ink-dim" data-scroll>We didn't invent this. We just built the perfect
+                            environment for it.</p>
+                    </div>
+                </div>
+                <div class="row g-5">
+                    <div class="col-lg-6" data-scroll>
+                        <h3 class="h2 text-neon mb-4">The Interaction Hypothesis</h3>
+                        <p class="text-ink-dim mb-4">Linguist Michael Long proposed that language acquisition happens
+                            through "negotiation of meaning." When you struggle to make yourself understood in a real
+                            conversation, your brain is forced to rewire itself. Passive listening isn't enough; you
+                            need the friction of interaction.</p>
+                        <p class="text-ink-dim">FOREIGN creates these moments of "productive friction" every single day.
+                        </p>
+                    </div>
+                    <div class="col-lg-6" data-scroll>
+                        <h3 class="h2 text-neon mb-4">The Affective Filter</h3>
+                        <p class="text-ink-dim mb-4">Stephen Krashen identified that anxiety acts as a filter, blocking
+                            language acquisition. If you're stressed, you can't learn. Traditional classrooms are
+                            high-stress environments.</p>
+                        <p class="text-ink-dim">We lower the stakes. By focusing on connection over correction, we lower
+                            your "affective filter," allowing your brain to absorb the language naturally.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer Call -->
+        <section class="section-kinetic text-center">
+            <h2 class="display-xl mb-5" data-scroll>Your voice is waiting.</h2>
+            <div data-scroll>
+                <a href="{% url 'register' %}" class="btn-kinetic">Join the Circle</a>
+            </div>
+        </section>
+
     </div>
-</section>
+</div>
+
+<!-- Navigation Dock -->
+<nav class="nav-dock">
+    <a href="{% url 'landing' %}" class="active">Home</a>
+    <a href="{% url 'promise' %}">Promise</a>
+    <a href="{% url 'method' %}">Method</a>
+    <a href="{% url 'experiences' %}">Experiences</a>
+    <a href="{% url 'pricing' %}">Pricing</a>
+    <a href="{% url 'login' %}" style="color: var(--primary);">Login</a>
+</nav>
+
+<!-- Noise Overlay -->
+<div class="noise-overlay"></div>
 {% endblock %}
