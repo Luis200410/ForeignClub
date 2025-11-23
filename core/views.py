@@ -50,690 +50,43 @@ from .models import (
     SkillAssessment,
 )
 
-
-
-PROGRAM_LEVELS = [
-    {
-        "code": Profile.FluencyLevel.BEGINNER,
-        "title": "Level 1 · Gather",
-        "headline": "Start speaking comfortably with the people beside you.",
-        "tagline": "Tiny conversation loops that turn neighbours into practice partners.",
-        "details": [
-            "Introduce yourself stories guided by community coaches",
-            "Everyday phrases broken into listen · repeat · try steps",
-            "Weekly check-ins that celebrate the first wins together",
-        ],
-    },
-    {
-        "code": Profile.FluencyLevel.ELEMENTARY,
-        "title": "Level 2 · Build",
-        "headline": "Use English to handle daily life without overthinking.",
-        "tagline": "Role-play nights focused on home, work, and city errands.",
-        "details": [
-            "Scenario circles for shopping, transport, and appointments",
-            "Community mentors answering cultural questions in real time",
-            "Vocabulary cards you can screenshot and use the same day",
-        ],
-    },
-    {
-        "code": Profile.FluencyLevel.INTERMEDIATE,
-        "title": "Level 3 · Share",
-        "headline": "Explain your ideas clearly at work and in community spaces.",
-        "tagline": "Project nights turn presentations into simple story arcs.",
-        "details": [
-            "Presentation circles with peer notes and applause moments",
-            "Simplified grammar refreshers before each practice",
-            "Co-created vocabulary banks for meetings and collaboration",
-        ],
-    },
-    {
-        "code": Profile.FluencyLevel.UPPER_INTERMEDIATE,
-        "title": "Level 4 · Lead",
-        "headline": "Guide conversations, facilitate meetings, and support others.",
-        "tagline": "Leadership labs focused on facilitation, feedback, and coaching skills.",
-        "details": [
-            "Facilitation labs with rotating roles and shared agendas",
-            "Feedback clinics that model encouraging, useful language",
-            "Community mentoring sessions for newer speakers",
-        ],
-    },
-    {
-        "code": Profile.FluencyLevel.ADVANCED,
-        "title": "Level 5 · Amplify",
-        "headline": "Host events, teach others, and build cultural bridges.",
-        "tagline": "Showcase sessions and storytelling residencies with community impact.",
-        "details": [
-            "Weekly community showcase with panels and Q&A",
-            "Story studio to design talks, podcasts, or workshops",
-            "Collaboration labs with local organisations and schools",
-        ],
-    },
-    {
-        "code": Profile.FluencyLevel.PROFICIENT,
-        "title": "Level 6 · Legacy",
-        "headline": "Grow the movement by mentoring new cohorts and sharing knowledge.",
-        "tagline": "Mastery studios that document methods, resources, and collective wins.",
-        "details": [
-            "Mentor training for hosting neighbour circles",
-            "Resource-building sprints for schools and workplaces",
-            "Community archive projects capturing shared stories",
-        ],
-    },
-]
-
-PROGRAM_LOOKUP = {level["code"]: level for level in PROGRAM_LEVELS}
-
-
-MODULE_STAGE_SEQUENCE = [
-    {
-        "key": "launch-pad",
-        "label": "Warm-Up Circle",
-        "tagline": "Arrive & Connect",
-        "summary": "Open with greetings, check-ins, and one simple phrase we’ll reuse all session long.",
-    },
-    {
-        "key": "flight-deck",
-        "label": "Practice Room",
-        "tagline": "Try It Together",
-        "summary": "Pair up, rotate, and repeat short conversations that mirror everyday life.",
-    },
-    {
-        "key": "afterburner",
-        "label": "Everyday Replay",
-        "tagline": "Use It Today",
-        "summary": "Document key phrases, record a quick reflection, and set a simple real-world action.",
-    },
-]
-
-for idx, stage in enumerate(MODULE_STAGE_SEQUENCE, start=1):
-    stage["order"] = idx
-
-MODULE_STAGE_LOOKUP = {stage["key"]: stage for stage in MODULE_STAGE_SEQUENCE}
-
-PRE_SESSION_TASKS = [task["title"] for task in DEFAULT_LAUNCH_PAD_TASKS]
-
-POST_SESSION_TASKS = [
-    "NotebookLM game mission",
-    "Spaced repetition review (48h)",
-    "Peer feedback exchange",
-    "Mini challenge unlocked via app",
-    "Signal reminder: next live cue",
-    "Evidence upload checkpoint",
-]
-
-AFTERBURNER_CARD_LIBRARY = {
-    Profile.FluencyLevel.BEGINNER: {
-        ModuleAfterburnerActivity.Slot.TALK_RECORD: {
-            "title": "Talk & Record Challenge",
-            "description": "Press record. Say the model sentence slowly. Listen. Try again with clear sounds.",
-        },
-        ModuleAfterburnerActivity.Slot.READING: {
-            "title": "Read & Highlight",
-            "description": "Read the short text out loud. Underline three new words and say them again.",
-        },
-        ModuleAfterburnerActivity.Slot.REAL_WORLD: {
-            "title": "Real World Challenge",
-            "description": "Use today's phrase in real life. Ask a friend or mirror one easy question.",
-        },
-        ModuleAfterburnerActivity.Slot.GRAMMAR: {
-            "title": "Grammar Snapshot",
-            "description": "Watch the quick grammar clip. Write two present simple sentences about you.",
-        },
-    },
-    Profile.FluencyLevel.ELEMENTARY: {
-        ModuleAfterburnerActivity.Slot.TALK_RECORD: {
-            "title": "Pronunciation Replay",
-            "description": "Record yourself at natural speed. Compare stress with the sample and adjust endings.",
-        },
-        ModuleAfterburnerActivity.Slot.READING: {
-            "title": "Guided Reading Burst",
-            "description": "Read the article aloud, pausing to note useful collocations and rhythm shifts.",
-        },
-        ModuleAfterburnerActivity.Slot.REAL_WORLD: {
-            "title": "Real World Challenge",
-            "description": "Start a short chat using this week's pattern. Log one win in your NotebookLM notes.",
-        },
-        ModuleAfterburnerActivity.Slot.GRAMMAR: {
-            "title": "Grammar Booster",
-            "description": "Review the focus tense and craft three personal example sentences with it.",
-        },
-    },
-    Profile.FluencyLevel.INTERMEDIATE: {
-        ModuleAfterburnerActivity.Slot.TALK_RECORD: {
-            "title": "Voice Precision Lab",
-            "description": "Record a 30-second response and analyze rhythm, intonation, and connected speech.",
-        },
-        ModuleAfterburnerActivity.Slot.READING: {
-            "title": "Insight Reading Loop",
-            "description": "Annotate the text for tone shifts, then summarize the key evidence aloud.",
-        },
-        ModuleAfterburnerActivity.Slot.REAL_WORLD: {
-            "title": "Real World Challenge",
-            "description": "Apply the scenario in a real or simulated conversation and capture feedback notes.",
-        },
-        ModuleAfterburnerActivity.Slot.GRAMMAR: {
-            "title": "Grammar Systems Review",
-            "description": "Deconstruct the structure in context and rewrite complex sentences using it.",
-        },
-    },
-    Profile.FluencyLevel.UPPER_INTERMEDIATE: {
-        ModuleAfterburnerActivity.Slot.TALK_RECORD: {
-            "title": "Delivery Masterclass",
-            "description": "Capture a speaking sample focusing on stress, linking, and persuasive cadence.",
-        },
-        ModuleAfterburnerActivity.Slot.READING: {
-            "title": "Critical Reading Pulse",
-            "description": "Dissect the article's argument, mark discourse markers, and brief it back.",
-        },
-        ModuleAfterburnerActivity.Slot.REAL_WORLD: {
-            "title": "Real World Challenge",
-            "description": "Lead a live interaction mirroring the week's case study and reflect on outcomes.",
-        },
-        ModuleAfterburnerActivity.Slot.GRAMMAR: {
-            "title": "Grammar Structure Upgrade",
-            "description": "Integrate the grammar focus into original paragraphs, highlighting register shifts.",
-        },
-    },
-    Profile.FluencyLevel.ADVANCED: {
-        ModuleAfterburnerActivity.Slot.TALK_RECORD: {
-            "title": "Narrative Delivery Studio",
-            "description": "Record a concise story, refine nuance and pacing, and evaluate audience impact.",
-        },
-        ModuleAfterburnerActivity.Slot.READING: {
-            "title": "Analytical Reading Exchange",
-            "description": "Interrogate author intent, map advanced lexis, and present a critical response.",
-        },
-        ModuleAfterburnerActivity.Slot.REAL_WORLD: {
-            "title": "Real World Strategy Challenge",
-            "description": "Execute a mission-critical conversation and capture insights for a cohort debrief.",
-        },
-        ModuleAfterburnerActivity.Slot.GRAMMAR: {
-            "title": "Grammar Refinement Clinic",
-            "description": "Stress-test complex syntax by reshaping examples into formal and informal versions.",
-        },
-    },
-    Profile.FluencyLevel.PROFICIENT: {
-        ModuleAfterburnerActivity.Slot.TALK_RECORD: {
-            "title": "Executive Delivery Audit",
-            "description": "Produce a high-stakes delivery sample, calibrating executive presence and flow.",
-        },
-        ModuleAfterburnerActivity.Slot.READING: {
-            "title": "Scholarly Reading Sprint",
-            "description": "Synthesize advanced texts, extract thesis frameworks, and articulate counterpoints.",
-        },
-        ModuleAfterburnerActivity.Slot.REAL_WORLD: {
-            "title": "Real World Impact Challenge",
-            "description": "Drive an authentic negotiation or leadership moment and document measured outcomes.",
-        },
-        ModuleAfterburnerActivity.Slot.GRAMMAR: {
-            "title": "Grammar Edge Lab",
-            "description": "Manipulate nuanced structures across registers, ensuring precision under pressure.",
-        },
-    },
-}
-
-AFTERBURNER_GAME = {
-    "key": "mission-remix",
-    "title": "Didactic Game · Mission Remix",
-    "description": "A collaborative remix where squads reimagine the week’s mission with new stakes, vocabulary, and constraints.",
-}
-
-AFTERBURNER_SLOT_SEQUENCE = [
-    ModuleAfterburnerActivity.Slot.TALK_RECORD,
-    ModuleAfterburnerActivity.Slot.READING,
-    ModuleAfterburnerActivity.Slot.REAL_WORLD,
-    ModuleAfterburnerActivity.Slot.GRAMMAR,
-    ModuleAfterburnerActivity.Slot.GAME,
-]
-
-FLIGHT_DECK_SLOT_SEQUENCE = [
-    ModuleFlightDeckActivity.Slot.SCHEDULER,
-    ModuleFlightDeckActivity.Slot.NOTEBOOK,
-    ModuleFlightDeckActivity.Slot.RECORDER,
-]
-
-FLASHCARD_SRS_INTERVALS = [
-    timedelta(minutes=1),
-    timedelta(minutes=10),
-    timedelta(hours=1),
-    timedelta(hours=6),
-    timedelta(days=1),
-    timedelta(days=3),
-    timedelta(days=7),
-    timedelta(days=14),
-]
-
-ALLOWED_ENROLLMENT_STATUSES = {
-    CourseEnrollment.EnrollmentStatus.ACTIVE,
-    CourseEnrollment.EnrollmentStatus.COMPLETED,
-}
-
-
-def _get_afterburner_card_configs(
-    course: Course | None,
-    module: CourseModule | None = None,
-) -> list[dict[str, str]]:
-    """Return ordered Afterburner card configs, prioritising module customisations."""
-
-    fallback_level_map = AFTERBURNER_CARD_LIBRARY.get(
-        getattr(course, "fluency_level", Profile.FluencyLevel.INTERMEDIATE),
-        AFTERBURNER_CARD_LIBRARY[Profile.FluencyLevel.INTERMEDIATE],
-    )
-
-    module_activities = {}
-    if module is not None:
-        module_activities = {
-            activity.slot: activity
-            for activity in module.afterburner_activities.filter(is_active=True)
-        }
-
-    configs: list[dict[str, str | object]] = []
-    for slot in AFTERBURNER_SLOT_SEQUENCE:
-        activity = module_activities.get(slot)
-        fallback_card = fallback_level_map.get(slot, {})
-        if slot == ModuleAfterburnerActivity.Slot.GAME:
-            game_instance = getattr(activity, "game", None) or _resolve_adaptive_game(module)
-            configs.append(
-                {
-                    "slot": slot,
-                    "title": (activity.title if activity and activity.title else AFTERBURNER_GAME["title"]),
-                    "description": (
-                        activity.description
-                        if activity and activity.description
-                        else AFTERBURNER_GAME["description"]
-                    ),
-                    "activity": activity,
-                    "game": game_instance,
-                    "goal": getattr(activity, "goal", "") if activity else "",
-                }
-            )
-            continue
-
-        configs.append(
-            {
-                "slot": slot,
-                "title": (
-                    activity.title if activity and activity.title else fallback_card.get("title", "")
-                ),
-                "description": (
-                    activity.description
-                    if activity and activity.description
-                    else fallback_card.get("description", "")
-                ),
-                "activity": activity,
-                "goal": getattr(activity, "goal", "") if activity else "",
-            }
-        )
-
-    return configs
-
-
-def _resolve_adaptive_game(module: CourseModule | None) -> ModuleGame | None:
-    if module is None:
-        return None
-
-    activity_game = (
-        ModuleAfterburnerActivity.objects.filter(
-            module=module,
-            slot=ModuleAfterburnerActivity.Slot.GAME,
-        )
-        .select_related("game")
-        .first()
-    )
-    if activity_game and activity_game.game:
-        game = activity_game.game
-        if game.is_active and game.game_type == ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
-            return game
-
-    return (
-        ModuleGame.objects.filter(
-            module=module,
-            game_type=ModuleGame.GameType.ADAPTIVE_FLASHCARDS,
-            is_active=True,
-        )
-        .order_by("order", "id")
-        .first()
-    )
-
-
-def _resolve_profile(
-    user,
-    *,
-    allow_admin_create: bool = False,
-):
-    """Return the user's profile, auto-creating one for admins when needed."""
-
-    profile = getattr(user, "profile", None)
-    if profile is not None or not getattr(user, "is_authenticated", False):
-        return profile
-
-    if allow_admin_create and getattr(user, "is_superuser", False):
-        display_name = (
-            user.get_full_name()
-            or user.get_username()
-            or "Mission Control"
-        )
-        profile, _ = Profile.objects.get_or_create(
-            user=user,
-            defaults={
-                "display_name": display_name,
-                "timezone": timezone.get_current_timezone_name(),
-            },
-        )
-        return profile
-
-    return profile
-
-
-def _pair_key(primary_id: int, partner_id: int | None) -> tuple[int, int] | None:
-    if primary_id is None or partner_id is None:
-        return None
-    return (primary_id, partner_id) if primary_id <= partner_id else (partner_id, primary_id)
-
-
-def _assign_meeting_pairs(
-    participant_ids: list[int],
-    avoided_pairs: set[tuple[int, int]],
-) -> tuple[list[tuple[int, int | None]], set[tuple[int, int]]]:
-    remaining = list(sorted(participant_ids))
-    assignments: list[tuple[int, int | None]] = []
-    used_this_round: set[tuple[int, int]] = set()
-
-    while len(remaining) > 1:
-        primary_id = remaining.pop(0)
-        candidate_index = None
-        for idx, candidate in enumerate(remaining):
-            key = _pair_key(primary_id, candidate)
-            if key and key not in avoided_pairs and key not in used_this_round:
-                candidate_index = idx
-                break
-
-        if candidate_index is None:
-            assignments.append((primary_id, None))
-            continue
-
-        partner_id = remaining.pop(candidate_index)
-        normalized = _pair_key(primary_id, partner_id)
-        if normalized:
-            used_this_round.add(normalized)
-            assignments.append(normalized)
-        else:
-            assignments.append((primary_id, partner_id))
-
-    if remaining:
-        assignments.append((remaining.pop(), None))
-
-    return assignments, used_this_round
-
-
-def _build_pair_map(
-    meeting: ModuleLiveMeeting,
-) -> dict[int, dict[int, ModuleMeetingPairing]]:
-    lookup: dict[int, dict[int, ModuleMeetingPairing]] = defaultdict(dict)
-    pairings = (
-        ModuleMeetingPairing.objects.filter(meeting=meeting)
-        .select_related("activity", "profile_primary", "profile_partner")
-        .all()
-    )
-    for pairing in pairings:
-        lookup[pairing.activity_id][pairing.profile_primary_id] = pairing
-        if pairing.profile_partner_id:
-            lookup[pairing.activity_id][pairing.profile_partner_id] = pairing
-    return lookup
-
-
-def _ensure_meeting_pairings(
-    module: CourseModule,
-    meeting: ModuleLiveMeeting,
-) -> dict[int, dict[int, ModuleMeetingPairing]]:
-    participants = list(
-        ModuleLiveMeetingSignup.objects.filter(meeting=meeting)
-        .select_related("profile")
-        .order_by("profile__display_name")
-    )
-    if not participants:
-        ModuleMeetingPairing.objects.filter(meeting=meeting).delete()
-        return {}
-
-    participant_ids = [signup.profile_id for signup in participants if signup.profile_id]
-    if not participant_ids:
-        return {}
-
-    historical_pairs = {
-        key
-        for key in (
-            _pair_key(primary_id, partner_id)
-            for primary_id, partner_id in ModuleMeetingPairing.objects.filter(module=module)
-            .exclude(meeting=meeting)
-            .values_list("profile_primary_id", "profile_partner_id")
-        )
-        if key
-    }
-
-    ModuleMeetingPairing.objects.filter(meeting=meeting).delete()
-
-    activities = list(module.meeting_activities.filter(is_active=True).order_by("order"))
-    if not activities:
-        return {}
-
-    avoided_pairs = set(historical_pairs)
-    pairings_to_create: list[ModuleMeetingPairing] = []
-
-    for activity in activities:
-        assignments, used_this_round = _assign_meeting_pairs(participant_ids, avoided_pairs)
-        for primary_id, partner_id in assignments:
-            if partner_id is None:
-                pairings_to_create.append(
-                    ModuleMeetingPairing(
-                        module=module,
-                        meeting=meeting,
-                        activity=activity,
-                        profile_primary_id=primary_id,
-                        paired_with_assistant=True,
-                    )
-                )
-                continue
-
-            ordered_pair = _pair_key(primary_id, partner_id)
-            if ordered_pair is None:
-                continue
-            avoided_pairs.add(ordered_pair)
-            pairings_to_create.append(
-                ModuleMeetingPairing(
-                    module=module,
-                    meeting=meeting,
-                    activity=activity,
-                    profile_primary_id=ordered_pair[0],
-                    profile_partner_id=ordered_pair[1],
-                    paired_with_assistant=False,
-                )
-            )
-
-        avoided_pairs.update(used_this_round)
-
-    if pairings_to_create:
-        ModuleMeetingPairing.objects.bulk_create(pairings_to_create)
-
-    return _build_pair_map(meeting)
-
-
-def _get_launch_pad_task_configs(course: Course | None, module: CourseModule | None) -> list[dict[str, str]]:
-    """Return launch pad task configurations with module overrides."""
-
-    module_tasks = []
-    if module is not None:
-        activity = getattr(module, "launchpad_activity", None)
-        if activity:
-            module_tasks = list(
-                activity.tasks.filter(is_active=True).order_by("order", "id")
-            )
-        else:
-            module_tasks = list(
-                ModuleLaunchPadTask.objects.filter(module=module, is_active=True).order_by("order", "id")
-            )
-
-    if module_tasks:
-        return [
-            {
-                "title": task.title,
-                "description": task.description,
-                "link_label": task.link_label or "Open NotebookLM",
-                "link_url": task.link_url,
-            }
-            for task in module_tasks
-        ]
-
-    return [task.copy() for task in LAUNCH_PAD_DEFAULT_TASKS]
-
-
-def _get_flight_deck_activity_configs(module: CourseModule | None) -> list[dict[str, str]]:
-    """Return ordered Flight Deck activity configs with module overrides."""
-
-    defaults = {task["slot"]: {**task} for task in FLIGHT_DECK_TASKS}
-    if module is None:
-        return [defaults[slot] for slot in FLIGHT_DECK_SLOT_SEQUENCE]
-
-    module_activities = {
-        activity.slot: activity
-        for activity in module.flightdeck_activities.filter(is_active=True)
-    }
-
-    configs: list[dict[str, str]] = []
-    for slot in FLIGHT_DECK_SLOT_SEQUENCE:
-        base_config = defaults.get(slot, {"slot": slot})
-        activity = module_activities.get(slot)
-        config = {**base_config}
-        if activity:
-            if activity.title:
-                config["title"] = activity.title
-            if activity.subtitle:
-                config["subtitle"] = activity.subtitle
-            if activity.description:
-                config["description"] = activity.description
-            if activity.link_label:
-                config["link_label"] = activity.link_label
-            if activity.link_url:
-                config["url"] = activity.link_url
-        configs.append(config)
-
-    return configs
-
-
-def _ensure_flashcard_progress_map(
-    profile: Profile,
-    game: ModuleGame,
-) -> dict[int, ModuleGameFlashcardProgress]:
-    """Ensure progress rows exist for each active flashcard and return a map."""
-
-    now = timezone.now()
-    flashcards = list(game.flashcards.filter(is_active=True).order_by("order", "id"))
-    if not flashcards:
-        return {}
-
-    existing = (
-        ModuleGameFlashcardProgress.objects.select_related("flashcard")
-        .filter(profile=profile, flashcard__in=flashcards)
-        .all()
-    )
-    progress_map = {progress.flashcard_id: progress for progress in existing}
-
-    to_create: list[ModuleGameFlashcardProgress] = []
-    for card in flashcards:
-        if card.id not in progress_map:
-            to_create.append(
-                ModuleGameFlashcardProgress(
-                    profile=profile,
-                    flashcard=card,
-                    next_review_at=now,
-                )
-            )
-
-    if to_create:
-        ModuleGameFlashcardProgress.objects.bulk_create(to_create)
-        existing = (
-            ModuleGameFlashcardProgress.objects.select_related("flashcard")
-            .filter(profile=profile, flashcard__in=flashcards)
-            .all()
-        )
-        progress_map = {progress.flashcard_id: progress for progress in existing}
-
-    return progress_map
-
-
-def _flashcard_interval_for_index(index: int) -> timedelta:
-    if index < 0:
-        index = 0
-    if not FLASHCARD_SRS_INTERVALS:
-        return timedelta(minutes=5)
-    if index >= len(FLASHCARD_SRS_INTERVALS):
-        index = len(FLASHCARD_SRS_INTERVALS) - 1
-    return FLASHCARD_SRS_INTERVALS[index]
-
-STAGE_EXTENSION_MAP = {
-    "launch-pad": {
-        "description": "Warm-Up Circle opens the room. We reconnect, share wins, and learn one clear phrase that anchors the session.",
-        "highlights": [
-            "Community check-in prompts that spark conversation instantly",
-            "Pronunciation and rhythm cues demonstrated by peers and coaches",
-            "Visual cards everyone can screenshot and reuse later",
-        ],
-        "promise": "You always know what we’re focusing on and how it connects to everyday life.",
-    },
-    "flight-deck": {
-        "description": "Practice Room is where we experiment. Partners rotate, prompts shift, and you get real-time feedback without pressure.",
-        "highlights": [
-            "Paired conversations with live coaching moments",
-            "Group reflections capturing what felt easy or tough",
-            "Simple grammar and vocabulary nudges woven into dialogue",
-        ],
-        "promise": "Speaking becomes natural because it happens with friends, not in isolation.",
-    },
-    "afterburner": {
-        "description": "Everyday Replay turns practice into action. We capture clips, outline one real-world step, and celebrate together.",
-        "highlights": [
-            "Short recordings you can replay or share with family",
-            "Community accountability threads for real-world wins",
-            "Mini challenges that keep the lesson alive between sessions",
-        ],
-        "promise": "You leave with a clear next action and people who will cheer when you use it.",
-    },
-}
-
-LAUNCH_PAD_DEFAULT_TASKS = deepcopy(DEFAULT_LAUNCH_PAD_TASKS)
-
-MEETING_ASSISTANT_URL = getattr(
-    settings,
-    "MEETING_ASSISTANT_URL",
-    "mailto:missioncontrol@foreign.club?subject=Live%20mission%20assist",
+from .config import (
+    AFTERBURNER_CARD_LIBRARY,
+    AFTERBURNER_SLOT_SEQUENCE,
+    ALLOWED_ENROLLMENT_STATUSES,
+    FLIGHT_DECK_SLOT_SEQUENCE,
+    FLIGHT_DECK_TASKS,
+    LAUNCH_PAD_DEFAULT_TASKS,
+    MEETING_ASSISTANT_URL,
+    PROGRAM_LEVELS,
+    PROGRAM_LOOKUP,
+    PROGRAM_STAGE_DETAILS,
+    STAGE_EXTENSION_MAP,
+)
+from .constants import (
+    AFTERBURNER_GAME,
+    FLASHCARD_SRS_INTERVALS,
+    MODULE_STAGE_LOOKUP,
+    MODULE_STAGE_SEQUENCE,
+    NOTEBOOK_LM_APP_URL,
+    POST_SESSION_TASKS,
+)
+from .services import (
+    AccessService,
+    ContentService,
+    GamificationService,
+    MeetingService,
+    ProfileService,
 )
 
-FLIGHT_DECK_TASKS = [
-    {
-        "slot": ModuleFlightDeckActivity.Slot.SCHEDULER,
-        "title": "Schedule your live mission",
-        "subtitle": "Lock your Friday studio slot directly from this page.",
-    },
-    {
-        "slot": ModuleFlightDeckActivity.Slot.NOTEBOOK,
-        "title": "Prep your NotebookLM workspace",
-        "subtitle": "Spin up a fresh set of notes for this week's mission. Capture vocabulary, new expressions, and personal takeaways inside NotebookLM so you can revisit them later.",
-        "url": NOTEBOOK_LM_APP_URL,
-        "link_label": "NotebookLM Notes",
-    },
-    {
-        "slot": ModuleFlightDeckActivity.Slot.RECORDER,
-        "title": "Get your recorder ready",
-        "subtitle": "Capture your live mission for reflection and evidence uploads",
-    },
-]
 
-PROGRAM_STAGE_DETAILS = [
-    {
-        **stage,
-        **STAGE_EXTENSION_MAP.get(stage["key"], {}),
-    }
-    for stage in MODULE_STAGE_SEQUENCE
-]
+
+
+
+
+
+
+
 
 
 class PlacementRequiredMixin(LoginRequiredMixin):
@@ -903,145 +256,7 @@ class CourseListView(PlacementRequiredMixin, TemplateView):
         return context
 
 
-def _get_enrollment_and_access(user, course):
-    profile = getattr(user, "profile", None)
-    enrollment = None
-    if profile:
-        enrollment = CourseEnrollment.objects.filter(profile=profile, course=course).first()
-    can_view = bool(
-        enrollment and enrollment.status in ALLOWED_ENROLLMENT_STATUSES
-    ) or user.is_staff or user.is_superuser
-    return enrollment, can_view
 
-
-def _get_stage_unlocks(user, course, module, enrollment=None, can_view_course=False):
-    unlocks = {stage["key"]: False for stage in MODULE_STAGE_SEQUENCE}
-    unlocks["launch-pad"] = can_view_course
-    if not unlocks["launch-pad"]:
-        return unlocks
-
-    profile = getattr(user, "profile", None)
-    if profile is None:
-        return unlocks
-
-    launch_configs = _get_launch_pad_task_configs(course, module)
-
-    try:
-        progress = ModuleStageProgress.objects.get(
-            profile=profile,
-            module=module,
-            stage_key=ModuleStageProgress.StageKey.LAUNCH_PAD,
-        )
-        tasks = list(progress.completed_tasks or [])
-    except ModuleStageProgress.DoesNotExist:
-        tasks = []
-
-    required = len(launch_configs)
-    if len(tasks) < required:
-        tasks.extend([False] * (required - len(tasks)))
-    elif len(tasks) > required:
-        tasks = tasks[:required]
-
-    stage_one_complete = required > 0 and all(bool(flag) for flag in tasks[:required])
-    unlocks["flight-deck"] = stage_one_complete
-
-    flight_tasks_required = _get_stage_required_tasks(
-        ModuleStageProgress.StageKey.FLIGHT_DECK, module
-    )
-    if flight_tasks_required:
-        flight_progress = None
-        try:
-            flight_progress = ModuleStageProgress.objects.get(
-                profile=profile,
-                module=module,
-                stage_key=ModuleStageProgress.StageKey.FLIGHT_DECK,
-            )
-            flight_tasks = list(flight_progress.completed_tasks or [])
-        except ModuleStageProgress.DoesNotExist:
-            flight_tasks = []
-
-        if len(flight_tasks) < flight_tasks_required:
-            flight_tasks.extend([False] * (flight_tasks_required - len(flight_tasks)))
-        elif len(flight_tasks) > flight_tasks_required:
-            flight_tasks = flight_tasks[:flight_tasks_required]
-
-        meetings_exist = ModuleLiveMeetingSignup.objects.filter(
-            profile=profile,
-            module=module,
-        ).exists()
-
-        if meetings_exist:
-            if not flight_tasks:
-                flight_tasks = [False] * flight_tasks_required
-            if not flight_tasks[0]:
-                flight_tasks[0] = True
-                if flight_progress is None:
-                    flight_progress = ModuleStageProgress.objects.create(
-                        profile=profile,
-                        module=module,
-                        stage_key=ModuleStageProgress.StageKey.FLIGHT_DECK,
-                        completed_tasks=flight_tasks,
-                    )
-                else:
-                    flight_progress.completed_tasks = flight_tasks
-                    flight_progress.save(update_fields=["completed_tasks", "updated_at"])
-
-        elif flight_tasks and flight_tasks[0]:
-            flight_tasks[0] = False
-            if flight_progress is not None:
-                flight_progress.completed_tasks = flight_tasks
-                flight_progress.save(update_fields=["completed_tasks", "updated_at"])
-
-        flight_stage_complete = all(bool(flag) for flag in flight_tasks[:flight_tasks_required])
-    else:
-        flight_stage_complete = False
-
-    unlocks["afterburner"] = flight_stage_complete
-    return unlocks
-
-
-def _is_module_unlocked(user, course, module, enrollment=None, can_view_course=False):
-    if getattr(user, "is_staff", False) or getattr(user, "is_superuser", False):
-        return True
-
-    if module.order <= 1:
-        return True
-
-    previous_order = module.order - 1
-    previous_module = None
-
-    if hasattr(course, "modules"):
-        for candidate in course.modules.all():
-            if candidate.order == previous_order:
-                previous_module = candidate
-                break
-
-    if previous_module is None:
-        previous_module = (
-            CourseModule.objects.filter(course=course, order=previous_order).first()
-        )
-
-    if previous_module is None:
-        return True
-
-    previous_unlocks = _get_stage_unlocks(
-        user,
-        course,
-        previous_module,
-        enrollment=enrollment,
-        can_view_course=can_view_course,
-    )
-    return bool(previous_unlocks.get("flight-deck", False))
-
-
-def _get_stage_required_tasks(stage_key: str, module: CourseModule) -> int:
-    if stage_key == ModuleStageProgress.StageKey.LAUNCH_PAD:
-        return len(_get_launch_pad_task_configs(getattr(module, "course", None), module))
-    if stage_key == ModuleStageProgress.StageKey.FLIGHT_DECK:
-        return len(_get_flight_deck_activity_configs(module))
-    if stage_key == ModuleStageProgress.StageKey.AFTERBURNER:
-        return len(_get_afterburner_card_configs(getattr(module, "course", None), module))
-    return 0
 
 
 class CourseDetailView(PlacementRequiredMixin, TemplateView):
@@ -1060,7 +275,7 @@ class CourseDetailView(PlacementRequiredMixin, TemplateView):
             slug=kwargs["slug"],
             is_published=True,
         )
-        enrollment, can_view_course = _get_enrollment_and_access(self.request.user, course)
+        enrollment, can_view_course = AccessService.get_enrollment_and_access(self.request.user, course)
 
         modules = (
             CourseModule.objects.filter(course=course)
@@ -1122,7 +337,7 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
 
         user = self.request.user
         user_is_admin = user.is_superuser
-        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        enrollment, can_view_course = AccessService.get_enrollment_and_access(user, course)
 
         if not can_view_course:
             messages.warning(self.request, "Finish your application to unlock weekly missions.")
@@ -1132,7 +347,7 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
             course=course,
             order=order,
         )
-        if not user_is_admin and not _is_module_unlocked(
+        if not user_is_admin and not AccessService.is_module_unlocked(
             user, course, module, enrollment, can_view_course
         ):
             previous_week = max(1, module.order - 1)
@@ -1147,7 +362,7 @@ class CourseModuleDetailView(PlacementRequiredMixin, TemplateView):
         previous_order = order - 1 if order > 1 else None
         next_order = order + 1 if order < total_modules else None
 
-        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        stage_unlocks = AccessService.get_stage_unlocks(user, course, module, enrollment, can_view_course)
         if user_is_admin:
             stage_unlocks = {stage["key"]: True for stage in MODULE_STAGE_SEQUENCE}
 
@@ -1205,7 +420,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
         )
         user = self.request.user
         user_is_admin = user.is_superuser
-        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        enrollment, can_view_course = AccessService.get_enrollment_and_access(user, course)
         if not can_view_course:
             messages.warning(self.request, "Finish your application to unlock weekly missions.")
             return redirect("course_detail", slug=slug)
@@ -1214,7 +429,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             course=course,
             order=order,
         )
-        if not user_is_admin and not _is_module_unlocked(
+        if not user_is_admin and not AccessService.is_module_unlocked(
             user, course, module, enrollment, can_view_course
         ):
             previous_week = max(1, module.order - 1)
@@ -1223,7 +438,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                 f"Complete Week {previous_week} Launch Pad missions to unlock Week {module.order}.",
             )
             return redirect("course_module", slug=slug, order=previous_week)
-        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        stage_unlocks = AccessService.get_stage_unlocks(user, course, module, enrollment, can_view_course)
         if user_is_admin:
             stage_unlocks = {stage["key"]: True for stage in MODULE_STAGE_SEQUENCE}
 
@@ -1252,7 +467,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             for stage in MODULE_STAGE_SEQUENCE
         ]
 
-        profile = _resolve_profile(user, allow_admin_create=user_is_admin)
+        profile = ProfileService.resolve_profile(user, allow_admin_create=user_is_admin)
         meeting_signup = None
         selected_meeting = None
         can_cancel_meeting = False
@@ -1268,7 +483,16 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             if meeting_signup and meeting_signup.meeting:
                 selected_meeting = meeting_signup.meeting
 
-        launch_configs = _get_launch_pad_task_configs(course, module)
+        launch_configs = ContentService.get_launch_pad_task_configs(course, module)
+        launch_progress = None
+        if profile:
+            launch_progress = ModuleStageProgress.objects.filter(
+                profile=profile,
+                module=module,
+                stage_key=ModuleStageProgress.StageKey.LAUNCH_PAD,
+            ).first()
+        launch_completed_flags = list(launch_progress.completed_tasks or []) if launch_progress else []
+
         launch_tasks = [
             {
                 "index": idx,
@@ -1276,7 +500,9 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                 "description": config.get("description", ""),
                 "link_label": config.get("link_label", "Open NotebookLM"),
                 "link_url": config.get("link_url") or NOTEBOOK_LM_APP_URL,
-                "completed": False,
+                "completed": bool(launch_completed_flags[idx - 1])
+                if (idx - 1) < len(launch_completed_flags)
+                else False,
             }
             for idx, config in enumerate(launch_configs, start=1)
         ]
@@ -1288,19 +514,32 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
         )
         meeting_board: list[dict[str, object]] = []
         meeting_guides: list[dict[str, object]] = []
-        afterburner_configs = _get_afterburner_card_configs(course, module)
+        afterburner_configs = ContentService.get_afterburner_card_configs(course, module)
         afterburner_cards: list[dict[str, object]] = []
         game_config: dict[str, object] | None = None
+        afterburner_progress = None
+        if profile:
+            afterburner_progress = ModuleStageProgress.objects.filter(
+                profile=profile,
+                module=module,
+                stage_key=ModuleStageProgress.StageKey.AFTERBURNER,
+            ).first()
+        ab_completed_flags = list(afterburner_progress.completed_tasks or []) if afterburner_progress else []
+
         for config in afterburner_configs:
             if config["slot"] == ModuleAfterburnerActivity.Slot.GAME:
                 game_config = config
                 continue
+            
+            card_index = len(afterburner_cards)
+            is_completed = bool(ab_completed_flags[card_index]) if card_index < len(ab_completed_flags) else False
+
             afterburner_cards.append(
                 {
-                    "index": len(afterburner_cards) + 1,
+                    "index": card_index + 1,
                     "title": config["title"],
                     "description": config["description"],
-                    "completed": False,
+                    "completed": is_completed,
                     "slot": config["slot"],
                     "dashboard_url": None,
                     "goal": config.get("goal", ""),
@@ -1312,7 +551,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
             if game_config.get("activity"):
                 selected_game = getattr(game_config["activity"], "game", None)
             if selected_game is None:
-                selected_game = game_config.get("game") or _resolve_adaptive_game(module)
+                selected_game = game_config.get("game") or GamificationService.resolve_adaptive_game(module)
 
         afterburner_game_card = {
             "index": len(afterburner_cards) + 1,
@@ -1465,7 +704,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                     Profile.FluencyLevel.ELEMENTARY,
                 }
             ):
-                pairings_map = _ensure_meeting_pairings(module, selected_meeting)
+                pairings_map = MeetingService.ensure_meeting_pairings(module, selected_meeting)
                 show_meeting_carousel = True
 
             for idx, activity in enumerate(meeting_activities_qs, start=1):
@@ -1528,7 +767,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                     stage_key=ModuleStageProgress.StageKey.FLIGHT_DECK,
                 )
                 tasks_state = list(progress.completed_tasks or [])
-                flight_configs = _get_flight_deck_activity_configs(module)
+                flight_configs = ContentService.get_flight_deck_activity_configs(module)
                 required = len(flight_configs)
                 if len(tasks_state) < required:
                     tasks_state.extend([False] * (required - len(tasks_state)))
@@ -1593,7 +832,7 @@ class CourseModuleStageView(PlacementRequiredMixin, TemplateView):
                     stage_key=ModuleStageProgress.StageKey.AFTERBURNER,
                 )
                 tasks_state = list(progress.completed_tasks or [])
-                required = _get_stage_required_tasks(ModuleStageProgress.StageKey.AFTERBURNER, module)
+                required = AccessService.get_stage_required_tasks(ModuleStageProgress.StageKey.AFTERBURNER, module)
                 if len(tasks_state) < required:
                     tasks_state.extend([False] * (required - len(tasks_state)))
                 elif len(tasks_state) > required:
@@ -1651,7 +890,7 @@ class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
             is_published=True,
         )
         user = request.user
-        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        enrollment, can_view_course = AccessService.get_enrollment_and_access(user, course)
         if not can_view_course:
             messages.warning(request, "Finish your application to unlock weekly missions.")
             return redirect("course_detail", slug=slug)
@@ -1662,7 +901,7 @@ class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
             order=order,
         )
 
-        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+        if not AccessService.is_module_unlocked(user, course, module, enrollment, can_view_course):
             previous_week = max(1, module.order - 1)
             messages.warning(
                 request,
@@ -1670,7 +909,7 @@ class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
             )
             return redirect("course_module", slug=slug, order=previous_week)
 
-        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        stage_unlocks = AccessService.get_stage_unlocks(user, course, module, enrollment, can_view_course)
         if not stage_unlocks.get(ModuleStageProgress.StageKey.AFTERBURNER, False):
             messages.warning(request, "Unlock Afterburner to view this dashboard.")
             return redirect("course_module", slug=slug, order=order)
@@ -1702,7 +941,7 @@ class ModuleAfterburnerDashboardView(PlacementRequiredMixin, TemplateView):
                 )
             if selected_game is None or selected_game.game_type != ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
                 # Fallback to any adaptive game tied to the module so the dashboard always has a queue.
-                selected_game = _resolve_adaptive_game(module)
+                selected_game = GamificationService.resolve_adaptive_game(module)
 
         reading_chapters = []
         grammar_points = []
@@ -1791,7 +1030,7 @@ class ModuleMeetingSignupView(PlacementRequiredMixin, View):
         )
         user = request.user
         user_is_admin = user.is_superuser
-        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        enrollment, can_view_course = AccessService.get_enrollment_and_access(user, course)
         if not can_view_course:
             messages.warning(request, "Finish your application to unlock weekly missions.")
             return redirect("course_detail", slug=slug)
@@ -1802,7 +1041,7 @@ class ModuleMeetingSignupView(PlacementRequiredMixin, View):
             order=order,
         )
 
-        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+        if not AccessService.is_module_unlocked(user, course, module, enrollment, can_view_course):
             previous_week = max(1, module.order - 1)
             messages.warning(
                 request,
@@ -1810,7 +1049,7 @@ class ModuleMeetingSignupView(PlacementRequiredMixin, View):
             )
             return redirect("course_module", slug=slug, order=previous_week)
 
-        profile = _resolve_profile(user, allow_admin_create=user_is_admin)
+        profile = ProfileService.resolve_profile(user, allow_admin_create=user_is_admin)
         if profile is None:
             messages.error(request, "Complete your profile to track progress.")
             return redirect("course_module_stage", slug=slug, order=order, stage=ModuleStageProgress.StageKey.FLIGHT_DECK)
@@ -1839,14 +1078,14 @@ class ModuleMeetingSignupView(PlacementRequiredMixin, View):
             stage_key=ModuleStageProgress.StageKey.FLIGHT_DECK,
         )
         tasks_state = list(progress.completed_tasks or [])
-        required = _get_stage_required_tasks(ModuleStageProgress.StageKey.FLIGHT_DECK, module)
+        required = AccessService.get_stage_required_tasks(ModuleStageProgress.StageKey.FLIGHT_DECK, module)
         if len(tasks_state) < required:
             tasks_state.extend([False] * (required - len(tasks_state)))
         tasks_state[0] = True
         progress.completed_tasks = tasks_state[:required]
         progress.save(update_fields=["completed_tasks", "updated_at"])
 
-        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        stage_unlocks = AccessService.get_stage_unlocks(user, course, module, enrollment, can_view_course)
 
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             assistant_start_dt = meeting.scheduled_for
@@ -1894,7 +1133,7 @@ class ModuleMeetingCancelView(PlacementRequiredMixin, View):
         )
         user = request.user
         user_is_admin = user.is_superuser
-        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        enrollment, can_view_course = AccessService.get_enrollment_and_access(user, course)
         if not can_view_course:
             messages.warning(request, "Finish your application to unlock weekly missions.")
             return redirect("course_detail", slug=slug)
@@ -1905,7 +1144,7 @@ class ModuleMeetingCancelView(PlacementRequiredMixin, View):
             order=order,
         )
 
-        if not _is_module_unlocked(user, course, module, enrollment, can_view_course):
+        if not AccessService.is_module_unlocked(user, course, module, enrollment, can_view_course):
             previous_week = max(1, module.order - 1)
             messages.warning(
                 request,
@@ -1962,14 +1201,14 @@ class ModuleMeetingCancelView(PlacementRequiredMixin, View):
             stage_key=ModuleStageProgress.StageKey.FLIGHT_DECK,
         )
         tasks_state = list(progress.completed_tasks or [])
-        required = _get_stage_required_tasks(ModuleStageProgress.StageKey.FLIGHT_DECK, module)
+        required = AccessService.get_stage_required_tasks(ModuleStageProgress.StageKey.FLIGHT_DECK, module)
         if len(tasks_state) < required:
             tasks_state.extend([False] * (required - len(tasks_state)))
         tasks_state[0] = False
         progress.completed_tasks = tasks_state[:required]
         progress.save(update_fields=["completed_tasks", "updated_at"])
 
-        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        stage_unlocks = AccessService.get_stage_unlocks(user, course, module, enrollment, can_view_course)
 
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse(
@@ -2005,7 +1244,7 @@ class ModuleGameFlashcardQueueView(PlacementRequiredMixin, View):
         )
 
         user = request.user
-        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        enrollment, can_view_course = AccessService.get_enrollment_and_access(user, course)
         if not can_view_course:
             return JsonResponse(
                 {"redirect_url": reverse("course_detail", args=[course.slug])},
@@ -2018,12 +1257,12 @@ class ModuleGameFlashcardQueueView(PlacementRequiredMixin, View):
             order=order,
         )
 
-        if not user.is_superuser and not _is_module_unlocked(
+        if not user.is_superuser and not AccessService.is_module_unlocked(
             user, course, module, enrollment, can_view_course
         ):
             return JsonResponse({"error": "module_locked"}, status=403)
 
-        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        stage_unlocks = AccessService.get_stage_unlocks(user, course, module, enrollment, can_view_course)
         if not user.is_superuser and not stage_unlocks.get(
             ModuleStageProgress.StageKey.AFTERBURNER, False
         ):
@@ -2039,15 +1278,15 @@ class ModuleGameFlashcardQueueView(PlacementRequiredMixin, View):
         )
         module_game = getattr(game_activity, "game", None)
         if module_game is None or module_game.game_type != ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
-            module_game = _resolve_adaptive_game(module)
+            module_game = GamificationService.resolve_adaptive_game(module)
         if not module_game:
             return JsonResponse({"cards": [], "meta": {"total_due": 0}}, status=200)
 
-        profile = _resolve_profile(user, allow_admin_create=True)
+        profile = ProfileService.resolve_profile(user, allow_admin_create=True)
         if profile is None:
             return JsonResponse({"error": "profile_missing"}, status=403)
 
-        progress_map = _ensure_flashcard_progress_map(profile, module_game)
+        progress_map = GamificationService.ensure_flashcard_progress_map(profile, module_game)
         now = timezone.now()
 
         due_progresses = [
@@ -2111,7 +1350,7 @@ class ModuleGameFlashcardLogView(PlacementRequiredMixin, View):
         )
 
         user = request.user
-        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        enrollment, can_view_course = AccessService.get_enrollment_and_access(user, course)
         if not can_view_course:
             return JsonResponse(
                 {"redirect_url": reverse("course_detail", args=[course.slug])},
@@ -2124,12 +1363,12 @@ class ModuleGameFlashcardLogView(PlacementRequiredMixin, View):
             order=order,
         )
 
-        if not user.is_superuser and not _is_module_unlocked(
+        if not user.is_superuser and not AccessService.is_module_unlocked(
             user, course, module, enrollment, can_view_course
         ):
             return JsonResponse({"error": "module_locked"}, status=403)
 
-        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        stage_unlocks = AccessService.get_stage_unlocks(user, course, module, enrollment, can_view_course)
         if not user.is_superuser and not stage_unlocks.get(
             ModuleStageProgress.StageKey.AFTERBURNER, False
         ):
@@ -2145,11 +1384,11 @@ class ModuleGameFlashcardLogView(PlacementRequiredMixin, View):
         )
         module_game = getattr(game_activity, "game", None)
         if module_game is None or module_game.game_type != ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
-            module_game = _resolve_adaptive_game(module)
+            module_game = GamificationService.resolve_adaptive_game(module)
         if not module_game:
             return JsonResponse({"error": "game_unavailable"}, status=400)
 
-        profile = _resolve_profile(user, allow_admin_create=True)
+        profile = ProfileService.resolve_profile(user, allow_admin_create=True)
         if profile is None:
             return JsonResponse({"error": "profile_missing"}, status=403)
 
@@ -2185,7 +1424,7 @@ class ModuleGameFlashcardLogView(PlacementRequiredMixin, View):
                 correct_streak = 0
                 last_outcome = "incorrect"
 
-            next_interval = _flashcard_interval_for_index(interval_index)
+            next_interval = GamificationService.flashcard_interval_for_index(interval_index)
 
             progress.interval_index = interval_index
             progress.next_review_at = now + next_interval
@@ -2255,7 +1494,7 @@ class ModuleGameFlashcardAnalyticsView(PlacementRequiredMixin, View):
         )
 
         user = request.user
-        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        enrollment, can_view_course = AccessService.get_enrollment_and_access(user, course)
         if not can_view_course:
             return JsonResponse(
                 {"redirect_url": reverse("course_detail", args=[course.slug])},
@@ -2268,12 +1507,12 @@ class ModuleGameFlashcardAnalyticsView(PlacementRequiredMixin, View):
             order=order,
         )
 
-        if not user.is_superuser and not _is_module_unlocked(
+        if not user.is_superuser and not AccessService.is_module_unlocked(
             user, course, module, enrollment, can_view_course
         ):
             return JsonResponse({"error": "module_locked"}, status=403)
 
-        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        stage_unlocks = AccessService.get_stage_unlocks(user, course, module, enrollment, can_view_course)
         if not user.is_superuser and not stage_unlocks.get(
             ModuleStageProgress.StageKey.AFTERBURNER, False
         ):
@@ -2289,11 +1528,11 @@ class ModuleGameFlashcardAnalyticsView(PlacementRequiredMixin, View):
         )
         module_game = getattr(game_activity, "game", None)
         if module_game is None or module_game.game_type != ModuleGame.GameType.ADAPTIVE_FLASHCARDS:
-            module_game = _resolve_adaptive_game(module)
+            module_game = GamificationService.resolve_adaptive_game(module)
         if not module_game:
             return JsonResponse({"error": "game_unavailable"}, status=400)
 
-        profile = _resolve_profile(user, allow_admin_create=True)
+        profile = ProfileService.resolve_profile(user, allow_admin_create=True)
         if profile is None:
             return JsonResponse({"error": "profile_missing"}, status=403)
 
@@ -2401,7 +1640,7 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
         )
         user = request.user
         user_is_admin = user.is_superuser
-        enrollment, can_view_course = _get_enrollment_and_access(user, course)
+        enrollment, can_view_course = AccessService.get_enrollment_and_access(user, course)
         if not can_view_course:
             messages.warning(request, "Finish your application to unlock weekly missions.")
             return redirect("course_detail", slug=slug)
@@ -2411,7 +1650,7 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
             course=course,
             order=order,
         )
-        if not user_is_admin and not _is_module_unlocked(
+        if not user_is_admin and not AccessService.is_module_unlocked(
             user, course, module, enrollment, can_view_course
         ):
             previous_week = max(1, module.order - 1)
@@ -2432,10 +1671,7 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
             )
             return redirect("course_module", slug=slug, order=previous_week)
 
-        profile = _resolve_profile(user, allow_admin_create=user_is_admin)
-        if profile is None:
-            messages.error(request, "Complete your profile to track progress.")
-            return redirect("course_module_stage", slug=slug, order=order, stage=stage_key)
+        profile = ProfileService.resolve_profile(user, allow_admin_create=user_is_admin)
 
         progress, _ = ModuleStageProgress.objects.get_or_create(
             profile=profile,
@@ -2444,7 +1680,7 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
         )
 
         tasks_state = list(progress.completed_tasks or [])
-        required = _get_stage_required_tasks(stage_key, module)
+        required = AccessService.get_stage_required_tasks(stage_key, module)
         if len(tasks_state) < required:
             tasks_state.extend([False] * (required - len(tasks_state)))
         elif len(tasks_state) > required:
@@ -2458,7 +1694,7 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
 
         if stage_key == ModuleStageProgress.StageKey.AFTERBURNER:
             now = timezone.now()
-            afterburner_configs = _get_afterburner_card_configs(course, module)
+            afterburner_configs = ContentService.get_afterburner_card_configs(course, module)
             non_game_configs: list[dict[str, object]] = []
             game_config: dict[str, object] | None = None
             for config in afterburner_configs:
@@ -2529,7 +1765,7 @@ class ModuleStageTaskToggleView(PlacementRequiredMixin, View):
         progress.completed_tasks = tasks_state
         progress.save(update_fields=["completed_tasks", "updated_at"])
 
-        stage_unlocks = _get_stage_unlocks(user, course, module, enrollment, can_view_course)
+        stage_unlocks = AccessService.get_stage_unlocks(user, course, module, enrollment, can_view_course)
         if user_is_admin:
             stage_unlocks = {stage["key"]: True for stage in MODULE_STAGE_SEQUENCE}
 

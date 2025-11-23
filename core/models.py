@@ -319,6 +319,10 @@ class Course(models.Model):
     def __str__(self) -> str:
         return self.title
 
+    def get_absolute_url(self) -> str:
+        from django.urls import reverse
+        return reverse("course_detail", kwargs={"slug": self.slug})
+
     @property
     def is_cohort_based(self) -> bool:
         return self.delivery_mode != self.DeliveryMode.SELF_PACED
@@ -346,6 +350,10 @@ class CourseModule(models.Model):
 
     def __str__(self) -> str:
         return f"{self.course.title} · Module {self.order}"
+
+    def get_absolute_url(self) -> str:
+        from django.urls import reverse
+        return reverse("course_module", kwargs={"slug": self.course.slug, "order": self.order})
 
 
 class CourseSession(models.Model):
