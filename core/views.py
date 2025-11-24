@@ -2326,6 +2326,20 @@ class ExperiencesView(PlacementRequiredMixin, TemplateView):
             "Intensive": [course for course in courses if course.difficulty == Course.Difficulty.INTENSIVE],
             "Mastery": [course for course in courses if course.difficulty == Course.Difficulty.MASTER],
         }
+        course_groups_display: dict[str, list[dict[str, object]]] = {}
+        for label, group in course_groups.items():
+            cards: list[dict[str, object]] = []
+            for course in group:
+                cards.append(
+                    {
+                        "title": course.title,
+                        "slug": course.slug,
+                        "delivery_label": course.get_delivery_mode_display(),
+                        "level_label": course.get_fluency_level_display(),
+                        "subtitle": course.subtitle or course.summary or "",
+                    }
+                )
+            course_groups_display[label] = cards
 
         levels = []
         for level in PROGRAM_LEVELS:
@@ -2337,6 +2351,7 @@ class ExperiencesView(PlacementRequiredMixin, TemplateView):
             {
                 "program_levels": levels,
                 "course_groups": course_groups,
+                "course_groups_display": course_groups_display,
                 "has_courses": bool(courses),
             }
         )

@@ -35,7 +35,7 @@
             <div class="col-lg-6" data-scroll>
                 <div class="p-4 border border-light rounded-4 bg-surface-highlight h-100">
                     <p class="text-neon small text-uppercase mb-3">Mission Outcomes</p>
-                    <p class="text-white-50 mb-0">{{ module.outcomes }}</p>
+                    <p class="text-white mb-0">{{ module.outcomes }}</p>
                 </div>
             </div>
             {% endif %}
@@ -75,7 +75,7 @@
                         style="{% if stage.is_unlocked %}background: var(--surface-highlight);{% else %}opacity: 0.5;{% endif %}">
                         <div class="row">
                             <div class="col-lg-2 mb-3 mb-lg-0">
-                                <span class="display-4 text-neon">0{{ stage.order }}</span>
+                                <span class="display-4 text-neon">{{ stage.order|stringformat:"02d" }}</span>
                             </div>
                             <div class="col-lg-7 mb-4 mb-lg-0">
                                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -85,7 +85,7 @@
                                     {% endif %}
                                 </div>
                                 <p class="lead text-ink-dim mb-2">{{ stage.tagline }}</p>
-                                <p class="text-white-50 small">{{ stage.summary|truncatechars:120 }}</p>
+                                <p class="text-white small">{{ stage.summary|truncatechars:120 }}</p>
                             </div>
                             <div class="col-lg-3 text-lg-end d-flex flex-column justify-content-center">
                                 {% if stage.is_unlocked %}

@@ -109,6 +109,7 @@ class KineticInteractions {
         this.initCursor();
         this.initObservers();
         this.initHorizontalScroll();
+        this.initAnimations();
     }
 
     initCursor() {
@@ -167,21 +168,114 @@ class KineticInteractions {
     }
 
     initHorizontalScroll() {
-        const section = document.querySelector('.horizontal-scroll-section');
         const track = document.querySelector('.horizontal-track');
+        if (!track) return;
 
-        if (!section || !track) return;
+        const cards = Array.from(track.querySelectorAll('.horizontal-card'));
+        if (!cards.length) return;
 
-        window.addEventListener('scroll', () => {
-            const rect = section.getBoundingClientRect();
-            const offset = -rect.top;
-            const maxScroll = section.offsetHeight - window.innerHeight;
+        // Drag-to-scroll support
+        const wrapper = track.closest('.horizontal-scroll-wrapper');
+        if (wrapper) {
+            let isDown = false;
+            let startX = 0;
+            let scrollLeft = 0;
+            wrapper.addEventListener('mousedown', (e) => {
+                isDown = true;
+                wrapper.classList.add('is-dragging');
+                startX = e.pageX - wrapper.offsetLeft;
+                scrollLeft = wrapper.scrollLeft;
+            });
+            wrapper.addEventListener('mouseleave', () => {
+                isDown = false;
+                wrapper.classList.remove('is-dragging');
+            });
+            wrapper.addEventListener('mouseup', () => {
+                isDown = false;
+                wrapper.classList.remove('is-dragging');
+            });
+            wrapper.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - wrapper.offsetLeft;
+                const walk = (x - startX) * 1.2;
+                wrapper.scrollLeft = scrollLeft - walk;
+            });
+        }
 
-            if (offset > 0 && offset < maxScroll) {
-                const percent = offset / maxScroll;
-                const move = -(track.scrollWidth - window.innerWidth) * percent;
-                track.style.transform = `translateX(${move}px)`;
+        let slideWidth = 0;
+        let currentIndex = 0;
+        let timer = null;
+        const gap = 24; // px, matches 1.5rem
+
+        const computeSlideWidth = () => {
+            const rect = cards[0].getBoundingClientRect();
+            slideWidth = rect.width + gap;
+        };
+
+        const goTo = (index) => {
+            track.style.transform = `translateX(-${index * slideWidth}px)`;
+        };
+
+        const startLoop = () => {
+            stopLoop();
+            timer = setInterval(() => {
+                currentIndex = (currentIndex + 1) % cards.length;
+                goTo(currentIndex);
+            }, 4000);
+        };
+
+        const stopLoop = () => {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
             }
+        };
+
+        computeSlideWidth();
+        goTo(0);
+        startLoop();
+
+        window.addEventListener('resize', () => {
+            computeSlideWidth();
+            goTo(currentIndex);
+        }, { passive: true });
+
+        track.addEventListener('mouseenter', stopLoop);
+        track.addEventListener('mouseleave', startLoop);
+
+        // Generic draggable tracks (e.g., course lists)
+        document.querySelectorAll('.course-scroll').forEach((scrollEl) => {
+            let isDown = false;
+            let startX = 0;
+            let scrollLeft = 0;
+            scrollEl.addEventListener('mousedown', (e) => {
+                isDown = true;
+                scrollEl.classList.add('is-dragging');
+                startX = e.pageX - scrollEl.offsetLeft;
+                scrollLeft = scrollEl.scrollLeft;
+            });
+            scrollEl.addEventListener('mouseleave', () => {
+                isDown = false;
+                scrollEl.classList.remove('is-dragging');
+            });
+            scrollEl.addEventListener('mouseup', () => {
+                isDown = false;
+                scrollEl.classList.remove('is-dragging');
+            });
+            scrollEl.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - scrollEl.offsetLeft;
+                const walk = (x - startX) * 1.2;
+                scrollEl.scrollLeft = scrollLeft - walk;
+            });
+        });
+    }
+
+    initAnimations() {
+        document.querySelectorAll('[data-animate]').forEach((el) => {
+            el.classList.add('is-visible');
         });
     }
 }

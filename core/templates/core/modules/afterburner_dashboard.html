@@ -3,24 +3,33 @@
 
 {% block title %}Afterburner · {{ module.title }}{% endblock %}
 {% block content %}
-<section class="container-xl py-7">
-    <div class="row justify-content-center">
-        <div class="col-xl-8 col-lg-9">
-            <article class="module-card glass-panel p-5 p-lg-6 mb-5" data-animate="fade-up">
-                <p class="eyebrow mb-2">Stage 3 · Afterburner · {{ slot_label }}</p>
-                <h1 class="h4 fw-bold tracking-tight mb-2">
-                    {% if activity %}
-                    {{ activity.title }}
-                    {% elif slot_enum == game_slot_value and selected_game %}
-                    {{ selected_game.title|default:"Game Mission" }}
-                    {% else %}
-                    Afterburner Mission
-                    {% endif %}
-                </h1>
+<section class="container-xl py-6 mt-4">
+    <div class="row justify-content-center afterburner-wrapper">
+        <div class="col-xl-9 col-lg-10">
+            <article class="afterburner-card p-5 p-lg-6 mb-4">
+                <div class="afterburner-hero">
+                    <div>
+                        <span class="afterburner-badge">Stage 3 · {{ slot_label }}</span>
+                        <h1 class="h4 fw-bold tracking-tight mb-2 mt-2">
+                            {% if activity %}
+                            {{ activity.title }}
+                            {% elif slot_enum == game_slot_value and selected_game %}
+                            {{ selected_game.title|default:"Game Mission" }}
+                            {% else %}
+                            Afterburner Mission
+                            {% endif %}
+                        </h1>
+                    </div>
+                    <a class="btn btn-outline-light" href="{% url 'course_module_stage' course.slug module.order 'afterburner' %}">← Back</a>
+                </div>
                 {% if activity and activity.description %}
-                <p class="text-white-50 mb-4">{{ activity.description }}</p>
+                <div class="afterburner-body mb-4">
+                    <p class="text-white mb-0">{{ activity.description|linebreaksbr }}</p>
+                </div>
                 {% elif slot_enum == game_slot_value and selected_game and selected_game.description %}
-                <p class="text-white-50 mb-4">{{ selected_game.description }}</p>
+                <div class="afterburner-body mb-4">
+                    <p class="text-white mb-0">{{ selected_game.description }}</p>
+                </div>
                 {% else %}
                 <p class="text-white-50 mb-4">Dive into the activity dashboard to complete this retention mission.</p>
                 {% endif %}
@@ -69,7 +78,7 @@
                                     {% if chapter.content %}
                                     <p class="reading-slide__text">{{ chapter.content|linebreaksbr }}</p>
                                     {% else %}
-                                    <p class="reading-slide__text text-white-50">{% trans "Add the story content for
+                                    <p class="reading-slide__text text-white">{% trans "Add the story content for
                                         this chapter to guide learners." %}</p>
                                     {% endif %}
                                 </div>
@@ -111,9 +120,9 @@
                         <li class="grammar-point">
                             <h2 class="h6 fw-semibold mb-1">{{ point.formula }}</h2>
                             {% if point.explanation %}
-                            <p class="text-white-50 mb-0">{{ point.explanation|linebreaksbr }}</p>
+                            <p class="text-white mb-0">{{ point.explanation|linebreaksbr }}</p>
                             {% else %}
-                            <p class="text-white-50 mb-0">Explain this pattern in simple terms for learners.</p>
+                            <p class="text-white mb-0">Explain this pattern in simple terms for learners.</p>
                             {% endif %}
                         </li>
                         {% endfor %}
@@ -134,7 +143,7 @@
                     </div>
                     {% endif %}
                     {% if activity and activity.description %}
-                    <p class="text-white-50 mb-3">{{ activity.description|linebreaksbr }}</p>
+                    <p class="text-white mb-3">{{ activity.description|linebreaksbr }}</p>
                     {% endif %}
 
                     {% if real_world_steps %}
@@ -149,7 +158,7 @@
                                 {% if step.title %}
                                 <h3 class="real-world-step__title h6 mb-1">{{ step.title }}</h3>
                                 {% endif %}
-                                <p class="text-white-50 mb-0">{{ step.instruction|linebreaksbr }}</p>
+                                <p class="text-white mb-0">{{ step.instruction|linebreaksbr }}</p>
                             </div>
                         </li>
                         {% endfor %}

@@ -13,7 +13,7 @@
 
         <!-- Horizontal Scroll Levels -->
         <section class="horizontal-scroll-section">
-            <div class="horizontal-scroll-wrapper">
+            <div class="horizontal-scroll-wrapper is-draggable" data-scroll>
                 <div class="horizontal-track">
                     {% for level in program_levels %}
                     <div class="horizontal-card">
@@ -37,27 +37,25 @@
                 <h2 class="display-xl mb-6" data-scroll>Mission Portfolio</h2>
 
                 {% if has_courses %}
-                {% for label, items in course_groups.items %}
+                {% for label, items in course_groups_display.items %}
                 <div class="mb-6" data-scroll>
                     <h3 class="h1 text-neon mb-4">{{ label }}</h3>
-                    <div class="row g-4">
+                    <div class="course-scroll is-draggable">
+                        <div class="course-track">
                         {% for course in items %}
-                        <div class="col-lg-6">
-                            <div class="p-5 border border-light rounded-4 h-100 hover-trigger bg-surface-highlight">
-                                <div class="d-flex gap-2 mb-4">
-                                    <span class="badge border border-light text-light">{{
-                                        course.get_delivery_mode_display }}</span>
-                                    <span class="badge border border-light text-light">Level {{
-                                        course.get_fluency_level_display }}</span>
-                                </div>
-                                <h4 class="h2 mb-3">{{ course.title }}</h4>
-                                <p class="text-ink-dim mb-4">{{ course.subtitle|default:course.summary|truncatechars:120
-                                    }}</p>
-                                <a href="{% url 'course_detail' course.slug %}" class="btn-kinetic-outline">View
-                                    Experience</a>
+                        <div class="course-card">
+                            <div class="d-flex gap-2 mb-3 badges-row">
+                                <span class="badge border border-light text-light">{{ course.delivery_label }}</span>
+                                <span class="badge border border-light text-light">Level {{ course.level_label }}</span>
                             </div>
+                            <h4 class="h2 mb-2">{{ course.title }}</h4>
+                            <p class="text-ink-dim mb-3 course-card__subtitle" data-fallback="Course details coming soon.">
+                                {{ course.subtitle|default:"Course details coming soon."|truncatechars:120 }}
+                            </p>
+                            <a href="{% url 'course_detail' course.slug %}" class="btn-kinetic-outline">View Experience</a>
                         </div>
                         {% endfor %}
+                        </div>
                     </div>
                 </div>
                 {% endfor %}

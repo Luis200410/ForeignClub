@@ -35,17 +35,18 @@
                         {% if launch_pad_tasks %}
                         {% for task in launch_pad_tasks %}
                         <form
-                            class="p-4 border border-light rounded-4 bg-surface-highlight js-stage-task-toggle {% if task.completed %}border-neon{% endif %}"
+                            class="stage-task-card p-4 border border-light rounded-4 bg-surface-highlight js-stage-task-toggle {% if task.completed %}border-neon{% endif %}"
                             action="{% url 'course_module_stage_task_toggle' course.slug module.order stage_key task.index %}"
                             method="post" data-stage-key="{{ stage_key }}">
                             {% csrf_token %}
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <span class="text-neon small text-uppercase tracking-widest mb-1 d-block">0{{
-                                        task.index }}</span>
+                                    <span class="text-neon small text-uppercase tracking-widest mb-1 d-block">
+                                        {{ task.index|stringformat:"02d" }}
+                                    </span>
                                     <h3 class="h5 mb-2">{{ task.title }}</h3>
                                     {% if task.description %}
-                                    <p class="text-white-50 small mb-2">{{ task.description }}</p>
+                                    <p class="text-white small mb-2">{{ task.description }}</p>
                                     {% endif %}
                                     {% if task.link_url %}
                                     <a href="{{ task.link_url }}" target="_blank"
@@ -72,28 +73,60 @@
                     {% if flight_deck_tasks %}
                     {% for task in flight_deck_tasks %}
                     {% if task.type == "scheduler" %}
-                    <div class="p-5 border border-light rounded-4 bg-surface-highlight mb-4">
-                        <h3 class="h4 mb-3">{{ task.title }}</h3>
+                    <div class="stage-task-card stage-scheduler-card p-5 border border-light rounded-4 bg-surface-highlight mb-4">
+                        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+                            <div>
+                                <p class="text-neon small text-uppercase tracking-widest mb-1">Practice Room</p>
+                                <h3 class="h4 mb-1">{{ task.title }}</h3>
+                                {% if task.subtitle %}<p class="text-ink-dim small mb-0">{{ task.subtitle }}</p>{% endif %}
+                            </div>
+                            {% if task.selected_meeting %}
+                            <div class="stage-scheduler-meta" data-selected-time="{{ task.selected_meeting.scheduled_for|date:'c' }}" data-selected-duration="{{ task.selected_meeting.duration_minutes }}">
+                                <span class="scheduler-chip">Booked</span>
+                                <p class="mb-1 small text-white-50">{{ task.selected_meeting.scheduled_for|date:"M j, H:i" }} · {{ task.selected_meeting.duration_minutes }}m</p>
+                                <div class="scheduler-countdown">
+                                    <span class="scheduler-countdown__label">Status</span>
+                                    <span class="scheduler-countdown__value js-meeting-countdown">—</span>
+                                </div>
+                                {% if task.can_cancel %}
+                                <form action="{{ task.cancel_url }}" method="post" class="mt-2">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="meeting_id" value="{{ task.selected_meeting.id }}">
+                                    <button class="btn btn-outline-light btn-sm" type="submit">Cancel booking</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
                         {% if task.meeting_options %}
                         <div class="d-grid gap-3">
                             {% for option in task.meeting_options %}
                             <form
-                                class="p-3 border border-light rounded-3 js-meeting-select {% if option.id == task.selected_meeting_id %}bg-primary text-dark{% endif %}"
+                                class="stage-meeting-option p-3 border border-light rounded-3 js-meeting-select {% if option.id == task.selected_meeting_id %}bg-primary text-dark{% endif %}"
                                 action="{% url 'course_module_meeting_select' course.slug module.order %}" method="post"
-                                data-meeting-id="{{ option.id }}">
+                                data-meeting-id="{{ option.id }}"
+                                data-meeting-at="{{ option.scheduled_for|date:'c' }}"
+                                data-meeting-duration="{{ option.duration_minutes }}"
+                                data-meeting-title="{{ option.title|default:'Live Mission' }}">
                                 {% csrf_token %}
                                 <input type="hidden" name="meeting_id" value="{{ option.id }}">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <p class="fw-bold mb-1">{{ option.title|default:"Live Mission" }}</p>
-                                        <p class="small mb-0 opacity-75">{{ option.scheduled_for|date:"M j, H:i" }} · {{
-                                            option.duration_minutes }} min</p>
+                                <div class="meeting-slot">
+                                    <div class="meeting-slot__calendar">
+                                        <span class="meeting-slot__month">{{ option.scheduled_for|date:"M" }}</span>
+                                        <span class="meeting-slot__day">{{ option.scheduled_for|date:"j" }}</span>
                                     </div>
-                                    <button
-                                        class="btn btn-sm {% if option.id == task.selected_meeting_id %}btn-dark{% else %}btn-outline-light{% endif %}"
-                                        type="submit">
-                                        {% if option.id == task.selected_meeting_id %}Selected{% else %}Join{% endif %}
-                                    </button>
+                                    <div class="meeting-slot__meta">
+                                        <p class="fw-bold mb-1">{{ option.title|default:"Live Mission" }}</p>
+                                        <p class="small mb-0 opacity-75">{{ option.scheduled_for|date:"D · H:i" }} · {{ option.duration_minutes }} min</p>
+                                    </div>
+                                    <div class="meeting-slot__action">
+                                        <span class="meeting-slot__time-badge meeting-slot__status" data-meeting-at="{{ option.scheduled_for|date:'c' }}" data-meeting-duration="{{ option.duration_minutes }}">⏰</span>
+                                        <button
+                                            class="btn btn-sm {% if option.id == task.selected_meeting_id %}btn-dark{% else %}btn-outline-light{% endif %}"
+                                            type="submit">
+                                            {% if option.id == task.selected_meeting_id %}Selected{% else %}Join{% endif %}
+                                        </button>
+                                    </div>
                                 </div>
                             </form>
                             {% endfor %}
@@ -101,6 +134,58 @@
                         {% else %}
                         <p class="text-white-50">Schedule coming soon.</p>
                         {% endif %}
+                    </div>
+                    {% elif task.type == "notebook" %}
+                    {% with notebook_url=task.url|default:"https://notebooklm.google.com/" %}
+                        {% if "notebooklm.google.com" in notebook_url %}
+                            {% with notebook_url="https://notebooklm.google.com/" %}
+                            <div class="stage-task-card p-4 border border-light rounded-4 bg-surface-highlight mb-3">
+                                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                    <div>
+                                        <span class="text-neon small text-uppercase tracking-widest mb-1 d-block">Prep</span>
+                                        <h3 class="h5 mb-2">{{ task.title }}</h3>
+                                        {% if task.subtitle %}<p class="text-ink-dim small mb-0">{{ task.subtitle }}</p>{% endif %}
+                                    </div>
+                                    <a class="btn btn-outline-light btn-sm" href="{{ notebook_url }}" target="_blank" rel="noreferrer">Open Notebook</a>
+                                </div>
+                            </div>
+                            {% endwith %}
+                        {% else %}
+                            <div class="stage-task-card p-4 border border-light rounded-4 bg-surface-highlight mb-3">
+                                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                    <div>
+                                        <span class="text-neon small text-uppercase tracking-widest mb-1 d-block">Prep</span>
+                                        <h3 class="h5 mb-2">{{ task.title }}</h3>
+                                        {% if task.subtitle %}<p class="text-ink-dim small mb-0">{{ task.subtitle }}</p>{% endif %}
+                                    </div>
+                                    {% if task.url %}
+                                    <a class="btn btn-outline-light btn-sm" href="{{ task.url }}" target="_blank" rel="noreferrer">Open Notebook</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                    {% elif task.type == "recorder" %}
+                    <div class="stage-task-card p-4 border border-light rounded-4 bg-surface-highlight mb-3">
+                        <div class="d-flex flex-column gap-3">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                <div>
+                                    <span class="text-neon small text-uppercase tracking-widest mb-1 d-block">Audio</span>
+                                    <h3 class="h5 mb-2">{{ task.title }}</h3>
+                                    {% if task.subtitle %}<p class="text-ink-dim small mb-0">{{ task.subtitle }}</p>{% endif %}
+                                </div>
+                            </div>
+                            <div class="recorder-inline" data-recorder-inline>
+                                <div class="recorder-inline__controls">
+                                    <button class="btn btn-sm btn-outline-light" type="button" data-recorder-action="start">Start</button>
+                                    <button class="btn btn-sm btn-outline-light" type="button" data-recorder-action="stop">Stop</button>
+                                    <button class="btn btn-sm btn-outline-light" type="button" data-recorder-action="play" disabled>Play</button>
+                                    <a class="btn btn-sm btn-outline-light" data-recorder-download href="#" download="flight-deck-recording.webm" hidden>Download</a>
+                                </div>
+                                <p class="recorder-inline__status js-recorder-inline-status text-white-50 small mb-2">Recorder idle.</p>
+                                <audio class="recorder-inline__audio" controls hidden></audio>
+                            </div>
+                        </div>
                     </div>
                     {% endif %}
                     {% endfor %}
@@ -113,46 +198,74 @@
                     <h2 class="h3 text-white mb-4">Retention Lab</h2>
                     <p class="text-ink-dim mb-4">Play, review, and lock in the gains.</p>
 
-                    <div class="d-flex flex-column gap-3">
+                        <div class="d-flex flex-column gap-3">
                         {% for technique in afterburner_cards %}
                         <form
-                            class="p-4 border border-light rounded-4 bg-surface-highlight js-stage-task-toggle {% if technique.completed %}border-neon{% endif %}"
+                            class="stage-task-card p-4 border border-light rounded-4 bg-surface-highlight js-stage-task-toggle {% if technique.completed %}border-neon{% endif %}"
                             action="{% url 'course_module_stage_task_toggle' course.slug module.order stage_key technique.index %}"
-                            method="post">
+                            method="post"
+                            {% if technique.dashboard_url %}data-dashboard-url="{{ technique.dashboard_url }}"{% endif %}
+                            {% if technique.is_locked %}data-locked="true"{% endif %}>
                             {% csrf_token %}
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <span class="text-neon small text-uppercase tracking-widest mb-1 d-block">0{{
-                                        technique.index }}</span>
+                                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                    <div class="flex-grow-1">
+                                    <span class="text-neon small text-uppercase tracking-widest mb-1 d-block">
+                                        {{ technique.index|stringformat:"02d" }}
+                                    </span>
                                     <h3 class="h5 mb-2">{{ technique.title }}</h3>
-                                    <p class="text-white-50 small mb-0">{{ technique.description }}</p>
+                                    <p class="text-white small mb-0">{{ technique.description }}</p>
                                     {% if technique.is_locked %}
                                     <p class="text-danger small mt-2">Locked: {{ technique.lock_message }}</p>
                                     {% endif %}
                                 </div>
-                                <button class="btn-kinetic-outline btn-sm" type="submit" {% if technique.is_locked
-                                    %}disabled{% endif %}>
-                                    {% if technique.is_locked %}Locked{% elif technique.completed %}Done{% else %}Mark
-                                    Done{% endif %}
-                                </button>
-                            </div>
-                        </form>
-                        {% endfor %}
+                                    <div class="stage-task-actions">
+                                        <button class="btn-kinetic-outline btn-sm" type="submit" {% if technique.is_locked %}disabled{% endif %}>
+                                            {% if technique.is_locked %}Locked{% elif technique.completed %}Done{% else %}Mark Done{% endif %}
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                            {% endfor %}
+                            
+                            {% if afterburner_game_card %}
+                            <form
+                                class="stage-task-card p-4 border border-light rounded-4 bg-surface-highlight js-stage-task-toggle {% if afterburner_game_card.completed %}border-neon{% endif %}"
+                                action="{% url 'course_module_stage_task_toggle' course.slug module.order stage_key afterburner_game_card.index %}"
+                                method="post"
+                                {% if afterburner_game_card.dashboard_url %}data-dashboard-url="{{ afterburner_game_card.dashboard_url }}"{% endif %}>
+                                {% csrf_token %}
+                                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                    <div class="flex-grow-1">
+                                        <span class="text-neon small text-uppercase tracking-widest mb-1 d-block">
+                                            {{ afterburner_game_card.index|stringformat:"02d" }}
+                                        </span>
+                                        <h3 class="h5 mb-2">{{ afterburner_game_card.title }}</h3>
+                                        <p class="text-white small mb-0">{{ afterburner_game_card.description }}</p>
+                                    </div>
+                                    <div class="stage-task-actions">
+                                        <button class="btn-kinetic-outline btn-sm" type="submit">
+                                            {% if afterburner_game_card.completed %}Done{% else %}Mark Done{% endif %}
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
-                {% endif %}
+                    {% endif %}
 
-            </div>
+                </div>
 
             <!-- Sidebar Navigation -->
             <div class="col-lg-4">
                 <div class="sticky-top" style="top: 2rem;">
-                    <div class="p-5 border border-light rounded-4 bg-surface-highlight">
+                    <div class="stage-nav-panel p-5 border border-light rounded-4 bg-surface-highlight">
                         <p class="text-neon text-uppercase tracking-widest small mb-4">Stage Nav</p>
                         <div class="d-grid gap-2 mb-4">
                             {% for item in stage_cards %}
                             <a href="{{ item.url }}"
-                                class="btn btn-outline-light text-start {% if item.is_active %}active{% endif %} {% if not item.is_unlocked %}disabled{% endif %}">
+                                class="btn btn-outline-light text-start {% if item.is_active %}active{% endif %} {% if not item.is_unlocked %}disabled{% endif %}"
+                                data-stage-key="{{ item.key }}">
                                 <span class="d-block small text-white-50">Stage {{ item.order }}</span>
                                 <span class="d-block">{{ item.label }} {% if not item.is_unlocked %}🔒{% endif %}</span>
                             </a>
@@ -171,20 +284,322 @@
 
 {% block extra_scripts %}
 {{ block.super }}
-<!-- Re-injecting the original JS logic for task toggling and scheduling -->
 <script>
     (function () {
-        // ... [Original JS logic preserved for functionality] ...
-        // Simplified for brevity in this rewrite, but in production, 
-        // I would ensure all the original JS event listeners for 
-        // .js-stage-task-toggle and .js-meeting-select are present 
-        // and adapted to the new classes if necessary.
-        // Since I kept the class names compatible, the original JS should largely work.
-
         const toggleForms = document.querySelectorAll('.js-stage-task-toggle');
-        toggleForms.forEach(function (form) {
-            form.addEventListener('submit', function (event) {
-                // ... (AJAX logic) ...
+        if (!toggleForms.length) return;
+
+        const updateNavLocks = function (stageUnlocks) {
+            document.querySelectorAll('.stage-nav-panel .btn-outline-light').forEach((link) => {
+                const key = link.getAttribute('data-stage-key');
+                if (!key || !(key in stageUnlocks)) return;
+                const unlocked = !!stageUnlocks[key];
+                link.classList.toggle('disabled', !unlocked);
+                link.setAttribute('aria-disabled', (!unlocked).toString());
+                if (!unlocked) {
+                    link.classList.add('stage-nav-link--locked');
+                } else {
+                    link.classList.remove('stage-nav-link--locked');
+                }
+            });
+        };
+
+        toggleForms.forEach((form) => {
+            const dashUrl = form.getAttribute('data-dashboard-url');
+            const isLocked = form.getAttribute('data-locked') === 'true';
+
+            if (dashUrl && !isLocked) {
+                form.classList.add('stage-task-card--link');
+                form.addEventListener('click', (event) => {
+                    const target = event.target;
+                    if (target.closest('button') || target.closest('a')) {
+                        return;
+                    }
+                    window.location.href = dashUrl;
+                });
+            }
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const token = form.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+                if (!submitBtn || !token) {
+                    form.submit();
+                    return;
+                }
+
+                const originalLabel = submitBtn.textContent.trim();
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Saving…';
+
+                try {
+                    const resp = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': token,
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        },
+                        body: new FormData(form),
+                    });
+
+                    if (!resp.ok) {
+                        throw new Error('Request failed');
+                    }
+
+                    const data = await resp.json();
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                        return;
+                    }
+
+                    const completed = !!data.completed;
+                    submitBtn.textContent = completed ? 'Done' : 'Mark Done';
+                    submitBtn.disabled = false;
+                    submitBtn.setAttribute('aria-pressed', completed ? 'true' : 'false');
+                    form.classList.toggle('border-neon', completed);
+
+                    if (data.stage_unlocks) {
+                        updateNavLocks(data.stage_unlocks);
+                    }
+                } catch (error) {
+                    console.error(error);
+                    submitBtn.textContent = 'Try again';
+                    submitBtn.disabled = false;
+                }
+            });
+        });
+
+        // Meeting countdown/status helpers
+        const formatCountdown = (diffMs) => {
+            const minutes = Math.floor(diffMs / 60000);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+            const remHours = hours % 24;
+            const remMinutes = minutes % 60;
+            if (days > 0) return `${days}d ${remHours}h`;
+            if (hours > 0) return `${hours}h ${remMinutes}m`;
+            return `${remMinutes}m`;
+        };
+
+        const annotateSlots = () => {
+            const now = Date.now();
+            document.querySelectorAll('.meeting-slot__status').forEach((badge) => {
+                const iso = badge.getAttribute('data-meeting-at');
+                const duration = parseInt(badge.getAttribute('data-meeting-duration') || '0', 10) || 0;
+                const start = iso ? new Date(iso).getTime() : NaN;
+                if (!start || Number.isNaN(start)) {
+                    badge.textContent = '—';
+                    return;
+                }
+                const end = start + duration * 60000;
+                let label = '';
+                badge.classList.remove('is-past', 'is-soon', 'is-live');
+                if (now >= end) {
+                    label = 'Ended';
+                    badge.classList.add('is-past');
+                    const form = badge.closest('form');
+                    const btn = form?.querySelector('button[type="submit"]');
+                    if (btn) {
+                        btn.classList.remove('btn-dark');
+                        btn.classList.add('btn-outline-light');
+                        btn.disabled = true;
+                        btn.textContent = 'Ended';
+                    }
+                    if (form) {
+                        form.classList.add('is-ended');
+                    }
+                } else if (now >= start) {
+                    label = 'Live now';
+                    badge.classList.add('is-live');
+                } else {
+                    const diff = start - now;
+                    label = `Starts in ${formatCountdown(diff)}`;
+                    if (diff < 2 * 60 * 60 * 1000) {
+                        badge.classList.add('is-soon');
+                    }
+                }
+                badge.textContent = label;
+            });
+
+            const countdownWrapper = document.querySelector('[data-selected-time]');
+            if (countdownWrapper) {
+                const countdownValue = countdownWrapper.querySelector('.js-meeting-countdown');
+                const iso = countdownWrapper.getAttribute('data-selected-time');
+                const duration = parseInt(countdownWrapper.getAttribute('data-selected-duration') || '0', 10) || 0;
+                const target = iso ? new Date(iso).getTime() : NaN;
+                if (!target || Number.isNaN(target)) {
+                    countdownValue.textContent = '—';
+                    return;
+                }
+                const end = target + duration * 60000;
+                const nowSelected = Date.now();
+                if (nowSelected >= end) {
+                    countdownValue.textContent = 'Ended · select a new slot';
+                    const chip = countdownWrapper.querySelector('.scheduler-chip');
+                    if (chip) chip.textContent = 'Ended';
+                } else if (nowSelected >= target) {
+                    countdownValue.textContent = 'Live now';
+                } else {
+                    countdownValue.textContent = `Starts in ${formatCountdown(target - nowSelected)}`;
+                }
+            }
+        };
+
+        annotateSlots();
+        setInterval(annotateSlots, 30000);
+
+        // Inline recorder for Practice Room
+        document.querySelectorAll('[data-recorder-inline]').forEach((wrapper, idx) => {
+            const statusEl = wrapper.querySelector('.js-recorder-inline-status');
+            const audioEl = wrapper.querySelector('.recorder-inline__audio');
+            const downloadEl = wrapper.querySelector('[data-recorder-download]');
+            const startBtn = wrapper.querySelector('[data-recorder-action="start"]');
+            const stopBtn = wrapper.querySelector('[data-recorder-action="stop"]');
+            const playBtn = wrapper.querySelector('[data-recorder-action="play"]');
+            let mediaRecorder = null;
+            let chunks = [];
+            let stream = null;
+            let recording = false;
+            let selectedMime = '';
+            let stoppedManually = false;
+
+            const setStatus = (text) => {
+                if (statusEl) statusEl.textContent = text;
+            };
+
+            const resetButtons = () => {
+                if (startBtn) startBtn.disabled = false;
+                if (stopBtn) stopBtn.disabled = true;
+                if (playBtn) playBtn.disabled = !audioEl || !audioEl.src;
+            };
+
+            const resetRecording = () => {
+                chunks = [];
+                if (audioEl) {
+                    audioEl.src = '';
+                    audioEl.hidden = true;
+                }
+                if (downloadEl) {
+                    downloadEl.hidden = true;
+                    downloadEl.href = '#';
+                }
+                resetButtons();
+            };
+
+            const stopStream = () => {
+                if (stream) {
+                    stream.getTracks().forEach((t) => t.stop());
+                    stream = null;
+                }
+            };
+
+            const cleanupRecorder = () => {
+                if (mediaRecorder) {
+                    try {
+                        mediaRecorder.stop();
+                    } catch (err) {
+                        /* ignore */
+                    }
+                    mediaRecorder.ondataavailable = null;
+                    mediaRecorder.onstop = null;
+                    mediaRecorder = null;
+                }
+            };
+
+            const onData = (evt) => {
+                if (evt.data && evt.data.size > 0) chunks.push(evt.data);
+            };
+
+            const onStop = () => {
+                recording = false;
+                if (!chunks.length) {
+                    setStatus('No audio captured. Try again.');
+                } else {
+                    const blob = new Blob(chunks, { type: selectedMime || chunks[0]?.type || 'audio/webm' });
+                    const url = URL.createObjectURL(blob);
+                    if (audioEl) {
+                        audioEl.src = url;
+                        audioEl.hidden = false;
+                        audioEl.load();
+                    }
+                    if (downloadEl) {
+                        downloadEl.hidden = false;
+                        downloadEl.href = url;
+                    }
+                    if (playBtn) {
+                        playBtn.disabled = false;
+                    }
+                    setStatus('Recording ready to review.');
+                }
+                stopStream();
+                cleanupRecorder();
+                resetButtons();
+            };
+
+            const recorderUnavailable = () => {
+                setStatus('Recording not supported or permission denied.');
+                startBtn?.setAttribute('disabled', 'disabled');
+                stopBtn?.setAttribute('disabled', 'disabled');
+                playBtn?.setAttribute('disabled', 'disabled');
+            };
+
+            if (!navigator.mediaDevices || !window.MediaRecorder) {
+                recorderUnavailable();
+                return;
+            }
+
+            resetButtons();
+
+            startBtn?.addEventListener('click', async () => {
+                if (recording) return;
+                resetRecording();
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    const mimeCandidates = [
+                        'audio/ogg;codecs=opus',
+                        'audio/ogg',
+                        'audio/webm;codecs=opus',
+                        'audio/webm',
+                        'audio/mp4;codecs=mp4a.40.2',
+                        'audio/mp4',
+                    ];
+                    selectedMime = mimeCandidates.find((c) => MediaRecorder.isTypeSupported(c)) || '';
+                    mediaRecorder = new MediaRecorder(stream, selectedMime ? { mimeType: selectedMime } : undefined);
+                    mediaRecorder.ondataavailable = onData;
+                    mediaRecorder.onstop = onStop;
+                    chunks = [];
+                    stoppedManually = false;
+                    mediaRecorder.start(250); // capture small chunks
+                    recording = true;
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    playBtn.disabled = true;
+                    setStatus('Recording... Speak into your mic.');
+                } catch (err) {
+                    console.error(err);
+                    recorderUnavailable();
+                }
+            });
+
+            stopBtn?.addEventListener('click', () => {
+                if (!recording || !mediaRecorder) {
+                    setStatus('Not recording yet.');
+                    return;
+                }
+                if (mediaRecorder.state !== 'inactive') {
+                    stoppedManually = true;
+                    mediaRecorder.stop();
+                    setStatus('Processing...');
+                }
+            });
+
+            playBtn?.addEventListener('click', () => {
+                if (audioEl && audioEl.src) {
+                    audioEl.play().catch(() => {
+                        setStatus('Press play again to listen.');
+                    });
+                }
             });
         });
     })();

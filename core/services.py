@@ -498,7 +498,9 @@ class AccessService:
         elif len(tasks) > required:
             tasks = tasks[:required]
 
-        stage_one_complete = required > 0 and all(
+        # If there are no configured Launch Pad tasks, treat the stage as complete so learners
+        # are not blocked from continuing through the module.
+        stage_one_complete = required == 0 or all(
             bool(flag) for flag in tasks[:required]
         )
         unlocks["flight-deck"] = stage_one_complete
@@ -543,8 +545,8 @@ class AccessService:
                             defaults={"completed_tasks": flight_tasks},
                         )
                         if flight_progress.completed_tasks != flight_tasks:
-                             flight_progress.completed_tasks = flight_tasks
-                             flight_progress.save(update_fields=["completed_tasks", "updated_at"])
+                            flight_progress.completed_tasks = flight_tasks
+                            flight_progress.save(update_fields=["completed_tasks", "updated_at"])
                     else:
                         flight_progress.completed_tasks = flight_tasks
                         flight_progress.save(
@@ -563,7 +565,8 @@ class AccessService:
                 bool(flag) for flag in flight_tasks[:flight_tasks_required]
             )
         else:
-            flight_stage_complete = False
+            # No configured Flight Deck tasks should not block Afterburner.
+            flight_stage_complete = True
 
         unlocks["afterburner"] = flight_stage_complete
         return unlocks

@@ -43,7 +43,7 @@
             style="{% if is_unlocked %}background: var(--surface-highlight);{% else %}opacity: 0.5;{% endif %}">
             <div class="row">
                 <div class="col-lg-2 mb-3 mb-lg-0">
-                    <span class="display-4 text-neon">0{{ module.order }}</span>
+                    <span class="display-4 text-neon">{{ module.order|stringformat:"02d" }}</span>
                     <span class="d-block text-ink-dim small text-uppercase tracking-widest">Week</span>
                 </div>
                 <div class="col-lg-7 mb-4 mb-lg-0">
@@ -53,19 +53,20 @@
                         <span class="badge border border-light text-white-50">Locked</span>
                         {% endif %}
                     </div>
-                    <p class="lead text-ink-dim mb-4">{{ module.description|default:"Module content locked." }}</p>
+                    <p class="lead text-white mb-4">{{ module.description|default:"Module content locked." }}</p>
 
                     {% if module.outcomes %}
                     <div class="p-3 border border-light rounded-3 bg-black">
                         <p class="text-neon small text-uppercase mb-2">Outcomes</p>
-                        <p class="text-white-50 small mb-0">{{ module.outcomes }}</p>
+                        <p class="text-white small mb-0">{{ module.outcomes }}</p>
                     </div>
                     {% endif %}
                 </div>
                 <div class="col-lg-3 text-lg-end d-flex flex-column justify-content-between">
                     {% if module.focus_keyword %}
-                    <span class="badge border border-light text-white align-self-lg-end mb-3">{{ module.focus_keyword
-                        }}</span>
+                    <span class="badge border border-light text-white align-self-lg-end mb-3">
+                        {{ module.focus_keyword|title }}
+                    </span>
                     {% endif %}
 
                     {% if is_unlocked %}

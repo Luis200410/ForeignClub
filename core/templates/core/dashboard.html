@@ -17,8 +17,9 @@
         <div class="row align-items-end mb-6">
             <div class="col-lg-8">
                 <p class="text-neon text-uppercase tracking-widest mb-2">Command Center</p>
-                <h1 class="display-xl" data-scroll>Welcome back, <span class="text-white">{{
-                        profile.display_name|default:user.get_username }}</span>.</h1>
+                {% with display_name=profile.display_name|default:user.get_username|default:"Explorer" %}
+                <h1 class="display-xl" data-scroll>Welcome back, <span class="text-white">{{ display_name }}</span>.</h1>
+                {% endwith %}
             </div>
             <div class="col-lg-4 text-lg-end">
                 <p class="lead text-ink-dim">{{ profile.headline|default:"Your journey continues." }}</p>
@@ -63,20 +64,19 @@
 
 <!-- Active Course -->
 {% if active_enrollments %}
-<section class="section-kinetic pb-5">
+<section class="section-kinetic pb-4">
     <div class="container">
-        <div class="sticky-card" style="background: var(--primary); color: var(--ink-dark);">
-            <div class="row align-items-center">
-                <div class="col-lg-8">
-                    <p class="text-uppercase tracking-widest mb-2" style="opacity: 0.7;">Current Mission</p>
-                    <h2 class="display-4 mb-3">{{ primary_course.title }}</h2>
-                    <p class="lead mb-4" style="opacity: 0.8;">{{ primary_course.subtitle|default:"Continue your active
-                        module." }}</p>
-                    <a href="{% url 'course_detail' primary_course.slug %}"
-                        class="btn btn-dark rounded-pill px-4 py-2">Resume Mission</a>
+        <div class="sticky-card mission-card">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-9 mission-card__body">
+                    <p class="text-uppercase tracking-widest mb-2 mission-card__eyebrow">Current Mission</p>
+                    <h2 class="h2 mb-2">{{ primary_course.title }}</h2>
+                    <p class="mb-0 mission-card__subtitle">{{ primary_course.subtitle|default:"Continue your active module." }}</p>
                 </div>
-                <div class="col-lg-4 d-none d-lg-block text-end">
-                    <span class="display-1" style="opacity: 0.2;">→</span>
+                <div class="col-lg-3 text-lg-end d-none d-lg-flex align-items-center justify-content-end">
+                    <a class="mission-card__arrow" href="{% url 'course_detail' primary_course.slug %}" aria-label="Resume mission">
+                        →
+                    </a>
                 </div>
             </div>
         </div>
