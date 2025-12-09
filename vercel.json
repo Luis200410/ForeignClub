@@ -5,6 +5,8 @@
     { "src": "core/static/**/*", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/favicon.ico", "dest": "/core/static/core/favicon.png" },
+    { "src": "/favicon.png", "dest": "/core/static/core/favicon.png" },
     { "src": "/static/(.*)", "dest": "/core/static/$1" },
     { "src": "/(.*)", "dest": "/api/index.py" }
   ],
