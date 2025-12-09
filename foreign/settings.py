@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 
 import dj_database_url
+from dj_database_url import ParseError
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -64,13 +66,18 @@ ASGI_APPLICATION = "foreign.asgi.application"
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL:
-    DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-            ssl_require=os.getenv("DB_SSL_REQUIRE", "1") == "1",
-        )
-    }
+    try:
+        DATABASES = {
+            "default": dj_database_url.parse(
+                DATABASE_URL,
+                conn_max_age=600,
+                ssl_require=os.getenv("DB_SSL_REQUIRE", "1") == "1",
+            )
+        }
+    except ParseError as exc:
+        raise ImproperlyConfigured(
+            "Invalid DATABASE_URL. Ensure it is a full Postgres URL and password characters are URL-encoded."
+        ) from exc
 else:
     DATABASES = {
         "default": {
